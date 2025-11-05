@@ -1,0 +1,63 @@
+/* --- Contenedor de la Animación --- */
+.login-animation-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1; /* Detrás del texto, pero visible */
+}
+
+/* --- Burbujas Individuales --- */
+.bubble {
+    position: absolute;
+    bottom: -100px; /* Empiezan abajo, fuera de la pantalla */
+    width: 40px;
+    height: 40px;
+    
+    /* Usamos el color 'primary' del tema de MUI */
+    background-color: rgba(0, 191, 165, 0.1); /* (Este es el teal que te gustó) */
+    
+    border-radius: 50%;
+    opacity: 0;
+    
+    /* Animación */
+    animation: floatUp 10s infinite ease-in;
+}
+
+/* --- Keyframes para la animación --- */
+@keyframes floatUp {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh); /* Sube 100% de la altura de la pantalla */
+        opacity: 0;
+    }
+}
+
+/* --- Variaciones de las Burbujas --- */
+/* Hacemos que salgan en diferentes lugares y a diferentes velocidades/tamaños */
+.bubble:nth-child(1) { left: 10%; animation-duration: 12s; width: 20px; height: 20px; }
+.bubble:nth-child(2) { left: 20%; animation-duration: 7s; animation-delay: 1s; width: 30px; height: 30px; }
+.bubble:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 2s; }
+.bubble:nth-child(4) { left: 40%; animation-duration: 8s; animation-delay: 0s; width: 25px; height: 25px; }
+.bubble:nth-child(5) { left: 50%; animation-duration: 11s; animation-delay: 3s; }
+.bubble:nth-child(6) { left: 60%; animation-duration: 9s; animation-delay: 1.5s; width: 35px; height: 35px; }
+.bubble:nth-child(7) { left: 70%; animation-duration: 13s; animation-delay: 4s; }
+.bubble:nth-child(8) { left: 80%; animation-duration: 6s; animation-delay: 2s; width: 20px; height: 20px; }
+.bubble:nth-child(9) { left: 90%; animation-duration: 10s; animation-delay: 0.5s; width: 30px; height: 30px; }
+.bubble:nth-child(10) { left: 55%; animation-duration: 14s; animation-delay: 5s; }
+.bubble:nth-child(11) { left: 25%; animation-duration: 8s; animation-delay: 3s; width: 25px; height: 25px; }
+.bubble:nth-child(12) { left: 75%; animation-duration: 11s; animation-delay: 1s; }
+.bubble:nth-child(13) { left: 15%; animation-duration: 9s; animation-delay: 2.5s; width: 35px; height: 35px; }
+.bubble:nth-child(14) { left: 45%; animation-duration: 13s; animation-delay: 4s; }
+.bubble:nth-child(15) { left: 85%; animation-duration: 7s; animation-delay: 2s; }

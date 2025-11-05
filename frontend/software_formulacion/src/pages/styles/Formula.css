@@ -1,0 +1,246 @@
+/* --- Contenedor Principal --- */
+.formula-page {
+    padding: 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Espacio entre secciones */
+    background-color: #121212; /* Fondo principal muy oscuro */
+    color: #e0e0e0;
+}
+
+/* --- Barra de Acciones Globales (Arriba) --- */
+.action-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+/* --- Tarjeta de Sección (Diseño Modular) --- */
+.formula-section {
+    background-color: #1e1e1e; /* Fondo de tarjeta */
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.section-title, .subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #333;
+}
+.subsection-title {
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border: none;
+}
+
+/* --- EL ESTADO BLOQUEADO --- */
+.formula-section.locked {
+    opacity: 0.4;
+    pointer-events: none; /* No se puede hacer clic */
+    filter: grayscale(80%);
+}
+.formula-section.locked .section-title::after {
+    content: '(Bloqueado - Guarda el Paso 1)';
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #ed6c02; /* Naranja de advertencia */
+    margin-left: 1rem;
+}
+.formula-section:not(.locked) + .formula-section.locked .section-title::after {
+    content: '(Bloqueado - Agrega ingredientes)';
+}
+
+
+/* --- Formularios y Grid --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+.form-grid-ingredientes {
+    display: grid;
+    /* 3 columnas para nombre, peso, tolerancia + 1 para botón */
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+/* --- Grupos de Inputs --- */
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+.input-group label {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px;
+    background-color: #2c2c2c;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    box-sizing: border-box; /* Importante para el padding */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #4CAF50; /* Verde al seleccionar */
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+.input-group input:disabled {
+    background-color: #333;
+    color: #777;
+    cursor: not-allowed;
+}
+
+/* --- Acciones de Formulario --- */
+.form-actions {
+    grid-column: 1 / -1; /* Ocupa todo el ancho */
+    text-align: right;
+    margin-top: 1rem;
+}
+.form-actions-ingredientes {
+    white-space: nowrap; /* Evita que el botón se parta */
+}
+.form-actions-final {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #333;
+}
+
+
+/* --- Estilos de Botones --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #ffffff;
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #555;
+}
+
+.btn-primary { background-color: #2e7d32; } /* Verde Oscuro */
+.btn-primary:hover:not(:disabled) { background-color: #1b5e20; transform: scale(1.02); }
+
+.btn-secondary { background-color: #ed6c02; } /* Naranja/Ámbar */
+.btn-secondary:hover:not(:disabled) { background-color: #e65100; transform: scale(1.02); }
+
+.btn-default { background-color: #444; } /* Gris */
+.btn-default:hover:not(:disabled) { background-color: #555; transform: scale(1.02); }
+
+
+/* --- Tabla de Ingredientes --- */
+.table-wrapper {
+    overflow-x: auto;
+}
+.ingredient-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.ingredient-table thead {
+    background-color: #2c2c2c;
+}
+.ingredient-table th, 
+.ingredient-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+}
+.ingredient-table th {
+    color: #ccc;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+.ingredient-table .table-actions {
+    display: flex;
+    gap: 1rem; /* Más espacio entre iconos */
+    text-align: center;
+    width: 60px; /* Ancho compacto */
+}
+
+/* --- ESTILOS PARA ICONOS DE TABLA --- */
+.btn-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon .MuiSvgIcon-root {
+    font-size: 1.25rem; /* Tamaño del icono */
+}
+.btn-icon:hover {
+    transform: scale(1.2);
+    filter: brightness(1.2);
+}
+
+.btn-icon-edit {
+    color: #ed6c02; /* Naranja/Ámbar */
+}
+.btn-icon-delete {
+    color: #d32f2f; /* Rojo */
+}
+/* ------------------------------------- */
+
+
+/* --- Resumen (Sección 3) --- */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.summary-card {
+    background-color: #121212;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.summary-label {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+.summary-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+}

@@ -1,0 +1,23 @@
+/* 1. Importar tu fuente */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+/* 2. Reseteo universal */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 3. Definimos la fuente para toda la aplicación */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: 'Poppins', 'Roboto', sans-serif;
+}
+
+/* 4. Quitamos el overflow-x global (ya lo manejas en el layout) */
+html, body {
+  overflow-x: hidden;
+}

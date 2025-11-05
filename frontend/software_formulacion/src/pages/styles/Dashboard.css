@@ -1,0 +1,110 @@
+/* Tu body original */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #000000;
+    color: #e0e0e0;
+}
+
+/* --- MODIFICACIÓN DEL GRID --- */
+.dashboard {
+    display: grid;
+    /* 4 columnas iguales */
+    grid-template-columns: repeat(4, 1fr);
+    
+    /* 3 filas: Cuadritos, Líneas, Barras/Pastel */
+    grid-template-areas:
+        "card1 card2 card3 card4"
+        "line  line  line  line"
+        "bar   bar   bar   pie";
+    
+    /* Altura de filas: auto para cuadritos, 300px para gráficas */
+    grid-template-rows: auto 300px 300px;
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+/* --- TUS GRÁFICAS ORIGINALES (SOLO CAMBIA EL GRID-AREA) --- */
+.chart-box {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.chart-box:hover {
+    transform: scale(1.02);
+}
+
+.chart-box h2 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #ffffff;
+    border-bottom: 1px solid #444;
+    padding-bottom: 0.5rem;
+}
+
+.line-chart {
+    grid-area: line;
+}
+
+.pie-chart {
+    grid-area: pie;
+}
+
+.bar-chart {
+    grid-area: bar;
+}
+
+/* --- NUEVOS ESTILOS PARA LOS "CUADRITOS" --- */
+.stat-card {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    color: #fff;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.02);
+}
+
+.stat-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ccc;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* --- Asignación de área para los "cuadritos" --- */
+/* (Esto coincide con las clases que puse en tu Dashboard.jsx) */
+.stat-card-1 { 
+    grid-area: card1;
+    /* Color de acento para el número (Pendientes) */
+    .stat-number { color: #F44336; } 
+}
+.stat-card-2 { 
+    grid-area: card2;
+    /* (En Proceso) */
+    .stat-number { color: #3CA7FFFF; } 
+}
+.stat-card-3 { 
+    grid-area: card3;
+    /* (Completados) */
+    .stat-number { color: #4CAF50; } 
+}
+.stat-card-4 { 
+    grid-area: card4;
+    /* (Calidad) */
+    .stat-number { color: #00FF80FF; } 
+}

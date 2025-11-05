@@ -1,0 +1,145 @@
+/* --- Estilos para EmpresaPage.css --- */
+
+.empresa-container {
+    padding: 24px;
+    background-color: #111827; /* Fondo oscuro principal */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    color: #e0e0e0;
+}
+
+.empresa-container.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px; /* Asegura algo de altura */
+    text-align: center;
+}
+
+
+.empresa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.empresa-title {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Espacio entre icono y texto */
+    font-weight: bold;
+    color: #60A5FA; /* Azul claro */
+}
+
+.edit-button {
+    color: #60A5FA !important; /* !important para sobreescribir MUI */
+    border-color: rgba(96, 165, 250, 0.5) !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease !important;
+}
+
+.edit-button:hover {
+    background-color: rgba(96, 165, 250, 0.1) !important;
+    border-color: #60A5FA !important;
+    transform: scale(1.05);
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Columnas responsivas */
+    gap: 24px;
+}
+
+.section-title {
+    font-weight: bold !important; /* !important para sobreescribir MUI */
+    margin-bottom: 16px !important;
+    color: #90CAF9; /* Azul más claro para títulos de sección */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+
+.info-section {
+    background-color: #1e293b; /* Fondo ligeramente más claro para secciones */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.info-section p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    color: #d1d5db; /* Gris claro para el texto */
+    display: flex; /* Para alinear icono de teléfono */
+    align-items: center;
+    gap: 6px;
+}
+
+.info-section strong {
+    color: #9ca3af; /* Gris un poco más oscuro para etiquetas */
+    margin-right: 8px;
+}
+
+
+/* --- Estilos específicos para el logo --- */
+.logo-section {
+    grid-column: 1 / -1; /* Ocupa todo el ancho en layout de una columna */
+    text-align: center; /* Centra el contenido */
+    background-color: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+@media (min-width: 768px) {
+  .logo-section {
+     grid-column: auto; /* Vuelve a ocupar una columna en pantallas más grandes */
+     text-align: left;
+  }
+}
+
+
+.empresa-logo {
+    max-width: 200px; /* Tamaño máximo del logo */
+    max-height: 150px;
+    height: auto;
+    display: block; /* Para centrar con margin: auto si es necesario */
+    margin: 10px auto 0 auto; /* Espacio arriba, centrado horizontal */
+    border-radius: 8px;
+    object-fit: contain; /* Asegura que la imagen se vea completa */
+    background-color: rgba(255, 255, 255, 0.05); /* Fondo sutil por si la imagen es transparente */
+    padding: 5px;
+}
+
+.logo-placeholder {
+    width: 200px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin: 10px auto 0 auto;
+}
+
+/* --- Estilos para carga y error --- */
+.loading-container, .error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    padding: 20px;
+    color: #9ca3af;
+}
+
+.error-message {
+    color: #f87171; /* Rojo */
+}
