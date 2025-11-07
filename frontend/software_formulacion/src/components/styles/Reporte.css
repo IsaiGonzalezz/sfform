@@ -1,0 +1,131 @@
+/* --- A4 container --- */
+.reporte-a4 {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 50px;
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+/* --- Encabezado --- */
+.encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 15px;
+}
+
+.encab-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-empresa {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.empresa-nombre {
+    font-size: 26px;
+    margin: 0;
+}
+
+.encab-right {
+    text-align: right;
+    font-size: 14px;
+}
+
+.folio {
+    font-size: 16px;
+}
+
+.fecha {
+    color: #555;
+}
+
+/* --- Título y ID --- */
+.titulo-formula {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titulo-formula h2 {
+    margin: 0;
+}
+
+.formula-id {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+/* --- Info general --- */
+.info-general {
+    display: flex;
+    gap: 40px;
+    margin-top: 25px;
+}
+
+.info-item label {
+    display: block;
+    font-size: 13px;
+    color: #777;
+}
+
+.info-item span {
+    font-size: 17px;
+    font-weight: bold;
+}
+
+/* --- Tabla --- */
+.tabla-section {
+    margin-top: 40px;
+}
+
+.tabla-formula {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tabla-formula th {
+    background: #f1f1f1;
+    padding: 10px;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+}
+
+.tabla-formula td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.tabla-formula .num {
+    text-align: right;
+}
+
+.total-label {
+    text-align: right;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.total-value {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* --- Footer --- */
+.pie {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 13px;
+    color: #777;
+}

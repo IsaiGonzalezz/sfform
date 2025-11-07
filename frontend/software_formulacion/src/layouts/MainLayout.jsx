@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
-    IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText
+    IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -19,6 +19,7 @@ import EngineeringIcon from '@mui/icons-material/Engineering';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
 import ScienceIcon from '@mui/icons-material/Science';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import FactoryIcon from '@mui/icons-material/Factory';
 
 const drawerWidth = 240;
 const collapsedWidth = 72;
@@ -31,6 +32,7 @@ const navItems = [
     { text: 'Empresa', path: '/empresa', icon: <BusinessIcon /> },
     { text: 'Ingredientes', path: '/ingredientes', icon: <ScienceIcon /> },
     { text: 'Formulas', path: '/formulas', icon: <ReceiptLongIcon /> },
+    { text: 'Produccion', path: '/produccion', icon: <FactoryIcon />}
 ];
 
 function MainLayout({ children }) {
@@ -54,7 +56,7 @@ function MainLayout({ children }) {
             <AppBar
                 position="fixed"
                 sx={{
-                    backgroundColor: theme.palette.background.paper,
+                    backgroundColor: '#000000FF',
                     color: theme.palette.text.primary,
                     boxShadow: 'none',
                     borderBottom: '1px solid rgba(255,255,255,0.12)',
@@ -80,7 +82,7 @@ function MainLayout({ children }) {
                 </Toolbar>
             </AppBar>
 
-            {/* ======= DRAWER (ESTO ESTÁ BIEN) ======= */}
+            
             <Drawer
                 variant="permanent"
                 open={open}

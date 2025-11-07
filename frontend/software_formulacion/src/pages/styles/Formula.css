@@ -244,3 +244,18 @@
     font-weight: 700;
     color: #ffffff;
 }
+
+.print-only-container {
+    display: none;
+}
+
+.pdf-hidden-container {
+    position: absolute; /* Ocupa espacio pero no interrumpe el layout */
+    left: -9999px;      /* Mueve el elemento fuera de la vista */
+    width: 210mm;       /* Dale un ancho fijo para el PDF */
+    height: 297mm;      /* Dale un alto fijo para el PDF */
+    overflow: hidden;   /* Asegura que no haya scrollbars */
+    /* Importante para que html2pdf lo renderice correctamente */
+    background-color: #ffffff; 
+    color: #000000;
+}

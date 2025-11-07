@@ -9,6 +9,7 @@ import OperadoresPage from './pages/OperadoresPage';
 import EmpresaPage from './pages/EmpresaPage';
 import IngredientesPage from './pages/IngredientesPage';
 import FormulasPage from './pages/FormulasPages';
+import ProduccionPage from './pages/ProducciónPage';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="empresa" element={<EmpresaPage />} />
             <Route path="ingredientes" element={<IngredientesPage />} />
             <Route path="formulas" element={<FormulasPage />} />
+            <Route path='produccion' element={<ProduccionPage/>} />
 
             <Route path="*" element={<div>Página no encontrada</div>} />
           </Routes>

@@ -31,14 +31,11 @@ const darkTheme = createTheme({
 // --- 3. ENVUELVE TU APP ---
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* Aquí empieza la magia */}
     <ThemeProvider theme={darkTheme}>
-      {/* CssBaseline aplica el 'palette.background.default' ('#121212') al <body> */}
       <CssBaseline />
       <BrowserRouter> 
         <App />
       </BrowserRouter>
     </ThemeProvider>
-    {/* Aquí termina */}
   </React.StrictMode>,
 );

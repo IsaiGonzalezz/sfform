@@ -13,8 +13,8 @@ class Formulas (models.Model):
 
 class Detalle_Formula (models.Model) : 
     iddetalle = models.AutoField(primary_key=True)
-    cantidad = models.FloatField(),
-    tolerancia = models.IntegerField(),
+    cantidad = models.FloatField()
+    tolerancia = models.IntegerField()
     idform = models.ForeignKey(Formulas, on_delete=models.CASCADE, db_column='idform')
     iding = models.ForeignKey(Ingredientes, on_delete=models.CASCADE, db_column='iding')
 
