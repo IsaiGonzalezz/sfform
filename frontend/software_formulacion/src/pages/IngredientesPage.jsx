@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+// ELIMINAR: import axios from 'axios';
+// === CAMBIO 1: Importar el hook de autenticación ===
+import { useAuth } from '../context/useAuth';
+// ===============================================
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox // Import Checkbox
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox 
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -12,9 +15,11 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ScienceIcon from '@mui/icons-material/Science'; // Icono para Ingredientes
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import IngredienteFormModal from '../components/IngredienteFormModal'; // Crearemos/Actualizaremos este
+import IngredienteFormModal from '../components/IngredienteFormModal';
 
-const API_URL_INGREDIENTES = 'http://127.0.0.1:8000/api/ingredientes/';
+// URL RELATIVA: Usaremos la ruta relativa para la instancia de Axios
+const API_URL_INGREDIENTES_REL = '/ingredientes/';
+
 const darkTheme = createTheme({
     palette: {
         mode: 'dark',
@@ -43,6 +48,11 @@ function CustomNoRowsOverlay() {
 }
 
 function IngredientesPage() {
+    
+    // === CAMBIO 2: Obtener la instancia protegida ===
+    const { axiosInstance } = useAuth(); 
+    // ===============================================
+    
     const [ingredientes, setIngredientes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setModalOpen] = useState(false);
@@ -50,25 +60,32 @@ function IngredientesPage() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [ingredienteToDelete, setIngredienteToDelete] = useState(null);
 
+    // --- Función READ (Petición GET) ---
     const fetchIngredientes = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axios.get(API_URL_INGREDIENTES);
-            setIngredientes(response.data);
+            // === CAMBIO 3: Usar axiosInstance.get ===
+            const response = await axiosInstance.get(API_URL_INGREDIENTES_REL);
+            // ==========================================
+            setIngredientes(response.data || []);
         } catch (error) {
-            console.error("Error al obtener las estaciones:", error);
-            setIngredientes([]);
+            console.error("Error al obtener los ingredientes:", error);
+            setIngredientes([]); 
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [axiosInstance]); // <-- Dependencia para el hook
 
 
     useEffect(() => {
-        fetchIngredientes();
-    }, [fetchIngredientes]);
+        // Ejecutamos solo cuando la instancia de Axios esté disponible
+        if (axiosInstance) {
+            fetchIngredientes();
+        }
+    }, [fetchIngredientes, axiosInstance]); // <-- Dependencia al hook
 
 
+    // --- Funciones para Modal C/U ---
     const handleOpenModal = (ing = null) => {
         setCurrentIngrediente(ing);
         setModalOpen(true);
@@ -79,6 +96,7 @@ function IngredientesPage() {
         setCurrentIngrediente(null);
     };
 
+    // --- Funciones para Confirmación DELETE ---
     const handleOpenConfirm = (ing) => {
         setIngredienteToDelete(ing);
         setConfirmOpen(true);
@@ -89,15 +107,21 @@ function IngredientesPage() {
         setIngredienteToDelete(null);
     };
 
+    // --- Función DELETE ---
     const handleDeleteIngrediente = async () => {
         if (!ingredienteToDelete) return;
         try {
-            await axios.delete(`${API_URL_INGREDIENTES}${ingredienteToDelete.iding}/`);
+            // === CAMBIO 4: Usar axiosInstance.delete ===
+            await axiosInstance.delete(`${API_URL_INGREDIENTES_REL}${ingredienteToDelete.iding}/`);
+            // ============================================
             fetchIngredientes();
-        } catch (error) { console.error('Error al borrar ingrediente:', error); }
+        } catch (error) { 
+            console.error('Error al borrar ingrediente:', error); 
+        }
         finally { handleCloseConfirm(); }
     };
 
+    // --- Columnas de la Tabla (sin cambios) ---
     const columns = [
         { field: 'iding', headerName: 'ID Ingrediente', width: 150 },
         { field: 'nombre', headerName: 'Nombre', flex: 1 },
@@ -128,11 +152,10 @@ function IngredientesPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 3, // Incrementado margen inferior
-                p: 2,
-                background: '#292929FF', // Fondo
+                mb: 3, p: 2,
+                background: '#292929FF', 
                 borderRadius: '12px',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', // Sombra
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', 
             }}>
                 <Box 
                 sx={{ 
@@ -171,7 +194,10 @@ function IngredientesPage() {
 
             {/* Tabla (Adaptada) */}
             <ThemeProvider theme={darkTheme}>
-                <Paper sx={{ /* ... estilos del Paper ... */ }}>
+                <Paper sx={{ 
+                    flexGrow: 1, width: '100%', borderRadius: '14px', overflow: 'hidden',
+                    backgroundColor: '#292929FF', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                }}>
                     <DataGrid
                         rows={ingredientes}
                         columns={columns}
@@ -179,7 +205,38 @@ function IngredientesPage() {
                         getRowId={(row) => row.iding} // Usar iding
                         slots={{ noRowsOverlay: CustomNoRowsOverlay }}
                         autoHeight={ingredientes.length === 0}
-                        sx={{ /* ... estilos DataGrid ... */ }}
+                        sx={{
+                            border: 'none', color: '#E0E0E0',
+                            '& .MuiDataGrid-columnHeaders': {
+                                background: 'linear-gradient(90deg, #292929FF, #292929FF)',
+                                color: '#E3EFF9FF',
+                                fontWeight: 'bold',
+                                fontSize: '0.95rem',
+                                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                            },
+                            '& .MuiDataGrid-cell': {
+                                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                            },
+                            '& .MuiDataGrid-row:hover': {
+                                backgroundColor: 'rgba(0,119,209,0.1)',
+                                transition: 'background-color 0.3s ease',
+                            },
+                            '& .Mui-selected': {
+                                backgroundColor: 'rgba(0, 119, 209, 0.2) !important',
+                                boxShadow: 'inset 0 0 5px rgba(0, 119, 209, 0.3)',
+                            },
+                            '& .Mui-selected:hover': {
+                                backgroundColor: 'rgba(0, 119, 209, 0.25) !important',
+                            },
+                            '& .MuiDataGrid-footerContainer': {
+                                backgroundColor: '#292929FF',
+                                borderTop: '1px solid rgba(255,255,255,0.1)',
+                            },
+                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar': { width: '8px' },
+                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-track': { background: '#1E293B' },
+                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb': { backgroundColor: '#4B5563', borderRadius: '4px' },
+                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb:hover': { background: '#6B7280' },
+                        }}
                     />
                 </Paper>
 

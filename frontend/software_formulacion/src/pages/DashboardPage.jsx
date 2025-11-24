@@ -1,3 +1,5 @@
+import React, {useEffect, useState} from 'react';
+import { useAuth } from '../context/useAuth'; // Corregida la tipografía: 'useAuth'
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell,
@@ -5,55 +7,95 @@ import {
 } from 'recharts';
 import './styles/Dashboard.css';
 
-const lineData = [
-    { name: 'Ene', Calidad: 80, Eficiencia: 65 },
-    { name: 'Feb', Calidad: 85, Eficiencia: 70 },
-    { name: 'Mar', Calidad: 78, Eficiencia: 60 },
-    { name: 'Abr', Calidad: 90, Eficiencia: 75 },
-];
 
-const pieData = [
-    { name: 'Todo', value: 15, color: '#00E808FF' },
-    { name: 'Pendiente', value: 45, color: '#FF0037FF' },
-    { name: 'En Proceso', value: 40, color: '#3CA7FFFF' },
-];
-
-const barData = [
-    { name: 'Estación 1', Pendiente: 20, Producción: 40 },
-    { name: 'Estación 2', Pendiente: 35, Producción: 50 },
-    { name: 'Estación 3', Pendiente: 25, Producción: 60 },
-    { name: 'Estación 4', Pendiente: 30, Producción: 45 },
-    { name: 'Estación 5', Pendiente: 40, Producción: 55 },
-];
+// Definición de colores estática para el PieChart
+const PIE_COLORS = ['#00E808FF', '#FF0037FF', '#3CA7FFFF'];
 
 export default function Dashboard() {
+    
+    // 1. Obtener la instancia de Axios segura del contexto
+    const { axiosInstance } = useAuth();
+    
+    // 2. Definir estados para los datos reales de la API
+    const [stats, setStats] = useState({ 
+        lineData: [], 
+        pieData: [], 
+        barData: [], 
+        statCards: { pendientes: 0, proceso: 0, completados: 0, calidad: '0%' }
+    }); 
+    const [loading, setLoading] = useState(true);
+
+    // 3. Función para cargar datos al montar el componente
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            // El Access Token se adjunta/refresca automáticamente aquí
+            try {
+                // Petición a tu endpoint de Django (asume que devuelve todos los datos necesarios)
+                const response = await axiosInstance.get('/api/dashboard_data/'); 
+                
+                // 4. Procesar y establecer los datos (esto asume una estructura de respuesta específica)
+                const data = response.data;
+
+                setStats({
+                    // Asume que la API te devuelve la data de las gráficas
+                    lineData: data.line_data || [], 
+                    pieData: data.pie_data ? data.pie_data.map((item, index) => ({
+                        ...item,
+                        color: PIE_COLORS[index]
+                    })) : [],
+                    barData: data.bar_data || [],
+                    statCards: {
+                        pendientes: data.stat_cards.pendientes,
+                        proceso: data.stat_cards.proceso,
+                        completados: data.stat_cards.completados,
+                        calidad: data.stat_cards.calidad_prom
+                    }
+                });
+
+                setLoading(false);
+            } catch (error) {
+                // El error 401 (expirado) se maneja en el Interceptor; aquí capturamos fallas reales.
+                console.error("Error al cargar datos del dashboard:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    // La dependencia axiosInstance asegura que el effect se ejecute cuando el hook esté listo
+    }, [axiosInstance]);
+
+    // Mostrar un estado de carga mientras se esperan los datos
+    if (loading) {
+        return <div className="dashboard-loading">Cargando datos del Dashboard...</div>;
+    }
+
     return (
         <div className="dashboard">
 
-            {/* --- 1. NUEVA FILA DE "CUADRITOS" --- */}
+            {/* --- 1. FILA DE ESTADÍSTICAS DINÁMICAS --- */}
             <div className="stat-card stat-card-1">
                 <h3 className="stat-title">Lotes Pendientes</h3>
-                <p className="stat-number">45</p>
+                <p className="stat-number">{stats.statCards.pendientes}</p>
             </div>
             <div className="stat-card stat-card-2">
                 <h3 className="stat-title">En Proceso</h3>
-                <p className="stat-number">40</p>
+                <p className="stat-number">{stats.statCards.proceso}</p>
             </div>
             <div className="stat-card stat-card-3">
                 <h3 className="stat-title">Completados</h3>
-                <p className="stat-number">15</p>
+                <p className="stat-number">{stats.statCards.completados}</p>
             </div>
             <div className="stat-card stat-card-4">
                 <h3 className="stat-title">Calidad Prom.</h3>
-                <p className="stat-number">83.2%</p>
+                <p className="stat-number">{stats.statCards.calidad}</p>
             </div>
 
 
-            {/* --- 2. TUS GRÁFICAS ORIGINALES (SIN MODIFICAR) --- */}
+            {/* --- 2. GRÁFICAS (Usando datos del estado) --- */}
             <div className="chart-box line-chart">
                 <h2>Indicadores Mensuales</h2>
                 <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={lineData}>
+                    <LineChart data={stats.lineData}>
                         <XAxis dataKey="name" stroke="#ccc" />
                         <YAxis stroke="#ccc" />
                         <Tooltip />
@@ -69,14 +111,14 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                         <Pie
-                            data={pieData}
+                            data={stats.pieData}
                             dataKey="value"
                             nameKey="name"
                             innerRadius={50}
                             outerRadius={80}
                             label
                         >
-                            {pieData.map((entry, index) => (
+                            {stats.pieData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                         </Pie>
@@ -89,7 +131,7 @@ export default function Dashboard() {
             <div className="chart-box bar-chart">
                 <h2>Producción por Estación</h2>
                 <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={barData}>
+                    <BarChart data={stats.barData}>
                         <XAxis dataKey="name" stroke="#ccc" />
                         <YAxis stroke="#ccc" />
                         <Tooltip />

@@ -1,74 +1,88 @@
 import React, { useState } from 'react';
-import { 
-    Box, Typography, TextField, Button, Paper, Grid, 
-    InputAdornment, IconButton, useTheme 
+import {
+    Box, Typography, TextField, Paper, Grid,
+    InputAdornment, IconButton, useTheme
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab'; // ¡Para el botón con carga!
+import { LoadingButton } from '@mui/lab';
+import { useAuth } from '../context/UseAuth'; 
 
 // --- Iconos ---
-import { 
-    PersonOutline, LockOutlined, Visibility, VisibilityOff, 
-    ScienceOutlined, // ¡Icono de matraz para el tema!
-    Login // Icono para el botón
+import {
+    PersonOutline, LockOutlined, Visibility, VisibilityOff,
+    ScienceOutlined, Login, BiotechOutlined
 } from '@mui/icons-material';
 
-// Importamos el CSS para la animación
 import './styles/Login.css';
 
 function LoginPage() {
-    const theme = useTheme(); // Accedemos al tema
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false); // Estado de carga
+    const theme = useTheme(); 
 
-    const handleLogin = (e) => {
+    // Accede a la función de login del contexto
+    const { loginUser } = useAuth(); 
+
+    const [correo, setCorreo] = useState('');
+    const [password, setPassword] = useState('');
+    const [showContraseña, setShowContraseña] = useState(false);
+    const [loading, setLoading] = useState(false); 
+    const [errorMessage, setErrorMessage] = useState(''); // Estado para manejar errores
+
+    // ---------------------- LÓGICA DE LOGIN ----------------------
+    const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        console.log('Login attempt:', { username, password });
-        // Simula una llamada a API
-        setTimeout(() => {
-            setLoading(false);
-        }, 2000);
+        setErrorMessage('');
+
+        try {
+            // Llama a la función de login del contexto (que hace la llamada axios)
+            // Pasamos un objeto con las credenciales
+            const credentials = {
+                correo: correo,
+                password: password
+            };
+            console.log("JSON enviado a /api/token/:", credentials);
+            await loginUser(credentials); 
+            
+            // Si tiene éxito, el contexto se encarga de redirigir (navigate('/'))
+        } catch (error) {
+            // Captura el error lanzado desde el AuthContext y lo muestra
+            setErrorMessage(error.message || "Error desconocido al iniciar sesión.");
+            
+        } finally {
+            setLoading(false); // Detiene el indicador de carga
+        }
     };
 
-    const handleClickShowPassword = () => setShowPassword(!showPassword);
+    const handleClickShowPassword = () => setShowContraseña(!showContraseña);
     const handleMouseDownPassword = (e) => e.preventDefault();
 
     return (
         <Grid container component="main" sx={{ minHeight: '100vh' }}>
-            
-            {/* --- 1. COLUMNA IZQUIERDA (Atmosférica) --- */}
+            {/* ... COLUMNA IZQUIERDA (Contenido estático) ... */}
             <Grid 
                 item 
                 xs={12} 
                 sm={6} 
                 md={7} 
                 sx={{
-                    position: 'relative', // Para la animación
-                    display: { xs: 'none', sm: 'flex' }, // Oculto en móviles
+                    position: 'relative', 
+                    display: { xs: 'none', sm: 'flex' },
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
                     p: 4,
-                    // Usamos un color de fondo ligeramente diferente del 'paper'
                     backgroundColor: theme.palette.background.default, 
                     color: '#fff',
                     textAlign: 'center',
-                    overflow: 'hidden', // Para contener la animación
+                    overflow: 'hidden',
                 }}
             >
-                {/* --- Animación de Burbujas --- */}
                 <div className="login-animation-wrapper">
-                    {/* Generamos 15 burbujas para la animación */}
                     {Array.from(Array(15)).map((_, i) => (
                         <div key={i} className="bubble"></div>
                     ))}
                 </div>
-
-                {/* Contenido de Branding (encima de la animación) */}
                 <Box sx={{ zIndex: 2, position: 'relative' }}>
-                    <ScienceOutlined sx={{ fontSize: 70, color: 'primary.main' }} />
+                    <BiotechOutlined sx={{ fontSize: 70, color: 'primary.main' }} />
                     <Typography 
                         variant="h2" 
                         sx={{ fontWeight: 600, mt: 2, letterSpacing: '1px' }}
@@ -79,11 +93,11 @@ function LoginPage() {
                         variant="h6" 
                         sx={{ color: 'text.secondary', mt: 1, fontWeight: 300 }}
                     >
-                        Precisión y control
+                        Precisión y Control.
                     </Typography>
                 </Box>
             </Grid>
-            
+
             {/* --- 2. COLUMNA DERECHA (Formulario) --- */}
             <Grid 
                 item 
@@ -94,13 +108,12 @@ function LoginPage() {
                 elevation={6} 
                 square 
                 sx={{
-                    // Usamos el color 'paper' del tema oscuro
                     backgroundColor: theme.palette.background.paper, 
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    p: { xs: 3, md: 6 }, // Padding responsivo
+                    p: { xs: 3, md: 6 },
                 }}
             >
                 <Box
@@ -109,20 +122,18 @@ function LoginPage() {
                         flexDirection: 'column',
                         alignItems: 'center',
                         width: '100%',
-                        maxWidth: 400, // Ancho máximo del form
+                        maxWidth: 400,
                     }}
                 >
-                    {/* Logo/Título para móviles (opcional) */}
                     <ScienceOutlined 
                         sx={{ 
                             fontSize: 40, 
                             color: 'primary.main',
-                            display: { xs: 'block', sm: 'none' }, // Mostrar solo en móvil
+                            display: { xs: 'block', sm: 'none' },
                             mb: 2
                         }} 
                     />
 
-                    {/* Título del Formulario */}
                     <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: '#fff' }}>
                         Iniciar Sesión
                     </Typography>
@@ -130,18 +141,29 @@ function LoginPage() {
                         Accede al sistema de formulación
                     </Typography>
 
+                    {/* MOSTRAR ERROR */}
+                    {errorMessage && (
+                        <Typography 
+                            variant="body2" 
+                            color="error" 
+                            sx={{ mb: 2, fontWeight: 500 }}
+                        >
+                            {errorMessage}
+                        </Typography>
+                    )}
+
                     {/* Formulario */}
                     <Box component="form" onSubmit={handleLogin} sx={{ width: '100%' }}>
                         <TextField
                             margin="normal"
                             required
                             fullWidth
-                            id="username"
-                            label="Usuario"
-                            name="username"
+                            id="correo"
+                            label="Correo"
+                            name="correo"
                             autoFocus
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={correo}
+                            onChange={(e) => setCorreo(e.target.value)}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -149,7 +171,6 @@ function LoginPage() {
                                     </InputAdornment>
                                 ),
                             }}
-                            // Estilos del tema oscuro (los que ya tenías)
                             InputLabelProps={{ sx: { color: 'text.secondary' } }}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -163,10 +184,10 @@ function LoginPage() {
                             margin="normal"
                             required
                             fullWidth
-                            name="password"
+                            name="password" // CLAVE CORREGIDA
                             label="Contraseña"
-                            type={showPassword ? 'text' : 'password'}
-                            id="password"
+                            type={showContraseña ? 'text' : 'password'}
+                            id="contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             InputLabelProps={{ sx: { color: 'text.secondary' } }}
@@ -192,7 +213,7 @@ function LoginPage() {
                                             edge="end"
                                             sx={{ color: 'text.secondary' }}
                                         >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            {showContraseña ? <VisibilityOff /> : <Visibility />}
                                         </IconButton>
                                     </InputAdornment>
                                 )
@@ -204,7 +225,7 @@ function LoginPage() {
                             type="submit"
                             fullWidth
                             variant="contained"
-                            color="primary" // Color principal del tema
+                            color="primary"
                             loading={loading}
                             loadingPosition="start"
                             startIcon={<Login />}
@@ -215,11 +236,10 @@ function LoginPage() {
                                 fontSize: '1rem',
                                 borderRadius: '10px',
                                 textTransform: 'none',
-                                // Efecto de gradiente "impactante"
                                 background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                                 '&:hover': {
                                     background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                                    boxShadow: `0 0 15px ${theme.palette.primary.main}55`, // Glow
+                                    boxShadow: `0 0 15px ${theme.palette.primary.main}55`,
                                 },
                             }}
                         >
@@ -232,7 +252,7 @@ function LoginPage() {
                         variant="caption"
                         sx={{ color: 'text.disabled', mt: 5, textAlign: 'center' }}
                     >
-                        © {new Date().getFullYear()}
+                        © Implementaciones SIAUMEX {new Date().getFullYear()}
                     </Typography>
                 </Box>
             </Grid>

@@ -1,0 +1,177 @@
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Oscuro y semitransparente */
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;     /* Centra verticalmente */
+    z-index: 2000;           /* Muy alto para que tape todo lo de atrás */
+    backdrop-filter: blur(3px); /* Efecto borroso bonito en el fondo */
+}
+
+/* 2. La caja blanca GRANDE */
+.modal-content-large {
+    background-color: rgb(41, 41, 41);
+    width: 85%;           /* Ocupa casi todo el ancho */
+    max-width: 1100px;    /* Pero que no se estire infinito en pantallas gigantes */
+    height: 85vh;         /* 85% del alto de la pantalla */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column; /* Para que el header quede arriba y la tabla abajo */
+    padding: 25px;
+    animation: aparecerModal 0.25s ease-out;
+}
+
+/* Animación suave de entrada */
+@keyframes aparecerModal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* 3. Encabezado (Título y botón cerrar) */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #414040;
+    padding-bottom: 15px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.5rem;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background-color: #f0f0f0;
+    color: #d00;
+}
+
+/* 4. Buscador */
+.search-bar-container {
+    margin-bottom: 20px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #cdcdcd;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 12px 12px 45px; /* Espacio a la izq para el icono */
+    border: 1px solid #2a2a2a;
+    background-color: #1f1f1f;
+    color: #b3b3b3;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+/* 5. Contenedor de la Tabla (Aquí ocurre el SCROLL) */
+.table-container-scroll {
+    flex: 1;          /* Ocupa todo el espacio sobrante */
+    overflow-y: auto; /* Si hay muchas fórmulas, aparece scroll AQUÍ, no en toda la página */
+    border: 1px solid #2b2b2b;
+    border-radius: 8px;
+}
+
+/* 6. Tabla */
+.formulas-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.formulas-table th {
+    background-color: #1f1f1f;
+    padding: 15px;
+    text-align: left;
+    position: sticky; /* Mantiene el encabezado fijo al bajar */
+    top: 0;
+    z-index: 1;
+    font-weight: 600;
+    border-bottom: 2px solid #313131;
+    color: #e5e5e5;
+}
+
+.formulas-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #535353;
+    color: #b3b3b3;
+}
+
+.formulas-table tr:hover {
+    background-color: #3d3d3d; /* Colorcito al pasar el mouse */
+}
+
+/* Botón PDF */
+.btn-pdf {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    transition: background 0.2s;
+}
+
+.btn-pdf:hover {
+    background-color: #c82333;
+}
+
+.btn-details {
+    background-color: #3572dc;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    transition: background 0.2s;
+}
+
+.btn-details:hover {
+    background-color: #1c5ce6;
+}
+
+/* ... al final de tu archivo .css ... */
+
+.actions-container {
+    display: flex;
+    align-items: center; /* <-- Esta es la magia: Alinear verticalmente al centro */
+    justify-content: center; /* Centra los botones (aunque tu <td> ya lo hacía) */
+    gap: 10px; /* <-- Manera moderna de dar espacio, reemplaza al 'margin-left' */
+}

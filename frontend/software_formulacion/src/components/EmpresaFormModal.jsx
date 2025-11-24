@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { Divider } from '@mui/material';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, Grid, Box, Typography, FormHelperText, CircularProgress, Avatar // Avatar para previsualizar logo
@@ -59,7 +60,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
     const [logoPreview, setLogoPreview] = useState(null); // Para la previsualización
     const isEditMode = empresaToEdit !== null;
 
-    const { handleSubmit, control, reset, watch, setValue, formState: { errors } } = useForm({
+    const { handleSubmit, control, reset, watch, formState: { errors } } = useForm({
         resolver: yupResolver(validationSchema),
         defaultValues: {
             rfc: '', nombre: '', calle: '', colonia: '', ciudad: '', estado: '',
@@ -84,7 +85,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                     contacto: empresaToEdit.contacto || '',
                     correo: empresaToEdit.correo || '',
                     telefono: empresaToEdit.telefono || '',
-                    logotipo: null, 
+                    logotipo: null,
                 });
                 // Si la empresa ya tiene un logo (URL), lo ponemos en la preview
                 setLogoPreview(empresaToEdit.logotipo || null);
@@ -173,122 +174,486 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="md" // Hacemos la modal un poco más ancha
-            fullWidth // Para que use el maxWidth
-            PaperProps={{ sx: { backgroundColor: '#1e1e1e', color: '#fff', borderRadius: '12px' } }}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    backgroundColor: '#1e1e1e',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    boxShadow: '0px 10px 40px rgba(0,0,0,0.5)',
+                },
+            }}
         >
             <form onSubmit={handleSubmit(onSubmit)}>
-                <DialogTitle sx={{ fontWeight: 'bold' }}>
-                    {isEditMode ? 'Editar Información de la Empresa' : 'Registrar Empresa'}
+                {/* --- CABECERA --- */}
+                <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
+                    <Typography variant="h5" fontWeight="bold">
+                        {isEditMode ? 'Editar Empresa' : 'Registrar Empresa'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#888', mt: 0.5 }}>
+                        Complete la información fiscal y de contacto de la organización.
+                    </Typography>
                 </DialogTitle>
 
-                <DialogContent>
-                    {/* Usamos Grid para organizar los campos */}
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
-                        {/* --- Fila 1: RFC y Nombre --- */}
-                        <Grid item xs={12} sm={6}>
-                            <Controller name="rfc" control={control} render={({ field }) => (<TextField {...field} label="RFC" fullWidth variant="outlined" disabled={isSaving || isEditMode} error={!!errors.RFC} helperText={errors.RFC?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Controller name="nombre" control={control} render={({ field }) => (<TextField {...field} label="Nombre de la Empresa" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Nombre} helperText={errors.Nombre?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
+                <DialogContent sx={{ py: 3 }}>
 
-                        {/* --- Fila 2: Calle y Colonia --- */}
-                        <Grid item xs={12} sm={6}>
-                            <Controller name="calle" control={control} render={({ field }) => (<TextField {...field} label="Calle" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Calle} helperText={errors.Calle?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Controller name="colonia" control={control} render={({ field }) => (<TextField {...field} label="Colonia" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Colonia} helperText={errors.Colonia?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
+                    {/* --- SECCIÓN 1: DATOS FISCALES --- */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography
+                            variant="subtitle2"
+                            sx={{
+                                color: '#03D000FF',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                mb: 2
+                            }}
+                        >
+                            Datos Fiscales
+                        </Typography>
 
-                        {/* --- Fila 3: Ciudad, Estado, CP --- */}
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="ciudad" control={control} render={({ field }) => (<TextField {...field} label="Ciudad" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Ciudad} helperText={errors.Ciudad?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="estado" control={control} render={({ field }) => (<TextField {...field} label="Estado" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Estado} helperText={errors.Estado?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="cp" control={control} render={({ field }) => (<TextField {...field} label="Código Postal" fullWidth variant="outlined" disabled={isSaving} error={!!errors.CP} helperText={errors.CP?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
+                        <Grid container spacing={3}>
+                            {/* RFC */}
+                            <Grid item xs={12} sm={4}>
+                                <Controller
+                                    name="rfc"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="RFC"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving || isEditMode}
+                                            error={!!errors.rfc}
+                                            helperText={errors.rfc?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                                    '&:hover fieldset': { borderColor: '#fff' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
 
-                        {/* --- Fila 4: Contacto, Correo, Teléfono --- */}
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="contacto" control={control} render={({ field }) => (<TextField {...field} label="Nombre Contacto" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Contacto} helperText={errors.Contacto?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
+                            {/* Nombre Empresa */}
+                            <Grid item xs={12} sm={8}>
+                                <Controller
+                                    name="nombre"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Razón Social / Nombre"
+                                            fullWidth
+                                            style={{
+                                                width : '490px'
+                                            }}
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.nombre}
+                                            helperText={errors.nombre?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                                    '&:hover fieldset': { borderColor: '#fff' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="correo" control={control} render={({ field }) => (<TextField {...field} label="Correo Contacto" type="email" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Correo} helperText={errors.Correo?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Controller name="telefono" control={control} render={({ field }) => (<TextField {...field} label="Teléfono Contacto" fullWidth variant="outlined" disabled={isSaving} error={!!errors.Telefono} helperText={errors.Telefono?.message} InputLabelProps={{ sx: { color: '#bbb' } }} sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }} />)} />
-                        </Grid>
+                    </Box>
 
-                        {/* --- Sección de Carga de Logo --- */}
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle1" sx={{ color: '#bbb', mb: 1 }}>Logotipo</Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                {/* Previsualización del logo */}
-                                <Avatar
-                                    src={logoPreview || undefined} // Muestra preview si existe
-                                    alt="Logo Preview"
-                                    variant="rounded" // O 'circular' si prefieres
-                                    sx={{ width: 80, height: 80, bgcolor: 'rgba(255, 255, 255, 0.1)' }} // Fondo por si no hay imagen
-                                >
-                                    <BusinessIcon /> {/* Icono por defecto si no hay preview */}
-                                </Avatar>
-                                {/* Botón para seleccionar archivo */}
+                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
+
+                    {/* --- SECCIÓN 2: UBICACIÓN --- */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography
+                            variant="subtitle2"
+                            sx={{
+                                color: '#03D000FF',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                mb: 2
+                            }}
+                        >
+                            Ubicación
+                        </Typography>
+
+                        <Grid container spacing={3}>
+                            {/* Calle */}
+                            <Grid item xs={12} sm={8}>
+                                <Controller
+                                    name="calle"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Calle y Número"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.calle}
+                                            helperText={errors.calle?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Colonia */}
+                            <Grid item xs={12} sm={4}>
+                                <Controller
+                                    name="colonia"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Colonia"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.colonia}
+                                            helperText={errors.colonia?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Ciudad */}
+                            <Grid item xs={12} sm={4}>
+                                <Controller
+                                    name="ciudad"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Ciudad"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.ciudad}
+                                            helperText={errors.ciudad?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Estado */}
+                            <Grid item xs={12} sm={4}>
+                                <Controller
+                                    name="estado"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Estado"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.estado}
+                                            helperText={errors.estado?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* CP */}
+                            <Grid item xs={12} sm={4}>
+                                <Controller
+                                    name="cp"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="C.P."
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.cp}
+                                            helperText={errors.cp?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+
+                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
+
+                    {/* --- SECCIÓN 3: CONTACTO --- */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography
+                            variant="subtitle2"
+                            sx={{
+                                color: '#03D000FF',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                mb: 2
+                            }}
+                        >
+                            Contacto
+                        </Typography>
+
+                        <Grid container spacing={3}>
+                            {/* Nombre Contacto */}
+                            <Grid item xs={12}>
+                                <Controller
+                                    name="contacto"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Nombre Completo del Responsable"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.contacto}
+                                            helperText={errors.contacto?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Teléfono */}
+                            <Grid item xs={12} sm={6}>
+                                <Controller
+                                    name="telefono"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Teléfono"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.telefono}
+                                            helperText={errors.telefono?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Correo */}
+                            <Grid item xs={12} sm={6}>
+                                <Controller
+                                    name="correo"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Correo Electrónico"
+                                            type="email"
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={isSaving}
+                                            error={!!errors.correo}
+                                            helperText={errors.correo?.message}
+                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    color: '#fff',
+                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+
+                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
+
+                    {/* --- SECCIÓN 4: BRANDING / LOGO --- */}
+                    <Box>
+                        <Typography
+                            variant="subtitle2"
+                            sx={{
+                                color: '#03D000FF',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                mb: 2
+                            }}
+                        >
+                            Branding
+                        </Typography>
+
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row' },
+                                alignItems: 'center',
+                                gap: 4,
+                                p: 3,
+                                border: '1px dashed rgba(255,255,255,0.2)',
+                                borderRadius: '8px',
+                                backgroundColor: 'rgba(255,255,255,0.02)',
+                                transition: '0.3s',
+                                '&:hover': {
+                                    borderColor: '#03D000FF',
+                                    backgroundColor: 'rgba(3, 208, 0, 0.05)'
+                                }
+                            }}
+                        >
+                            {/* Previsualización */}
+                            <Avatar
+                                src={logoPreview || undefined}
+                                variant="rounded"
+                                sx={{
+                                    width: 100,
+                                    height: 100,
+                                    bgcolor: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)'
+                                }}
+                            >
+                                <BusinessIcon sx={{ color: '#666', fontSize: 40 }} />
+                            </Avatar>
+
+                            {/* Botón de Carga */}
+                            <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                                 <Button
                                     component="label"
-                                    role={undefined}
                                     variant="outlined"
-                                    tabIndex={-1}
                                     startIcon={<CloudUploadIcon />}
-                                    disabled={isSaving}
-                                    sx={{ color: '#bbb', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                                    sx={{
+                                        color: '#fff',
+                                        borderColor: 'rgba(255,255,255,0.3)',
+                                        textTransform: 'none',
+                                        fontWeight: 'bold',
+                                        mb: 1,
+                                        '&:hover': {
+                                            borderColor: '#03D000FF',
+                                            color: '#03D000FF',
+                                            backgroundColor: 'transparent'
+                                        }
+                                    }}
                                 >
-                                    {isEditMode && logoPreview ? 'Cambiar Logo' : 'Subir Logo'}
-                                    {/* Usamos Controller para el input de archivo */}
+                                    {isEditMode && logoPreview ? 'Cambiar Logotipo' : 'Subir Logotipo'}
                                     <Controller
                                         name="logotipo"
                                         control={control}
                                         render={({ field: { onChange, onBlur, name, ref } }) => (
                                             <VisuallyHiddenInput
                                                 type="file"
-                                                accept="image/png, image/jpeg, image/gif" // Tipos aceptados
+                                                accept="image/*"
                                                 onBlur={onBlur}
                                                 name={name}
                                                 ref={ref}
-                                                onChange={(e) => {
-                                                    onChange(e.target.files); // Actualiza el valor en React Hook Form
-                                                }}
-                                                disabled={isSaving}
+                                                onChange={(e) => onChange(e.target.files)}
                                             />
                                         )}
                                     />
                                 </Button>
+
+                                <Typography variant="caption" display="block" sx={{ color: '#666' }}>
+                                    Formato recomendado: PNG transparente.
+                                </Typography>
+
+                                {/* Error del Logo */}
+                                {errors.logotipo && (
+                                    <FormHelperText error sx={{ mt: 1 }}>
+                                        {errors.logotipo.message}
+                                    </FormHelperText>
+                                )}
                             </Box>
-                            {/* Muestra errores de validación del logo */}
-                            {errors.Logotipo && <FormHelperText error sx={{ mt: 1 }}>{errors.Logotipo.message}</FormHelperText>}
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
+
                 </DialogContent>
 
-                <DialogActions sx={{ p: '16px 24px' }}>
-                    <Button onClick={onClose} sx={{ color: '#bbb' }} disabled={isSaving}>
+                {/* --- PIE DE PÁGINA (ACCIONES) --- */}
+                <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <Button
+                        onClick={onClose}
+                        sx={{
+                            color: '#aaa',
+                            mr: 2,
+                            textTransform: 'none',
+                            '&:hover': { color: '#fff' }
+                        }}
+                        disabled={isSaving}
+                    >
                         Cancelar
                     </Button>
-                    <Button // O LoadingButton
+                    <Button
                         type="submit"
-                        loading={isSaving}
+                        disabled={isSaving}
                         variant="contained"
                         sx={{
-                            fontWeight: 'bold', borderRadius: '8px',
-                            background: 'linear-gradient(90deg, #03D000FF, #03D000FF)', // Gradiente azul
-                            '&.Mui-disabled': { background: 'rgba(0, 119, 209, 0.5)' },
-                            '&:hover': { background: 'linear-gradient(90deg, #03A300FF, #03A300FF)' },
+                            bgcolor: '#03D000FF',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            px: 4,
+                            textTransform: 'none',
+                            boxShadow: '0 0 10px rgba(3, 208, 0, 0.3)',
+                            '&:hover': {
+                                bgcolor: '#02a100',
+                                boxShadow: '0 0 20px rgba(3, 208, 0, 0.5)',
+                            }
                         }}
                     >
-                        {isEditMode ? 'Guardar Cambios' : 'Registrar Empresa'}
+                        {isSaving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Registrar Empresa')}
                     </Button>
                 </DialogActions>
             </form>

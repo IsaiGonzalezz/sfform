@@ -1,131 +1,318 @@
-/* --- A4 container --- */
+/* --- ESTILOS GLOBALES (PARA PANTALLA Y BASE) --- */
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background-color: #F8F9FA;
+    /* Fondo gris sutil para la vista previa */
+    color: #2C3E50;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor principal para la vista en pantalla */
 .reporte-a4 {
     width: 100%;
     max-width: 800px;
-    margin: 0 auto;
-    padding: 40px 50px;
-    font-family: Arial, sans-serif;
-    color: #333;
+    min-height: 1040px;
+    /* Altura mínima para simular A4 en pantalla */
+    margin: 2px auto;
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+
+    /* Usamos flex para que el footer se vaya al fondo EN PANTALLA */
+    display: flex;
+    flex-direction: column;
 }
 
-/* --- Encabezado --- */
+/* --- Encabezado Estilos --- */
 .encabezado {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 15px;
+    align-items: flex-start;
+    border-bottom: 2px solid #EAECEE;
+    padding: 20px 30px 15px 30px;
+    /* Padding horizontal de 50px */
 }
 
 .encab-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
 
 .logo-empresa {
-    width: 70px;
-    height: 70px;
-    border-radius: 8px;
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
     object-fit: cover;
 }
 
+.info-empresa {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .empresa-nombre {
-    font-size: 26px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2C3E50;
     margin: 0;
+    line-height: 1.2;
+}
+
+.empresa-rfc {
+    font-size: 13px;
+    font-weight: 500;
+    color: #5D6D7E;
+    margin: 10px 0 0 0;
 }
 
 .encab-right {
     text-align: right;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #5D6D7E;
 }
 
-.folio {
-    font-size: 16px;
+.encab-right strong {
+    color: #34495E;
 }
 
-.fecha {
-    color: #555;
+/* --- Contenido Principal --- */
+/* Este 'main' es el ÚNICO cambio estructural que necesitas. */
+/* Le damos flex-grow para que empuje el footer en PANTALLA. */
+.contenido-principal {
+    flex-grow: 1;
+    padding: 0 50px;
+    /* Mantenemos el padding horizontal */
 }
 
-/* --- Título y ID --- */
 .titulo-formula {
-    margin-top: 25px;
+    margin-top: 30px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
 }
 
-.titulo-formula h2 {
+.titulo-formula h5 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #34495E;
     margin: 0;
 }
 
 .formula-id {
-    font-weight: bold;
-    font-size: 16px;
-    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+    color: #7F8C8D;
+    background-color: #F4F6F7;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
-/* --- Info general --- */
 .info-general {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 30px;
+    padding: 10px;
+    background-color: #F8F9FA;
+    border-radius: 8px;
+    border: 1px solid #EAECEE;
+}
+
+.info-item {
     display: flex;
-    gap: 40px;
-    margin-top: 25px;
+    flex-direction: column;
 }
 
 .info-item label {
-    display: block;
-    font-size: 13px;
-    color: #777;
+    font-size: 12px;
+    font-weight: 500;
+    color: #7F8C8D;
+    text-transform: uppercase;
+    margin-bottom: 5px;
 }
 
 .info-item span {
-    font-size: 17px;
-    font-weight: bold;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2C3E50;
 }
 
-/* --- Tabla --- */
+/* --- Estilos de la Tabla --- */
 .tabla-section {
-    margin-top: 40px;
+    margin-top: 35px;
+}
+
+.tabla-section h5 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #34495E;
+    margin-bottom: 15px;
 }
 
 .tabla-formula {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+}
+
+.tabla-formula th,
+.tabla-formula td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #24262c;
 }
 
 .tabla-formula th {
-    background: #f1f1f1;
-    padding: 10px;
-    font-weight: bold;
-    border-bottom: 2px solid #ccc;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1d2227;
+    background-color: #dce0e3;
+    border-top: 2px solid #BDC3C7;
+    border-bottom: 2px solid #BDC3C7;
 }
 
 .tabla-formula td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #e5e5e5;
+    font-size: 12px;
+    color: #1d2227;
+    background-color: #f9fbfd;
+    border-top: 2px solid #BDC3C7;
+    border-bottom: 2px solid #BDC3C7;
+}
+
+
+.tabla-formula tbody tr:nth-child(even) {
+    background-color: #F8F9FA;
 }
 
 .tabla-formula .num {
     text-align: right;
 }
 
+/* Total de la tabla */
+.tabla-formula tfoot td {
+    font-weight: 700;
+    font-size: 15px;
+    color: #243342;
+    border-top: 2px solid #BDC3C7;
+    padding-top: 12px;
+}
+
 .total-label {
     text-align: right;
-    font-weight: bold;
-    font-size: 16px;
 }
 
 .total-value {
-    font-weight: bold;
-    font-size: 16px;
+    text-align: right;
 }
 
-/* --- Footer --- */
+/* --- Pie de Página (Pantalla) --- */
+/* Quitamos el margin-top de 400px! */
 .pie {
-    margin-top: 50px;
     text-align: center;
-    font-size: 13px;
-    color: #777;
+    font-size: 12px;
+    color: #95A5A6;
+    border-top: 1px solid #EAECEE;
+    padding: 10px 50px;
+}
+
+.pie p {
+    margin: 4px 0;
+}
+
+
+/*
+        / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
+        / / / --- LA MAGIA: ESTILOS DE IMPRESIÓN Y PDF --- / / /
+        / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
+        */
+@media print {
+    body {
+        background-color: #fff;
+        /* Fondo blanco para impresión */
+        font-family: 'Inter', Arial, sans-serif;
+        /* Asegura la fuente */
+    }
+
+    /* Oculta la sombra y márgenes del 'simulador' A4 */
+    .reporte-a4 {
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        display: block;
+        /* Revertimos el flex */
+    }
+
+    /* --- 1. FIJAR ENCABEZADO Y PIE --- */
+    .encabezado {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        /* Fondo para que no se traslape texto */
+        z-index: 100;
+        /* Re-declaramos padding para que se alinee */
+        padding: 10px 30px 10px 30px;
+        box-sizing: border-box;
+        /* Súper importante */
+    }
+
+    .pie {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        /* Fondo blanco */
+        z-index: 100;
+        margin-top: 0;
+        /* Ignora cualquier margen */
+        /* Re-declaramos padding */
+        padding: 5px 10px;
+        box-sizing: border-box;
+        /* Súper importante */
+    }
+
+    /* --- 2. CREAR ESPACIO PARA EL CONTENIDO --- */
+    /* Este es el truco más importante */
+    .contenido-principal {
+        padding-top: 130px;
+        /* Alto del header + margen */
+        padding-bottom: 100px;
+        /* Alto del footer + margen */
+        padding-left: 50px;
+        /* Padding horizontal */
+        padding-right: 50px;
+        /* Padding horizontal */
+        flex-grow: 0;
+        /* Revertimos el flex */
+    }
+
+    /* --- 3. REPETIR ENCABEZADO DE TABLA --- */
+    .tabla-formula thead {
+        display: table-header-group;
+        /* Magia para repetir <thead> en cada página */
+    }
+
+    /* --- 4. CONTROLAR SALTOS DE PÁGINA --- */
+    /* Evita que estas secciones se corten entre páginas */
+    .titulo-formula,
+    .info-general {
+        page-break-after: avoid;
+    }
+
+    /* Permite que la tabla se rompa, pero no una fila individual */
+    .tabla-formula {
+        page-break-inside: auto;
+    }
+
+    .tabla-formula tr {
+        page-break-inside: avoid;
+    }
 }

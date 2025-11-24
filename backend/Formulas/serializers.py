@@ -3,18 +3,11 @@ from django.db import transaction
 from .models import Formulas, Detalle_Formula
 from Ingredientes.models import Ingredientes 
 
-# --- Serializador de Detalle (Ingrediente) ---
-# Este serializador se usará para la lista anidada.
 # Maneja la *lectura* (GET) y *escritura* (POST) de cada ingrediente.
 class DetalleFormulaSerializer(serializers.ModelSerializer):
-    
-    # Hacemos 'iding' explícito para asegurarnos de que acepte el 'iding' (PK) 
-    # del ingrediente que envía el frontend.
     iding = serializers.PrimaryKeyRelatedField(
         queryset=Ingredientes.objects.all(),
-        write_only=True
     )
-    
     # Campo extra para MOSTRAR el nombre del ingrediente en un GET
     nombre_ingrediente = serializers.CharField(source='iding.nombre', read_only=True)
 
@@ -28,21 +21,17 @@ class DetalleFormulaSerializer(serializers.ModelSerializer):
 class FormulaSerializer(serializers.ModelSerializer):
     
     # --- Para CREAR (POST) ---
-    # Esperamos una lista de ingredientes bajo la llave "ingredientes"
-    # Esta llave debe coincidir con la que envías desde React
     ingredientes = DetalleFormulaSerializer(many=True, write_only=True)
 
     # --- Para LEER (GET) ---
-    # Mostramos los detalles usando la relación inversa ('detalle_formula_set')
-    # y usamos el mismo serializador de detalle.
     detalles = DetalleFormulaSerializer(many=True, source='detalle_formula_set', read_only=True)
 
     class Meta:
         model = Formulas
         # 'detalles' es para GET, 'ingredientes' es para POST
-        fields = ['idform', 'folio', 'nombre', 'detalles', 'ingredientes']
+        fields = ['idform', 'nombre', 'detalles', 'ingredientes']
 
-    @transaction.atomic # ¡Importante! Si algo falla, revierte toda la creación.
+    @transaction.atomic #Si algo falla, revierte toda la creación.
     def create(self, validated_data):
         """
         Sobrescribe el método create para manejar la creación anidada.
@@ -52,7 +41,7 @@ class FormulaSerializer(serializers.ModelSerializer):
         ingredientes_data = validated_data.pop('ingredientes')
         
         # 2. Crea la Fórmula (el "maestro") con los datos restantes
-        # (ej. idform, folio, nombre)
+        # (ej. idform, nombre)
         formula = Formulas.objects.create(**validated_data)
         
         # 3. Itera sobre la lista de ingredientes y créalos uno por uno

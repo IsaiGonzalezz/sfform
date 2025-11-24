@@ -36,7 +36,7 @@ const validationSchema = yup.object().shape({
     correo: yup.string()
         .email('Debe ser un correo electrónico válido')
         .required('El correo es obligatorio'),
-    contraseña: yup.string()
+    password: yup.string()
         .when('$isEditMode', { // Validación condicional
             is: false, // Si NO estamos editando (creando)
             then: (schema) => schema.required('La contraseña es obligatoria').min(8, 'Mínimo 8 caracteres'),
@@ -90,7 +90,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 if (!dataToUpdate.contraseña) {
                     delete dataToUpdate.contraseña;
                 }
-                await axios.put(`${API_URL}${userToEdit.rfid}/`, dataToUpdate);
+                await axios.put(`${API_URL}${userToEdit.id}/`, dataToUpdate);
             } else {
                 await axios.post(API_URL, data);
             }
@@ -222,7 +222,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
 
                             {/* --- CAMPO CONTRASEÑA --- */}
                             <Controller
-                                name="contraseña"
+                                name="password"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth'; 
+// ===============================================
 import {
     Box, Typography, Button, Paper, IconButton,
     Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
@@ -14,8 +15,8 @@ import EvStationIcon from '@mui/icons-material/EvStation'; // <-- Icono para Est
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // <-- Icono para Advertencia
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'; // <-- Icono para Tabla Vacía
 
-// URL de la API para Estaciones
-const API_URL_ESTACIONES = 'http://127.0.0.1:8000/api/estaciones/';
+// URL RELATIVA: Usaremos la ruta relativa para la instancia de Axios
+const API_URL_ESTACIONES_REL = 'http://127.0.0.1:8000/api/estaciones/';
 
 // Tema oscuro (tomado del diseño de UsersPage)
 const darkTheme = createTheme({
@@ -52,6 +53,10 @@ function CustomNoRowsOverlay() {
 
 function EstacionesPage() {
 
+    // === CAMBIO 2: Obtener la instancia protegida ===
+    const { axiosInstance } = useAuth(); 
+    // ===============================================
+
     // --- Estados (Lógica de EstacionesPage) ---
     const [estaciones, setEstaciones] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,19 +65,22 @@ function EstacionesPage() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [stationToDelete, setStationToDelete] = useState(null);
 
-    // --- Función READ (Lógica de EstacionesPage) ---
+    // --- Función READ (Petición GET) ---
     const fetchEstaciones = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axios.get(API_URL_ESTACIONES);
-            setEstaciones(response.data);
+            // === CAMBIO 3: Usar axiosInstance.get ===
+            const response = await axiosInstance.get(API_URL_ESTACIONES_REL);
+            // =========================================
+            setEstaciones(response.data || []); 
         } catch (error) {
             console.error("Error al obtener las estaciones:", error);
-            setEstaciones([]); // Limpiar en caso de error
+            // El Interceptor maneja el 401; si llega un error, limpiamos.
+            setEstaciones([]); 
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [axiosInstance]); // <-- Dependencia añadida para el hook
 
     // Cargar datos al montar el componente
     useEffect(() => {
@@ -105,8 +113,10 @@ function EstacionesPage() {
     const handleDeleteStation = async () => {
         if (!stationToDelete) return;
         try {
-            // Usamos la API_URL_ESTACIONES y el ID de la estación
-            await axios.delete(`${API_URL_ESTACIONES}${stationToDelete.idest}/`);
+            // === CAMBIO 4: Usar axiosInstance.delete ===
+            // Usa la URL relativa + el ID de la estación
+            await axiosInstance.delete(`${API_URL_ESTACIONES_REL}${stationToDelete.idest}/`);
+            // ============================================
             console.log('Estación borrada:', stationToDelete.idest);
             fetchEstaciones(); // Recargar la tabla
         } catch (error) {
@@ -129,7 +139,6 @@ function EstacionesPage() {
             disableColumnMenu: true,
             renderCell: (params) => (
                 <Box>
-                    {/* Los estilos de color ya estaban en UsersPage */}
                     <IconButton onClick={() => handleOpenModal(params.row)} sx={{ color: '#38ef7d' }} aria-label="editar">
                         <EditIcon />
                     </IconButton>
@@ -142,15 +151,14 @@ function EstacionesPage() {
     ];
 
     return (
-        <>
+        <ThemeProvider theme={darkTheme}>
             {/* Encabezado (Diseño de UsersPage) */}
             <Box
                 sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 3, // Incrementado margen inferior
-                    p: 2,
+                    mb: 3, p: 2,
                     background: 'linear-gradient(90deg, #292929FF, #292929FF)', // Fondo
                     borderRadius: '12px',
                     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', // Sombra
@@ -162,13 +170,9 @@ function EstacionesPage() {
                     <Typography
                         variant="h4"
                         component="h1"
-                        sx={{
-                            fontWeight: 'bold',
-                            color: '#E0E0E0',
-                            letterSpacing: '0.5px',
-                        }}
+                        sx={{ fontWeight: 'bold', color: '#E0E0E0', letterSpacing: '0.5px' }}
                     >
-                        Gestión de Estaciones 
+                        Gestión de Estaciones
                     </Typography>
                 </Box>
 
@@ -178,17 +182,14 @@ function EstacionesPage() {
                     startIcon={<AddIcon />}
                     onClick={() => handleOpenModal()} // Lógica de Estaciones
                     sx={{
-                        fontWeight: 'bold',
-                        borderRadius: '10px',
-                        px: 3,
-                        py: 1,
+                        fontWeight: 'bold', borderRadius: '10px', px: 3, py: 1,
                         backgroundColor: '#004F8CFF', // Azul principal
                         color: '#fff',
-                        boxShadow: '0 0 10px rgba(0, 119, 209, 0.5)', 
+                        boxShadow: '0 0 10px rgba(0, 119, 209, 0.5)',
                         transition: 'all 0.3s ease',
                         '&:hover': {
-                            backgroundColor: '#005ea8', 
-                            boxShadow: '0 0 20px rgba(0, 119, 209, 0.8)', 
+                            backgroundColor: '#005ea8',
+                            boxShadow: '0 0 20px rgba(0, 119, 209, 0.8)',
                             transform: 'scale(1.05)',
                         },
                     }}
@@ -197,146 +198,98 @@ function EstacionesPage() {
                 </Button>
             </Box>
 
-            <ThemeProvider theme={darkTheme}>
-                {/* Contenedor de la Tabla (Diseño de UsersPage) */}
-                <Paper
+            {/* Contenedor de la Tabla (Diseño de UsersPage) */}
+            <Paper
+                sx={{
+                    flexGrow: 1, width: '100%', borderRadius: '14px', overflow: 'hidden',
+                    backgroundColor: '#292929FF', // Fondo del Paper/Tabla
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                }}
+            >
+                {/* Tabla (Diseño de UsersPage, Datos de EstacionesPage) */}
+                <DataGrid
+                    rows={estaciones} // <-- Lógica Estaciones
+                    columns={columns} // <-- Lógica Estaciones
+                    loading={loading} // <-- Lógica Estaciones
+                    getRowId={(row) => row.idest} // <-- Lógica Estaciones
+                    slots={{ noRowsOverlay: CustomNoRowsOverlay }}
+                    autoHeight={estaciones.length === 0} // <-- Lógica Estaciones
                     sx={{
-                        flexGrow: 1,
-                        width: '100%',
-                        borderRadius: '14px',
-                        overflow: 'hidden',
-                        backgroundColor: '#292929FF', // Fondo del Paper/Tabla
-                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
-                    }}
-                >
-                    {/* Tabla (Diseño de UsersPage, Datos de EstacionesPage) */}
-                    <DataGrid
-                        rows={estaciones} // <-- Lógica Estaciones
-                        columns={columns} // <-- Lógica Estaciones
-                        loading={loading} // <-- Lógica Estaciones
-                        getRowId={(row) => row.idest} // <-- Lógica Estaciones
-                        slots={{ noRowsOverlay: CustomNoRowsOverlay }}
-                        autoHeight={estaciones.length === 0} // <-- Lógica Estaciones
-                        sx={{
-                            // --- Estilos de UsersPage ---
-                            border: 'none',
-                            color: '#E0E0E0', 
-                            '& .MuiDataGrid-columnHeaders': {
-                                background: 'linear-gradient(90deg, #292929FF, #292929FF)',
-                                color: '#E3EFF9FF', 
-                                fontWeight: 'bold',
-                                fontSize: '0.95rem',
-                                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                            },
-                            '& .MuiDataGrid-cell': {
-                                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                            },
-                            '& .MuiDataGrid-row:hover': {
-                                backgroundColor: 'rgba(0,119,209,0.1)', 
-                                transition: 'background-color 0.3s ease',
-                            },
-                            '& .Mui-selected': {
-                                backgroundColor: 'rgba(0, 119, 209, 0.2) !important', 
-                                boxShadow: 'inset 0 0 5px rgba(0, 119, 209, 0.3)',
-                            },
-                            '& .Mui-selected:hover': { 
-                                backgroundColor: 'rgba(0, 119, 209, 0.25) !important',
-                            },
-                            '& .MuiDataGrid-footerContainer': {
-                                backgroundColor: '#292929FF',
-                                borderTop: '1px solid rgba(255,255,255,0.1)',
-                            },
-                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar': { width: '8px' },
-                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-track': { background: '#1E293B' },
-                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb': { backgroundColor: '#4B5563', borderRadius: '4px' },
-                            '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb:hover': { background: '#6B7280' },
-                        }}
-                    />
-                </Paper>
-
-                {/* Modal para Crear/Editar (Lógica de EstacionesPage) */}
-                <EstacionFormModal
-                    open={isModalOpen}
-                    onClose={handleCloseModal}
-                    onSaveSuccess={fetchEstaciones} // <-- Llama a fetchEstaciones
-                    estacionToEdit={currentEstacion} // <-- Pasa la estación a editar
-                />
-
-                {/* Dialog de Confirmación (Diseño de UsersPage, Lógica de EstacionesPage) */}
-                <Dialog
-                    open={confirmOpen}
-                    onClose={handleCloseConfirm}
-                    PaperProps={{
-                        sx: {
-                            backgroundColor: '#1E1E1E',
-                            color: '#FFFFFF',
-                            borderRadius: '12px',
-                            boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)',
-                        },
-                    }}
-                >
-                    <DialogTitle
-                        sx={{
+                        // --- Estilos de UsersPage ---
+                        border: 'none', color: '#E0E0E0',
+                        '& .MuiDataGrid-columnHeaders': {
+                            background: 'linear-gradient(90deg, #292929FF, #292929FF)',
+                            color: '#E3EFF9FF',
                             fontWeight: 'bold',
-                            color: '#F87171',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1
+                            fontSize: '0.95rem',
+                            borderBottom: '1px solid rgba(255,255,255,0.1)',
+                        },
+                        '& .MuiDataGrid-cell': {
+                            borderBottom: '1px solid rgba(255,255,255,0.08)',
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: 'rgba(0,119,209,0.1)',
+                            transition: 'background-color 0.3s ease',
+                        },
+                        '& .Mui-selected': {
+                            backgroundColor: 'rgba(0, 119, 209, 0.2) !important',
+                            boxShadow: 'inset 0 0 5px rgba(0, 119, 209, 0.3)',
+                        },
+                        '& .Mui-selected:hover': {
+                            backgroundColor: 'rgba(0, 119, 209, 0.25) !important',
+                        },
+                        '& .MuiDataGrid-footerContainer': {
+                            backgroundColor: '#292929FF',
+                            borderTop: '1px solid rgba(255,255,255,0.1)',
+                        },
+                        '& .MuiDataGrid-virtualScroller::-webkit-scrollbar': { width: '8px' },
+                        '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-track': { background: '#1E293B' },
+                        '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb': { backgroundColor: '#4B5563', borderRadius: '4px' },
+                        '& .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb:hover': { background: '#6B7280' },
+                    }}
+                />
+            </Paper>
+
+            {/* Modal para Crear/Editar */}
+            <EstacionFormModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onSaveSuccess={fetchEstaciones}
+                estacionToEdit={currentEstacion}
+            />
+
+            {/* Dialog de Confirmación */}
+            <Dialog
+                open={confirmOpen}
+                onClose={handleCloseConfirm}
+                PaperProps={{ sx: { backgroundColor: '#1E1E1E', color: '#FFFFFF', borderRadius: '12px', boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)', }, }}
+            >
+                <DialogTitle sx={{ fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1 }}><WarningAmberIcon />Confirmar Eliminación</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ color: '#D1D5DB' }}>
+                        ¿Estás seguro de que deseas eliminar la estación
+                        <strong style={{ color: '#60A5FA' }}> {stationToDelete?.nombre}</strong>
+                        (ID: {stationToDelete?.idest})?
+                        Esta acción no se puede deshacer.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={handleCloseConfirm} sx={{ color: '#A5A5A5', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s ease', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' }, }}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleDeleteStation}
+                        sx={{
+                            color: '#fff', backgroundColor: '#EF4444', fontWeight: 'bold', borderRadius: '8px', px: 2, textTransform: 'none', boxShadow: '0 0 10px rgba(239,68,68,0.4)', transition: 'all 0.3s ease',
+                            '&:hover': { backgroundColor: '#DC2626', boxShadow: '0 0 20px rgba(239,68,68,0.7)', transform: 'scale(1.05)', },
                         }}
+                        autoFocus
                     >
-                        <WarningAmberIcon /> {/* <-- Icono Advertencia */}
-                        Confirmar Eliminación
-                    </DialogTitle>
-                    <DialogContent>
-                        {/* Texto adaptado para Estaciones */}
-                        <DialogContentText sx={{ color: '#D1D5DB' }}>
-                            ¿Estás seguro de que deseas eliminar la estación
-                            <strong style={{ color: '#60A5FA' }}> {stationToDelete?.nombre}</strong> 
-                            (ID: {stationToDelete?.idest})?
-                            Esta acción no se puede deshacer.
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions sx={{ px: 3, pb: 2 }}>
-                        {/* Botón Cancelar (Diseño UsersPage) */}
-                        <Button
-                            onClick={handleCloseConfirm}
-                            sx={{
-                                color: '#A5A5A5',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '8px',
-                                textTransform: 'none',
-                                transition: 'all 0.2s ease',
-                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            Cancelar
-                        </Button>
-                        {/* Botón Eliminar (Diseño UsersPage) */}
-                        <Button
-                            onClick={handleDeleteStation} // <-- Lógica de Estaciones
-                            sx={{
-                                color: '#fff',
-                                backgroundColor: '#EF4444', // Rojo
-                                fontWeight: 'bold',
-                                borderRadius: '8px',
-                                px: 2,
-                                textTransform: 'none',
-                                boxShadow: '0 0 10px rgba(239,68,68,0.4)',
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                    backgroundColor: '#DC2626', // Rojo más oscuro
-                                    boxShadow: '0 0 20px rgba(239,68,68,0.7)',
-                                    transform: 'scale(1.05)',
-                                },
-                            }}
-                            autoFocus
-                        >
-                            Eliminar
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </ThemeProvider>
-        </>
+                        Eliminar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </ThemeProvider>
     );
 }
 

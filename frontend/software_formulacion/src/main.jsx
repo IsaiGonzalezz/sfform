@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
-import './index.css'; // Tu index.css
+import './index.css';
+import { AuthProvider } from './context/AuthProvider.jsx';
 
 // --- 1. IMPORTA ESTO DE MUI ---
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -34,7 +35,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <BrowserRouter> 
-        <App />
+        <AuthProvider>
+          <App/>
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>,

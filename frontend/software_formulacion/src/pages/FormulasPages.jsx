@@ -1,24 +1,24 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import axios from 'axios';
-import html2pdf from 'html2pdf.js'; // <-- IMPORTAR html2pdf
+import { useAuth } from '../context/useAuth';
+import html2pdf from 'html2pdf.js';
 import ReporteFormula from '../components/ReporteFormula';
+import ConsultarFormulasModal from '../components/ConsultarFormulasModal';
 import './styles/Formula.css';
 import '../components/styles/Reporte.css'
 import {
     ReceiptLong, Science, PlaylistAddCheck,
-    Save, Add, Edit, Delete, ClearAll, PictureAsPdf, // Cambiado Print por PictureAsPdf
+    Save, Add, Edit, Delete, ClearAll, PictureAsPdf,
 } from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
 
-// --- URLs de la API ---
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const API_URL_FORMULAS = `${API_BASE_URL}/formulas/`;
-const API_URL_INGREDIENTES = `${API_BASE_URL}/ingredientes/`;
-const API_URL_EMPRESA = `${API_BASE_URL}/empresa/`;
+// --- URLs RELATIVAS
+const API_URL_FORMULAS_REL = '/formulas/';
+const API_URL_INGREDIENTES_REL = '/ingredientes/';
+const API_URL_EMPRESA_REL = '/empresa/';
+// -----------------------------------------------------------
 
 export default function FormulaPage() {
-
-    // --- NUEVO: Ref para el componente del reporte que se convertirá en PDF ---
+    const { axiosInstance } = useAuth();
     const reportePdfRef = useRef(null);
 
     // --- ESTADOS PRINCIPALES ---
@@ -27,7 +27,6 @@ export default function FormulaPage() {
 
     const [formulaData, setFormulaData] = useState({
         id: '',
-        folio: '',
         nombre: '',
     });
 
@@ -43,8 +42,10 @@ export default function FormulaPage() {
     const [empresaInfo, setEmpresaInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [showConsultar, setShowConsultar] = useState(false);
     const [error, setError] = useState(null);
 
+    // Función auxiliar para convertir imágenes a base64
     const convertToBase64 = async (url) => {
         try {
             const response = await fetch(url);
@@ -63,21 +64,23 @@ export default function FormulaPage() {
 
     // --- EFECTO DE CARGA (useEffect) ---
     useEffect(() => {
-
-
         const fetchInitialData = async () => {
+            // Se ejecuta solo si la instancia de Axios está lista
+            if (!axiosInstance) return;
+
             setIsLoading(true);
             setError(null);
             try {
-
+                // === CAMBIO 3: Usar axiosInstance en Promise.all ===
                 const [ingredientesRes, empresaRes] = await Promise.all([
-                    axios.get(API_URL_INGREDIENTES),
-                    axios.get(API_URL_EMPRESA)
+                    axiosInstance.get(API_URL_INGREDIENTES_REL), // Petición 1 Protegida
+                    axiosInstance.get(API_URL_EMPRESA_REL)      // Petición 2 Protegida
                 ]);
+                // ====================================================
 
                 const dataMapeada = ingredientesRes.data.map(ing => ({
                     id: ing.iding,
-                    nombre: ing.nombre // <-- CORREGIDO
+                    nombre: ing.nombre
                 }));
                 setListaIngredientes(dataMapeada);
 
@@ -86,11 +89,13 @@ export default function FormulaPage() {
 
                     // Si existe logotipo como URL, intentar convertirlo a base64
                     if (empresaDatos.logotipo) {
+                        // Nota: La función convertToBase64 usa fetch nativo, no axiosInstance,
+                        // por lo que no lleva el token. Solo funcionará si la imagen es pública o si Django
+                        // devuelve la URL como base64 en la petición inicial.
                         const base64Logo = await convertToBase64(empresaDatos.logotipo);
                         if (base64Logo) {
                             empresaDatos.logotipo = base64Logo;
                         } else {
-                            // Si falla la conversión dejamos la URL original (se intentará con useCORS)
                             console.warn('No se pudo convertir el logotipo a base64, se dejará la URL original.');
                         }
                     }
@@ -104,6 +109,7 @@ export default function FormulaPage() {
 
             } catch (err) {
                 console.error("Error cargando ingredientes o empresa:", err);
+                // El Interceptor maneja el 401. Si hay un error aquí, es un fallo de BD o 404/403.
                 setError('No se pudieron cargar los datos iniciales.');
             } finally {
                 setIsLoading(false);
@@ -111,7 +117,8 @@ export default function FormulaPage() {
         };
 
         fetchInitialData();
-    }, []);
+        // Añadimos axiosInstance a las dependencias.
+    }, [axiosInstance]);
 
     // --- CÁLCULOS DERIVADOS ---
     const pesoTotalCalculado = useMemo(() => {
@@ -120,12 +127,13 @@ export default function FormulaPage() {
 
     // --- MANEJADORES DE EVENTOS ---
 
+    // (Lógica de Ingredientes/Fórmula sin cambios)
     const handleDefinirFormula = (e) => {
         e.preventDefault();
-        if (formulaData.id && formulaData.folio && formulaData.nombre) {
+        if (formulaData.id && formulaData.nombre) {
             setFormulaDefinida(true);
         } else {
-            alert('Por favor, ingresa un ID, Folio y Nombre para la fórmula.');
+            alert('Por favor, ingresa un ID y Nombre para la fórmula.');
         }
     };
 
@@ -156,10 +164,27 @@ export default function FormulaPage() {
         setCurrentIngrediente({ id: '', nombre: '', peso: '', tolerancia: '' });
     };
 
+    //Función para remover el ingrediente
     const handleRemoveIngrediente = (idToRemove) => {
         setIngredientes(ingredientes.filter(ing => ing.id.toString() !== idToRemove.toString()));
     };
 
+    //Función para editar el ingrediente
+    const handleEditIngrediente = (ingredienteAEditar) => {
+        // 1. Llenamos los inputs con los datos del ingrediente seleccionado
+        setCurrentIngrediente({
+            id: ingredienteAEditar.id,
+            nombre: ingredienteAEditar.nombre,
+            peso: ingredienteAEditar.peso,
+            tolerancia: ingredienteAEditar.tolerancia
+        });
+
+        // 2. Lo eliminamos de la lista temporalmente
+        // Así el usuario puede modificarlo y volver a darle "Agregar" sin duplicarlo.
+        handleRemoveIngrediente(ingredienteAEditar.id);
+    };
+
+    // --- FUNCIÓN DE ESCRITURA (POST) ---
     const handleRegistrarFormula = async (e) => {
         e.preventDefault();
         setIsSaving(true);
@@ -173,13 +198,14 @@ export default function FormulaPage() {
 
         const payload = {
             idform: formulaData.id,
-            folio: formulaData.folio,
             nombre: formulaData.nombre,
             ingredientes: ingredientesPayload
         };
 
         try {
-            const response = await axios.post(API_URL_FORMULAS, payload);
+            // === CAMBIO 4: Usar axiosInstance.post ===
+            const response = await axiosInstance.post(API_URL_FORMULAS_REL, payload);
+            // ==========================================
             console.log('Respuesta de la API:', response.data);
             alert('¡Fórmula registrada exitosamente!');
             handleLimpiarFormulario();
@@ -195,7 +221,7 @@ export default function FormulaPage() {
     const handleLimpiarFormulario = () => {
         setFormulaDefinida(false);
         setIngredientes([]);
-        setFormulaData({ id: '', folio: '', nombre: '' });
+        setFormulaData({ id: '', nombre: '' });
         setCurrentIngrediente({ id: '', nombre: '', peso: '', tolerancia: '' });
         setError(null);
         setIsSaving(false);
@@ -206,22 +232,20 @@ export default function FormulaPage() {
         setFormulaData(prev => ({ ...prev, [name]: value }));
     };
 
-    // --- NUEVO: MANEJADOR DE DESCARGA DE PDF ---
+    // --- MANEJADOR DE DESCARGA DE PDF (sin cambios) ---
     const handleDownloadPdf = () => {
         if (reportePdfRef.current) {
             const element = reportePdfRef.current;
             const pdfFileName = `Formula-${formulaData.id || 'sin-id'}-${formulaData.nombre || 'reporte'}.pdf`;
 
-            // Opciones de html2pdf
             const opt = {
                 margin: 10,
                 filename: pdfFileName,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 }, // Aumenta la escala para mejor resolución
+                html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generar y descargar el PDF
             html2pdf().from(element).set(opt).save();
         } else {
             console.error('No se pudo encontrar el elemento para generar el PDF.');
@@ -231,15 +255,15 @@ export default function FormulaPage() {
 
 
     return (
-        <div className="formula-page"> {/* Ya no necesita 'print-hide' */}
+        <div className="formula-page">
 
             {/* --- 0. Barra de Acciones Globales --- */}
             <div className="action-bar">
                 <button className="btn btn-default" onClick={handleLimpiarFormulario} disabled={isSaving}>
                     <ClearAll /> Limpiar Formulario
                 </button>
-                <button className="btn btn-default" disabled={isSaving}>
-                    <Edit /> Editar Fórmula Existente
+                <button className="btn btn-edit" disabled={isSaving} onClick={() => setShowConsultar(true)}>
+                    <Edit /> Consultar Formulas
                 </button>
             </div>
 
@@ -260,29 +284,17 @@ export default function FormulaPage() {
                             required
                         />
                     </div>
-                    <div className="input-group">
-                        <label htmlFor="folioFormula">Folio</label>
-                        <input
-                            type="text"
-                            id="folioFormula"
-                            name="folio"
-                            value={formulaData.folio}
-                            onChange={handleFormulaChange}
-                            disabled={formulaDefinida || isSaving}
-                            placeholder="Ej: FL-2025-01"
-                            required
-                        />
-                    </div>
-                    <div className="input-group">
+                    <div className="input-group input-span-2">
                         <label htmlFor="nombreFormula">Nombre de la Fórmula</label>
                         <input
                             type="text"
                             id="nombreFormula"
                             name="nombre"
+                            
                             value={formulaData.nombre}
                             onChange={handleFormulaChange}
                             disabled={formulaDefinida || isSaving}
-                            placeholder="Ej: Caramelo Tipo A"
+                            placeholder="..."
                             required
                         />
                     </div>
@@ -343,7 +355,7 @@ export default function FormulaPage() {
                         />
                     </div>
                     <div className="form-actions-ingredientes">
-                        <button type="submit" className="btn btn-secondary" disabled={isSaving}>
+                        <button type="submit" className="btn btn-warning" disabled={isSaving}>
                             <Add /> Agregar Ingrediente
                         </button>
                     </div>
@@ -355,8 +367,8 @@ export default function FormulaPage() {
                             <tr>
                                 <th>ID</th>
                                 <th>Nombre</th>
-                                <th>Peso (Kg)</th>
-                                <th>Tolerancia (%)</th>
+                                <th style={{textAlign:'right'}}>Peso (Kg)</th>
+                                <th style={{textAlign:'right'}}>Tolerancia (%)</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -372,10 +384,10 @@ export default function FormulaPage() {
                                     <tr key={index}>
                                         <td>{ing.id}</td>
                                         <td>{ing.nombre}</td>
-                                        <td>{ing.peso}</td>
-                                        <td>{ing.tolerancia}%</td>
+                                        <td style={{textAlign:'right'}}>{ing.peso}</td>
+                                        <td style={{textAlign:'right'}}>{ing.tolerancia}%</td>
                                         <td className="table-actions">
-                                            <button className="btn-icon btn-icon-edit" disabled={isSaving}>
+                                            <button className="btn-icon btn-icon-edit" disabled={isSaving} onClick={() => handleEditIngrediente(ing)}>
                                                 <Edit />
                                             </button>
                                             <button
@@ -418,7 +430,7 @@ export default function FormulaPage() {
                         disabled={ingredientes.length === 0 || isSaving}
                         onClick={handleDownloadPdf}
                     >
-                        <PictureAsPdf /> Descargar PDF {/* <-- ÍCONO Y TEXTO CAMBIADOS */}
+                        <PictureAsPdf /> Descargar PDF
                     </button>
                     <button
                         className="btn btn-primary"
@@ -432,8 +444,7 @@ export default function FormulaPage() {
             </div>
 
             {/* --- COMPONENTE DE REPORTE OCULTO (PARA PDF) --- */}
-            {/* Es importante que este div exista en el DOM para que html2pdf lo pueda "leer" */}
-            <div className="pdf-hidden-container"> {/* Clase para ocultar */}
+            <div className="pdf-hidden-container">
                 <ReporteFormula
                     ref={reportePdfRef}
                     formula={formulaData}
@@ -441,7 +452,10 @@ export default function FormulaPage() {
                     empresa={empresaInfo}
                 />
             </div>
-
+            <ConsultarFormulasModal 
+                isOpen={showConsultar} 
+                onClose={() => setShowConsultar(false)} 
+            />
         </div>
     );
 }

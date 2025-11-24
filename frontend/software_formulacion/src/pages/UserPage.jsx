@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'; // <-- 1. Importamos useEffect
-import axios from 'axios'; // <-- 2. Importamos Axios
+import { useAuth } from '../context/useAuth';
 import {
     Box, Typography, Button, Paper, IconButton,
     Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
@@ -13,8 +13,6 @@ import UserFormModal from '../components/UserFormModal';
 import GroupIcon from '@mui/icons-material/Group'; // <-- Icono para Usuarios
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // <-- Icono para Advertencia
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-
-
 
 const API_URL = 'http://127.0.0.1:8000/api/usuarios/';
 
@@ -51,7 +49,7 @@ function CustomNoRowsOverlay() {
 
 
 function UsersPage() {
-
+    const { axiosInstance } = useAuth();
     // --- 3. Creamos el estado para guardar los usuarios y el estado de carga ---
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true); // Empezamos en 'cargando'
@@ -67,14 +65,14 @@ function UsersPage() {
     const fetchUsers = useCallback(async () => {
         setLoading(true); // Ponemos en estado de carga
         try {
-            const response = await axios.get(API_URL);
+            const response = await axiosInstance.get(API_URL);
             setUsers(response.data);
         } catch (error) {
             console.error("Hubo un error al obtener los usuarios:", error);
         } finally {
             setLoading(false); // Quitamos el estado de carga
         }
-    }, []); // El array vacío significa que la función no cambia
+    }, [axiosInstance]); // El array vacío significa que la función no cambia
 
     // useEffect ahora simplemente llama a nuestra nueva función
     useEffect(() => {
@@ -114,8 +112,8 @@ function UsersPage() {
 
         try {
             // Hacemos la petición DELETE a la URL específica del usuario
-            await axios.delete(`${API_URL}${userToDelete.rfid}/`);
-            console.log('Usuario borrado exitosamente:', userToDelete.rfid);
+            await axiosInstance.delete(`${API_URL}${userToDelete.id}/`);
+            console.log('Usuario borrado exitosamente:', userToDelete.id);
             fetchUsers(); // Recargamos la tabla para que desaparezca el usuario
         } catch (error) {
             console.error('Hubo un error al borrar el usuario:', error.response?.data || error.message);

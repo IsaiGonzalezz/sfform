@@ -1,0 +1,388 @@
+import React, { useState, useMemo ,useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { ArrowLeft, Save, X, Trash2, Edit3, Check, Plus } from 'lucide-react';
+
+const DetalleFormulaPage = () => {
+    const { id } = useParams(); // Obtiene el ID de la URL (ej: FRM-001)
+    const navigate = useNavigate();
+
+    // Estados
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Estado para almacenar la data original
+    const [formula, setFormula] = useState(null);
+
+    // Estado para manejar los cambios del formulario (Edición)
+    const [formData, setFormData] = useState({
+        nombre: '',
+        detalles: [] // Aquí viven los ingredientes cargados
+    });
+
+    // 1. GET: Cargar la fórmula al iniciar
+    useEffect(() => {
+        const fetchFormula = async () => {
+            try {
+                // Ajusta la URL base a tu configuración local
+                const response = await axios.get(`http://127.0.0.1:8000/api/formulas/${id}/`);
+                setFormula(response.data);
+                setFormData(response.data); // Inicializamos el form con los datos traídos
+                setLoading(false);
+            } catch (err) {
+                console.error(err);
+                setError('No se pudo cargar la fórmula. Verifica la conexión.');
+                setLoading(false);
+            }
+        };
+        fetchFormula();
+    }, [id]);
+
+    const formatNumero = (num) => {
+        const numeroLimpo = parseFloat(num || 0);
+        // 'en-US' usa coma (,) para miles y punto (.) para decimal
+        return numeroLimpo.toLocaleString('en-US', {
+            maximumFractionDigits: 3 
+        });
+    };
+
+    const [pesoTotal, totalIngredientes] = useMemo(() => {
+        const detalles = formData.detalles || [];
+        
+        // 1. Calcula el total
+        const total = detalles.reduce((sum, d) => sum + parseFloat(d.cantidad || 0), 0);
+        // 2. Cuenta los ingredientes
+        const count = detalles.length;
+
+        // Devuelve los valores (el peso ya formateado)
+        return [formatNumero(total), count];
+
+    }, [formData.detalles]);
+
+    // Manejadores de Inputs (Nombre)
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    // Manejadores de Inputs (Ingredientes en la tabla)
+    const handleDetalleChange = (index, field, value) => {
+        const nuevosDetalles = [...formData.detalles];
+        nuevosDetalles[index][field] = value;
+        setFormData({ ...formData, detalles: nuevosDetalles });
+    };
+
+    // 2. PUT: Guardar Cambios
+    const handleSave = async () => {
+        try {
+            
+            const payload = {
+                nombre: formData.nombre,
+                // Mapeamos solo lo que el serializer necesita para escribir
+                ingredientes: formData.detalles.map(d => ({
+                    iding: d.iding, // ID del ingrediente
+                    cantidad: parseFloat(d.cantidad),
+                    tolerancia: parseInt(d.tolerancia)
+                }))
+            };
+
+            await axios.put(`http://127.0.0.1:8000/formulas/${id}/`, payload);
+
+            alert('Fórmula actualizada correctamente');
+            setIsEditing(false);
+            // Recargamos los datos "oficiales"
+            setFormula(formData);
+
+        } catch (err) {
+            console.error(err);
+            alert('Error al actualizar. Revisa la consola.');
+        }
+    };
+
+    // 3. DELETE: Eliminar Fórmula <DESCARTADO>
+    const handleDelete = async () => {
+        if (window.confirm(`¿Estás seguro de eliminar la fórmula ${id}? Esta acción no se puede deshacer.`)) {
+            try {
+                await axios.delete(`http://127.0.0.1:8000/api/formulas/${id}/`);
+                alert('Fórmula eliminada.');
+                navigate('/formulas'); // Te regresa a la lista principal
+            } catch (err) {
+                console.error(err);
+                alert('Error al eliminar.');
+            }
+        }
+    };
+
+    // Cancelar edición (revertir cambios) DESCARTADO
+    const handleCancel = () => {
+        setFormData(formula); // Regresamos a los datos originales
+        setIsEditing(false);
+    };
+
+    // --- RENDERIZADO ---
+
+    if (loading) return <div style={styles.centerMsg}>Cargando detalles...</div>;
+    if (error) return <div style={styles.centerMsgError}>{error}</div>;
+    if (!formula) return null;
+
+    return (
+        <div style={styles.container}>
+            {/* Encabezado */}
+            <div style={styles.header}>
+                <button style={styles.backBtn} onClick={() => navigate(-1)}>
+                    <ArrowLeft size={20} /> Volver
+                </button>
+                <div style={styles.titleContainer}>
+                    <h1 style={styles.title}>
+                        {isEditing ? 'Editando: ' : 'Detalle de: '}
+                        <span style={{ color: '#4dabf7' }}>{formula.idform}</span>
+                    </h1>
+                </div>
+
+                {/* Botones de Acción Principal */}
+                <div style={styles.actions}>
+                    {!isEditing ? (
+                        <>
+                            <button style={{ ...styles.btnDelete, display: 'none' }} onClick={handleDelete} hidden={true}>
+                                <Trash2 size={18} /> Eliminar
+                            </button>
+                            <button style={{ ...styles.btnEdit, display: 'none' }} onClick={() => setIsEditing(true)} hidden={true}>
+                                <Edit3 size={18} /> Editar
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button style={styles.btnCancel} onClick={handleCancel}>
+                                <X size={18} /> Cancelar
+                            </button>
+                            <button style={styles.btnSave} onClick={handleSave}>
+                                <Save size={18} /> Guardar
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Formulario Principal */}
+            <div style={styles.card}>
+                <div style={styles.formGroup}>
+                    <label style={styles.label}>Nombre de la Fórmula</label>
+                    {isEditing ? (
+                        <input
+                            style={styles.input}
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleInputChange}
+                        />
+                    ) : (
+                        <p style={styles.textData}>{formula.nombre}</p>
+                    )}
+                    <div style={{padding: '10px'}}>
+                    </div>
+                    <div className="summary-grid">
+                        <div className="summary-card">
+                            <span className="summary-label">Peso Total Calculado</span>
+                            <span className="summary-value">{pesoTotal} Kg</span>
+                        </div>
+                        <div className="summary-card">
+                            <span className="summary-label">Total de Ingredientes</span>
+                            <span className="summary-value">{totalIngredientes}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabla de Ingredientes */}
+            <div style={styles.card}>
+                <h3 style={styles.subTitle}>Ingredientes / Composición</h3>
+                <div style={styles.tableContainer}>
+                    <table style={styles.table}>
+                        <thead>
+                            <tr>
+                                <th style={styles.th}>Ingrediente</th>
+                                <th style={styles.th}>Cantidad (kg/L)</th>
+                                <th style={styles.th}>Tolerancia (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {formData.detalles.map((item, index) => (
+                                <tr key={index} style={{ borderBottom: '1px solid #444' }}>
+                                    <td style={styles.td}>
+                                        {/* El nombre del ingrediente suele ser read-only incluso al editar la formula, 
+                                            a menos que quieras cambiar el ingrediente en sí, lo cual es más complejo */}
+                                        {item.nombre_ingrediente || `Ingrediente ID: ${item.iding}`}
+                                    </td>
+                                    <td style={styles.td}>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                style={styles.inputTable}
+                                                value={item.cantidad}
+                                                onChange={(e) => handleDetalleChange(index, 'cantidad', e.target.value)}
+                                            />
+                                        ) : (
+                                            <span>{item.cantidad}</span>
+                                        )}
+                                    </td>
+                                    <td style={styles.td}>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                style={styles.inputTable}
+                                                value={item.tolerancia}
+                                                onChange={(e) => handleDetalleChange(index, 'tolerancia', e.target.value)}
+                                            />
+                                        ) : (
+                                            <span>{item.tolerancia} %</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                            {formData.detalles.length === 0 && (
+                                <tr>
+                                    <td colSpan="3" style={{ ...styles.td, textAlign: 'center', color: '#888' }}>
+                                        Esta fórmula no tiene ingredientes registrados.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- ESTILOS DARK MODE EN JS (INLINE) ---
+const styles = {
+    container: {
+        minHeight: '100vh',
+        backgroundColor: '#121212', // Fondo muy oscuro
+        color: '#e0e0e0',
+        padding: '40px',
+        fontFamily: 'Arial, sans-serif'
+    },
+    centerMsg: {
+        display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
+        backgroundColor: '#121212', color: '#fff', fontSize: '1.2rem'
+    },
+    centerMsgError: {
+        display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
+        backgroundColor: '#121212', color: '#ff6b6b', fontSize: '1.2rem'
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '30px',
+        borderBottom: '1px solid #333',
+        paddingBottom: '20px'
+    },
+    backBtn: {
+        background: 'transparent',
+        border: 'none',
+        color: '#888',
+        cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: '5px',
+        fontSize: '1rem'
+    },
+    titleContainer: {
+        flex: 1,
+        marginLeft: '20px'
+    },
+    title: {
+        margin: 0,
+        fontSize: '1.8rem',
+        fontWeight: 'bold'
+    },
+    actions: {
+        display: 'flex',
+        gap: '15px'
+    },
+    // Botones
+    btnEdit: {
+        backgroundColor: '#228be6', color: 'white', border: 'none', padding: '10px 20px',
+        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+    },
+    btnDelete: {
+        backgroundColor: '#fa5252', color: 'white', border: 'none', padding: '10px 20px',
+        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+    },
+    btnSave: {
+        backgroundColor: '#40c057', color: 'white', border: 'none', padding: '10px 20px',
+        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+    },
+    btnCancel: {
+        backgroundColor: '#495057', color: 'white', border: 'none', padding: '10px 20px',
+        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+    },
+    // Tarjetas y Formulario
+    card: {
+        backgroundColor: '#1e1e1e', // Un poco más claro que el fondo
+        padding: '25px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+        marginBottom: '25px'
+    },
+    formGroup: {
+        marginBottom: '10px'
+    },
+    label: {
+        display: 'block',
+        color: '#888',
+        fontSize: '0.9rem',
+        marginBottom: '8px'
+    },
+    textData: {
+        fontSize: '1.5rem',
+        color: '#fff',
+        margin: 0
+    },
+    input: {
+        width: '100%',
+        padding: '12px',
+        backgroundColor: '#2d2d2d',
+        border: '1px solid #444',
+        borderRadius: '6px',
+        color: 'white',
+        fontSize: '1.1rem',
+        outline: 'none'
+    },
+    // Tabla
+    subTitle: {
+        marginTop: 0,
+        marginBottom: '20px',
+        borderLeft: '4px solid #4dabf7',
+        paddingLeft: '10px',
+        color: '#fff'
+    },
+    tableContainer: {
+        overflowX: 'auto'
+    },
+    table: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        color: '#e0e0e0'
+    },
+    th: {
+        textAlign: 'left',
+        padding: '12px',
+        borderBottom: '2px solid #444',
+        color: '#adb5bd'
+    },
+    td: {
+        padding: '15px 12px',
+    },
+    inputTable: {
+        width: '100px',
+        padding: '8px',
+        backgroundColor: '#2d2d2d',
+        border: '1px solid #444',
+        borderRadius: '4px',
+        color: 'white',
+        textAlign: 'center'
+    }
+};
+
+export default DetalleFormulaPage;

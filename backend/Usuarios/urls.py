@@ -6,5 +6,5 @@ urlpatterns = [
     path('usuarios/', UsuarioListCreateView.as_view(), name='usuario-list-create'),
 
     # Esta ruta maneja GET/PUT/DELETE para un usuario específico por su RFID
-    path('usuarios/<str:rfid>/', UsuarioDetailView.as_view(), name='usuario-detail'),
+    path('usuarios/<int:id>/', UsuarioDetailView.as_view(), name='usuario-detail'),
 ]

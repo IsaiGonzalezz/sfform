@@ -26,6 +26,10 @@ urlpatterns = [
     path('api/', include('Formulas.urls')),
     path('api/', include('Ingredientes.urls')),
     path('api/', include('Operadores.urls')),
+    path('api/', include('Login.urls')),
+    path('api/', include('Dashboard.urls')),
+    path('api/', include('Produccion.urls')),
+    #path('api/', include('Inventario.urls'))
 ]
 
 if settings.DEBUG:

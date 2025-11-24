@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,15 +39,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    #'rest_framework.authtoken',
     'corsheaders',
+    'Dashboard',
     'Estaciones',
     'Empresa',
     'Formulas',
     'Ingredientes',
+    'Inventario',
+    'Login',
     'Operadores',
+    'Produccion',
     'Usuarios',
 
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # Definimos JWT como el método de autenticación principal
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # Puedes mantener el SessionAuthentication para el navegador
+        'rest_framework.authentication.SessionAuthentication', 
+    ),
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -147,3 +163,27 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+AUTH_USER_MODEL = 'Usuarios.Usuario'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+SIMPLE_JWT = {
+    # 1. Access Token: el token que se usa para las peticiones API
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Dura 1 hora 
+    # 2. Refresh Token: se usa para obtener un nuevo Access Token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Dura 1 día
+
+    # 3. Al usar un refresh invalida el token anterior
+    'ROTATE_REFRESH_TOKENS': True, 
+    
+    # 4. Obliga al cliente a usar el nuevo token de forma inmediata
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    # 3. Permite usar el ID de usuario personalizado (tu rfid/correo) en el token
+    # Necesario para saber qué usuario está pidiendo el token.
+    'USER_ID_FIELD': 'correo',
+    'USER_ID_CLAIM': 'correo',
+    
+    'AUTH_HEADER_TYPES': ('Bearer',), # El frontend enviará "Authorization: Bearer <token>"
+
+}

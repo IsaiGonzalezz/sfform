@@ -4,7 +4,6 @@ from Ingredientes.models import Ingredientes
 
 class Formulas (models.Model):
     idform = models.CharField(max_length=20,primary_key=True)
-    folio = models.CharField(max_length=20)
     nombre = models.CharField(max_length=50)
 
     class Meta : 

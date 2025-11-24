@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+// ELIMINAR: import axios from 'axios';
+// === CAMBIO 1: Importar el hook de autenticación ===
+import { useAuth } from '../context/useAuth';
+// ===============================================
 import {
     Button,
     Box,
     Typography,
     CircularProgress,
-    Paper, // Usamos Paper para el fondo
-    Grid,  // Usamos Grid para distribuir
+    Paper,
+    Grid,
     Divider,
-    useTheme // Para acceder al tema
+    useTheme
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -16,18 +19,17 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import PhoneIcon from '@mui/icons-material/Phone';
 import AddIcon from '@mui/icons-material/Add';
-import FingerprintIcon from '@mui/icons-material/Fingerprint'; // Para RFC
-import PersonIcon from '@mui/icons-material/Person'; // Para Contacto
-import AlternateEmailIcon from '@mui/icons-material/AlternateEmail'; // Para Correo
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import PersonIcon from '@mui/icons-material/Person';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import EmpresaFormModal from '../components/EmpresaFormModal';
-// Ya no necesitamos 'Empresa.css'
-// import './styles/Empresa.css';
 
-// URL base del backend Django
-const BASE_API_URL = 'http://127.0.0.1:8000';
-const API_URL_EMPRESA = `${BASE_API_URL}/api/empresa/`;
+// URLs RELATIVAS: Usaremos estas para la instancia de Axios
+// La instancia ya tiene http://127.0.0.1:8000/api
+const API_URL_EMPRESA_REL = '/empresa/'; 
 
-// Pequeño componente helper para mostrar la info
+
+// Pequeño componente helper para mostrar la info (sin cambios)
 const InfoItem = ({ icon, label, value }) => {
     const theme = useTheme();
     return (
@@ -47,22 +49,27 @@ const InfoItem = ({ icon, label, value }) => {
 
 
 function EmpresaPage() {
+    // === CAMBIO 2: Obtener la instancia protegida ===
+    const { axiosInstance } = useAuth(); 
+    // ===============================================
+
     const [empresaData, setEmpresaData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isModalOpen, setModalOpen] = useState(false);
-    const theme = useTheme(); // Obtenemos el tema
+    const theme = useTheme();
 
-    // --- (La lógica de fetchEmpresaData, useEffect, handleOpen/CloseModal
-    //      sigue siendo exactamente la misma. Es buena lógica.) ---
-
+    // --- Lógica de fetchEmpresaData ---
     const fetchEmpresaData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(API_URL_EMPRESA);
+            // === CAMBIO 3: Usar axiosInstance.get ===
+            const response = await axiosInstance.get(API_URL_EMPRESA_REL);
+            // ==========================================
             let data = null;
 
+            // Esta lógica es crucial si tu API devuelve una lista o un objeto simple
             if (Array.isArray(response.data) && response.data.length > 0) {
                 data = response.data[0];
             } else if (!Array.isArray(response.data) && response.data) {
@@ -78,12 +85,13 @@ function EmpresaPage() {
             }
         } catch (err) {
             console.error('Error al obtener datos de la empresa:', err);
+            // El Interceptor maneja el 401; si el error llega aquí, es un fallo de BD o 404/403
             setError(err.message || 'No se pudo conectar a la API.');
             setEmpresaData(null);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [axiosInstance]); // <-- Agregar axiosInstance a dependencias
 
     useEffect(() => {
         fetchEmpresaData();
@@ -92,9 +100,7 @@ function EmpresaPage() {
     const handleOpenModal = () => setModalOpen(true);
     const handleCloseModal = () => setModalOpen(false);
 
-    // --- RENDERIZADO ---
-
-    // Estado de carga
+    // --- RENDERIZADO DE CARGA ---
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -103,7 +109,7 @@ function EmpresaPage() {
         );
     }
 
-    // Estado sin datos o con error
+    // --- RENDERIZADO SIN DATOS (REGISTRAR) ---
     if (!empresaData) {
         return (
             <Box sx={{
@@ -112,7 +118,7 @@ function EmpresaPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                minHeight: 'calc(100vh - 200px)', // Centrado vertical
+                minHeight: 'calc(100vh - 200px)', 
                 p: 3
             }}>
                 <BusinessIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
@@ -125,10 +131,9 @@ function EmpresaPage() {
                         : 'Registra los datos de tu empresa para empezar.'}
                 </Typography>
 
-                {/* --- BOTÓN CAMBIADO --- */}
                 <Button
                     variant="contained"
-                    color="success" // Verde
+                    color="success" 
                     startIcon={<AddIcon />}
                     onClick={handleOpenModal}
                     sx={{
@@ -141,22 +146,23 @@ function EmpresaPage() {
                     Registrar Empresa
                 </Button>
 
+                {/* Modal para CREAR */}
                 <EmpresaFormModal
                     open={isModalOpen}
                     onClose={handleCloseModal}
                     onSaveSuccess={fetchEmpresaData}
-                    empresaToEdit={null}
+                    empresaToEdit={null} // Es null porque estamos creando
                 />
             </Box>
         );
     }
 
-    // --- ESTADO CON DATOS (EL NUEVO DISEÑO) ---
+    // --- RENDERIZADO CON DATOS (MOSTRAR/EDITAR) ---
     return (
         <Paper sx={{
             width: '100%',
-            overflow: 'hidden', // Para contener bordes
-            borderRadius: '12px' // Bordes redondeados
+            overflow: 'hidden', 
+            borderRadius: '12px' 
         }}>
             
             {/* Encabezado con Título y Botón Editar */}
@@ -164,14 +170,13 @@ function EmpresaPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 3, // Padding del encabezado
+                p: 3, 
             }}>
                 <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
                     <BusinessIcon sx={{ mr: 1.5, verticalAlign: 'middle', fontSize: '2rem' }} />
                     Perfil de la Empresa
                 </Typography>
 
-                {/* --- BOTÓN CAMBIADO --- */}
                 <Button
                     variant="contained"
                     color="warning"
@@ -195,15 +200,9 @@ function EmpresaPage() {
                             Logotipo
                         </Typography>
                         <Box sx={{
-                            width: '100%',
-                            height: 200,
-                            borderRadius: '8px',
-                            border: `2px dashed ${theme.palette.divider}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            overflow: 'hidden',
-                            backgroundColor: theme.palette.action.hover, // Un fondo sutil
+                            width: '100%', height: 200, borderRadius: '8px',
+                            border: `2px dashed ${theme.palette.divider}`, display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', overflow: 'hidden', backgroundColor: theme.palette.action.hover, 
                         }}>
                             {empresaData.logotipo ? (
                                 <img
@@ -213,12 +212,11 @@ function EmpresaPage() {
                                     onError={(e) => {
                                         e.target.onerror = null; 
                                         e.target.style.display = 'none';
-                                        // Crea un placeholder si la imagen falla
                                         e.target.nextElementSibling.style.display = 'flex';
                                     }}
                                 />
                             ) : null}
-                             <Box sx={{ 
+                            <Box sx={{ 
                                 display: empresaData.logotipo ? 'none' : 'flex',
                                 color: 'text.secondary' 
                             }}>
@@ -251,7 +249,6 @@ function EmpresaPage() {
                             icon={<LocationOnIcon />}
                             label="Dirección"
                             value={
-                                // Construimos la dirección completa, filtrando partes vacías
                                 [
                                     empresaData.calle,
                                     empresaData.colonia ? `Col. ${empresaData.colonia}` : null,
@@ -259,9 +256,9 @@ function EmpresaPage() {
                                     empresaData.estado,
                                     empresaData.cp ? `C.P. ${empresaData.cp}` : null
                                 ]
-                                .filter(Boolean) // Elimina los nulos o strings vacíos
-                                .join(', ') // Une todo con comas
-                                || 'No especificada' // Fallback por si todo está vacío
+                                .filter(Boolean) 
+                                .join(', ') 
+                                || 'No especificada' 
                             }
                         />
 
@@ -291,12 +288,12 @@ function EmpresaPage() {
                 </Grid>
             </Box>
 
-            {/* Modal para editar (sin cambios) */}
+            {/* Modal para editar */}
             <EmpresaFormModal
                 open={isModalOpen}
                 onClose={handleCloseModal}
                 onSaveSuccess={fetchEmpresaData}
-                empresaToEdit={empresaData}
+                empresaToEdit={empresaData} // Enviamos los datos existentes para editar
             />
         </Paper>
     );

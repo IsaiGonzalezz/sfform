@@ -1,6 +1,5 @@
 /* --- Contenedor Principal --- */
 .formula-page {
-    padding: 1.5rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -88,6 +87,11 @@
     color: #aaa;
     margin-bottom: 0.5rem;
 }
+
+.input-span-2 {
+    grid-column: span 3;
+}
+
 .input-group input,
 .input-group select {
     width: 100%;
@@ -151,14 +155,20 @@
     background-color: #555;
 }
 
-.btn-primary { background-color: #2e7d32; } /* Verde Oscuro */
+.btn-primary { 
+
+    background-color: #2e7d32; 
+} /* Verde Oscuro */
 .btn-primary:hover:not(:disabled) { background-color: #1b5e20; transform: scale(1.02); }
 
-.btn-secondary { background-color: #ed6c02; } /* Naranja/Ámbar */
-.btn-secondary:hover:not(:disabled) { background-color: #e65100; transform: scale(1.02); }
+.btn-warning { background-color: #ed6c02; } /* Naranja/Ámbar */
+.btn-warning:hover:not(:disabled) { background-color: #e65100; transform: scale(1.02); }
 
-.btn-default { background-color: #444; } /* Gris */
-.btn-default:hover:not(:disabled) { background-color: #555; transform: scale(1.02); }
+.btn-default { background-color: #f84545; } /* Rojo */
+.btn-default:hover:not(:disabled) { background-color: #c00404; transform: scale(1.02); }
+
+.btn-edit { background-color: #c1902d; } 
+.btn-edit:hover:not(:disabled) { background-color: #c37f00; transform: scale(1.02); }
 
 
 /* --- Tabla de Ingredientes --- */
