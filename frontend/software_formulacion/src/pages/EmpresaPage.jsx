@@ -25,7 +25,6 @@ import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import EmpresaFormModal from '../components/EmpresaFormModal';
 
 // URLs RELATIVAS: Usaremos estas para la instancia de Axios
-// La instancia ya tiene http://127.0.0.1:8000/api
 const API_URL_EMPRESA_REL = '/empresa/'; 
 
 

@@ -139,8 +139,28 @@ function IngredientesPage() {
             field: 'actions', headerName: 'Acciones', width: 120, sortable: false, disableColumnMenu: true,
             renderCell: (params) => (
                 <Box>
-                    <IconButton onClick={() => handleOpenModal(params.row)} sx={{ color: '#38ef7d' }}><EditIcon /></IconButton>
-                    <IconButton onClick={() => handleOpenConfirm(params.row)} sx={{ color: '#ff6b6b' }}><DeleteOutlineIcon /></IconButton>
+                    <IconButton onClick={() => handleOpenModal(params.row)}>
+                        <EditIcon 
+                            style={{
+                                backgroundColor: '#229D1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
+                    </IconButton>
+                    <IconButton onClick={() => handleOpenConfirm(params.row)}>
+                        <DeleteOutlineIcon 
+                            style={{
+                                backgroundColor: '#9D1B1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
+                    </IconButton>
                 </Box>
             ),
         },

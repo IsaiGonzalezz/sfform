@@ -3,12 +3,10 @@ from Formulas.models import Formulas
 from Usuarios.models import Usuario
 from Ingredientes.models import Ingredientes
 
-# --- Modelo Corregido ---
+# --- Modelo 
 class Produccion(models.Model):
     folio = models.AutoField(primary_key=True)
-    op = models.CharField(max_length=20, null=True, blank=True) # Permitir nulos/vacíos
-    
-    # FK a Formulas. Asumo que Formulas.IdForm NO es entero, por eso el CASCADE
+    op = models.CharField(max_length=20)
     idform = models.ForeignKey(
         Formulas, 
         on_delete=models.SET_NULL, # Usamos SET_NULL para evitar borrados en cascada no deseados
@@ -20,17 +18,10 @@ class Produccion(models.Model):
     
     lote = models.CharField(max_length=50, null=True, blank=True)
     pesform = models.FloatField(null=True, blank=True)
-    pesing = models.FloatField(null=True, blank=True)
-    pmax = models.FloatField(null=True, blank=True)
-    pmin = models.FloatField(null=True, blank=True)
-    
-    # Los campos booleanos o de estado a menudo permiten valores nulos
-    pesado = models.IntegerField(default=0) # Asumiendo 0 o 1 (tinyint)
     estatus = models.IntegerField(default=0)
     
-    fecha = models.DateTimeField(null=True, blank=True)
-    
-    # FK a Usuario: CLAVE CORREGIDA
+    fecha = models.DateTimeField()
+
     # Apunta al campo 'id' entero del modelo Usuario.
     idusu = models.ForeignKey(
         Usuario, 
@@ -44,6 +35,8 @@ class Produccion(models.Model):
     class Meta : 
         db_table = 'Produccion'
         managed = False # Mantienes la gestión de la tabla fuera de Django
+
+
 
 
 class DetalleProduccion(models.Model):
@@ -74,4 +67,4 @@ class DetalleProduccion(models.Model):
     
     class Meta:
         db_table = 'Detalle_Produccion'
-        managed = False # Si mantienes el esquema managed=False
+        managed = False

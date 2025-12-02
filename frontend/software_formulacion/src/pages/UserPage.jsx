@@ -14,7 +14,7 @@ import GroupIcon from '@mui/icons-material/Group'; // <-- Icono para Usuarios
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // <-- Icono para Advertencia
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
-const API_URL = 'http://127.0.0.1:8000/api/usuarios/';
+const API_URL_REL = `/usuarios/`;
 
 const darkTheme = createTheme({
     palette: {
@@ -65,7 +65,7 @@ function UsersPage() {
     const fetchUsers = useCallback(async () => {
         setLoading(true); // Ponemos en estado de carga
         try {
-            const response = await axiosInstance.get(API_URL);
+            const response = await axiosInstance.get(API_URL_REL);
             setUsers(response.data);
         } catch (error) {
             console.error("Hubo un error al obtener los usuarios:", error);
@@ -112,7 +112,7 @@ function UsersPage() {
 
         try {
             // Hacemos la petición DELETE a la URL específica del usuario
-            await axiosInstance.delete(`${API_URL}${userToDelete.id}/`);
+            await axiosInstance.delete(`${API_URL_REL}${userToDelete.id}/`);
             console.log('Usuario borrado exitosamente:', userToDelete.id);
             fetchUsers(); // Recargamos la tabla para que desaparezca el usuario
         } catch (error) {
@@ -139,10 +139,26 @@ function UsersPage() {
                 <Box>
                     {/* El botón de editar ahora llama a 'handleOpenModal' con los datos de la fila */}
                     <IconButton onClick={() => handleOpenModal(params.row)} sx={{ color: '#38ef7d' }}>
-                        <EditIcon />
+                        <EditIcon
+                            style={{
+                                backgroundColor: '#229D1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
                     <IconButton onClick={() => handleOpenConfirm(params.row)} sx={{ color: '#ff6b6b' }}>
-                        <DeleteOutlineIcon />
+                        <DeleteOutlineIcon
+                            style={{
+                                backgroundColor: '#9D1B1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
                 </Box>
             ),
@@ -233,7 +249,7 @@ function UsersPage() {
                                 fontWeight: 'bold',
                                 fontSize: '0.95rem',
                                 borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                
+
                             },
                             // Celdas
                             '& .MuiDataGrid-cell': {

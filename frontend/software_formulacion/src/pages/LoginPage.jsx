@@ -4,7 +4,7 @@ import {
     InputAdornment, IconButton, useTheme
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { useAuth } from '../context/UseAuth'; 
+import { useAuth } from '../context/useAuth'; 
 
 // --- Iconos ---
 import {
@@ -13,6 +13,8 @@ import {
 } from '@mui/icons-material';
 
 import './styles/Login.css';
+import logoAnimado from '../assets/GifSiaumex.gif';
+
 
 function LoginPage() {
     const theme = useTheme(); 
@@ -82,7 +84,12 @@ function LoginPage() {
                     ))}
                 </div>
                 <Box sx={{ zIndex: 2, position: 'relative' }}>
-                    <BiotechOutlined sx={{ fontSize: 70, color: 'primary.main' }} />
+                    <BiotechOutlined 
+                        sx={{ fontSize: 70}} 
+                        style={{
+                            color : '#33799CFF'
+                        }}
+                    />
                     <Typography 
                         variant="h2" 
                         sx={{ fontWeight: 600, mt: 2, letterSpacing: '1px' }}
@@ -125,16 +132,23 @@ function LoginPage() {
                         maxWidth: 400,
                     }}
                 >
-                    <ScienceOutlined 
-                        sx={{ 
-                            fontSize: 40, 
-                            color: 'primary.main',
-                            display: { xs: 'block', sm: 'none' },
-                            mb: 2
-                        }} 
+                    <Box
+                        component="img"
+                        src={logoAnimado} // Tu variable importada
+                        alt="Logo Empresa Animado"
+                        sx={{
+                            width: 70,       
+                            height: 'auto',
+                            mb: 2, // Margen abajo para separarlo del texto
+                        }}
+                        style={{
+                            backgroundColor : '#FFFFFFFF',
+                            borderRadius: '8px',
+                            padding: '3px', 
+                        }}
                     />
 
-                    <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: '#fff' }}>
+                    <Typography variant="h4" sx={{ mb: 1, fontWeight: 500, color: '#fff' }}>
                         Iniciar Sesión
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>

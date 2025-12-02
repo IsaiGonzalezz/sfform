@@ -16,7 +16,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // <-- Icono pa
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'; // <-- Icono para Tabla Vacía
 
 // URL RELATIVA: Usaremos la ruta relativa para la instancia de Axios
-const API_URL_ESTACIONES_REL = 'http://127.0.0.1:8000/api/estaciones/';
+const API_URL_ESTACIONES_REL = '/estaciones/';
 
 // Tema oscuro (tomado del diseño de UsersPage)
 const darkTheme = createTheme({
@@ -139,11 +139,27 @@ function EstacionesPage() {
             disableColumnMenu: true,
             renderCell: (params) => (
                 <Box>
-                    <IconButton onClick={() => handleOpenModal(params.row)} sx={{ color: '#38ef7d' }} aria-label="editar">
-                        <EditIcon />
+                    <IconButton onClick={() => handleOpenModal(params.row)} aria-label="editar">
+                        <EditIcon 
+                            style={{
+                                backgroundColor: '#229D1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
-                    <IconButton onClick={() => handleOpenConfirm(params.row)} sx={{ color: '#ff6b6b' }} aria-label="eliminar">
-                        <DeleteOutlineIcon />
+                    <IconButton onClick={() => handleOpenConfirm(params.row)} aria-label="eliminar">
+                        <DeleteOutlineIcon 
+                            style={{
+                                backgroundColor: '#9D1B1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
                 </Box>
             ),

@@ -143,14 +143,15 @@ export default function FormulaPage() {
     };
 
     const handleIngredienteSearchChange = (e) => {
-        const nombre = e.target.value;
-        const ingredienteEncontrado = listaIngredientes.find(ing => ing.nombre === nombre);
-        const id = ingredienteEncontrado ? ingredienteEncontrado.id : '';
+        const selectedId = e.target.value;
+        
+        // Buscamos el objeto completo para obtener también el nombre
+        const ingredienteEncontrado = listaIngredientes.find(ing => String(ing.id) === String(selectedId));
 
         setCurrentIngrediente(prev => ({
             ...prev,
-            id: id,
-            nombre: nombre
+            id: selectedId,
+            nombre: ingredienteEncontrado ? ingredienteEncontrado.nombre : ''
         }));
     };
 
@@ -299,7 +300,7 @@ export default function FormulaPage() {
                         />
                     </div>
                     <div className="form-actions">
-                        <button type="submit" className="btn btn-primary" disabled={formulaDefinida || isSaving}>
+                        <button type="submit" className="btn btn-primary" disabled={formulaDefinida || isSaving} style={{ width: '100%' }}>
                             <Save /> Seleccionar Ingredientes
                         </button>
                     </div>
@@ -312,21 +313,23 @@ export default function FormulaPage() {
                 <form onSubmit={handleAddIngrediente} className="form-grid-ingredientes">
                     <div className="input-group">
                         <label htmlFor="nombreIngrediente">Nombre del Ingrediente</label>
-                        <input
-                            list="ingredientes-list"
+                        <select
                             id="nombreIngrediente"
-                            name="nombre"
-                            value={currentIngrediente.nombre}
-                            onChange={handleIngredienteSearchChange}
-                            placeholder={isLoading ? "Cargando ingredientes..." : "Busca un ingrediente..."}
-                            autoComplete="off"
+                            className="form-select" // Clase para estilo bonito
+                            value={currentIngrediente.id} // Vinculamos al ID, no al nombre
+                            onChange={handleIngredienteSearchChange} // Usamos la nueva función
                             disabled={isLoading || isSaving}
-                        />
-                        <datalist id="ingredientes-list">
+                        >
+                            <option value="">
+                                {isLoading ? "Cargando..." : "Selecciona un ingrediente"}
+                            </option>
+                            
                             {listaIngredientes.map(ing => (
-                                <option key={ing.id} data-id={ing.id} value={ing.nombre} />
+                                <option key={ing.id} value={ing.id}>
+                                    {ing.nombre}
+                                </option>
                             ))}
-                        </datalist>
+                        </select>
                     </div>
                     <div className="input-group">
                         <label htmlFor="pesoIngrediente">Peso Objetivo (Kg)</label>
@@ -388,14 +391,30 @@ export default function FormulaPage() {
                                         <td style={{textAlign:'right'}}>{ing.tolerancia}%</td>
                                         <td className="table-actions">
                                             <button className="btn-icon btn-icon-edit" disabled={isSaving} onClick={() => handleEditIngrediente(ing)}>
-                                                <Edit />
+                                                <Edit 
+                                                    style={{
+                                                        backgroundColor: '#1B609DFF',   // fondo
+                                                        borderRadius: '8px',          // esquinas redondeadas
+                                                        padding: '6px',               // espacio interno alrededor del ícono
+                                                        color: '#FFFFFF',                // color del ícono
+                                                        fontSize: '32px'              // tamaño del ícono
+                                                    }}
+                                                />
                                             </button>
                                             <button
                                                 className="btn-icon btn-icon-delete"
                                                 onClick={() => handleRemoveIngrediente(ing.id)}
                                                 disabled={isSaving}
                                             >
-                                                <Delete />
+                                                <Delete 
+                                                    style={{
+                                                        backgroundColor: '#9D1B1BFF',   // fondo
+                                                        borderRadius: '8px',          // esquinas redondeadas
+                                                        padding: '6px',               // espacio interno alrededor del ícono
+                                                        color: '#FFFFFF',                // color del ícono
+                                                        fontSize: '32px'              // tamaño del ícono
+                                                    }}
+                                                />
                                             </button>
                                         </td>
                                     </tr>

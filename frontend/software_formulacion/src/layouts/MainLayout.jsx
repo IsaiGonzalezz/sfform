@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/UseAuth';
+import { useAuth } from '../context/useAuth';
 import { Link as RouterLink, useLocation, Outlet } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, Typography, Divider,

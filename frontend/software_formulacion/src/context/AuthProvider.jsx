@@ -6,7 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import { AuthContext } from './AuthContext';
 
 // --- CONFIGURACIÓN DE LA API ---
-const BASE_URL = 'http://127.0.0.1:8000/api'; 
+const BASE_URL = `${import.meta.env.VITE_API_URL}`; 
 
 //instancia de Axios
 const axiosInstance = axios.create({

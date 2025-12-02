@@ -98,19 +98,41 @@ WSGI_APPLICATION = 'formulacion_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+""" 
+#OPCION 1. PARA USO DE BASE DE DATOS MEDIANTE AUTENTICACION CON WINDOWS
+
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'SOFte',
-        'USER' : '',
-        'PASSWORD' : '',
-        'HOST': 'ISAÍ',  
-        'PORT': '',
+        'ENGINE': 'mssql', #POR DEFECTO
+        'NAME': 'SOFte', #NOMBRE DE LA BASE DE DATOS A USAR
+        'USER' : '', #VACIO POR DEFECTO (AUTENTICACION POR WINDOWS)
+        'PASSWORD' : '', #VACIO POR DEFECTO (AUTENTICACION POR WINDOWS)
+        'HOST': 'ISAÍ',  #NOMBRE DEL SERVER (SERVER NAME)
+        'PORT': '', #VACIO POR DEFECTO (AUTENTICACION POR WINDOWS)
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     }
 }
+"""
+
+#OPCION 2. PARA USO DE BASE DE DATOS MEDIANTE USUARIO Y CONTRASEÑA
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'SOFte',               # Nombre de tu base de datos
+        'USER': 'django_user',        # Usuario SQL 
+        'PASSWORD': '3541587873',  # Contraseña del usuario
+        'HOST': 'localhost',           # O el nombre del servidor (server name)
+        'PORT': '1433',                # Puerto por defecto de SQL Server
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=no',
+        },
+    }
+}
+
 
 
 # Password validation

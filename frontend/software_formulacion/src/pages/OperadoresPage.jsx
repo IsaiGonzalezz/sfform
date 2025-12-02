@@ -150,10 +150,26 @@ function OperadoresPage() {
             renderCell: (params) => (
                 <Box>
                     <IconButton onClick={() => handleOpenModal(params.row)} sx={{ color: '#38ef7d' }} aria-label="editar">
-                        <EditIcon />
+                        <EditIcon 
+                            style={{
+                                backgroundColor: '#229D1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
                     <IconButton onClick={() => handleOpenConfirm(params.row)} sx={{ color: '#ff6b6b' }} aria-label="eliminar">
-                        <DeleteOutlineIcon />
+                        <DeleteOutlineIcon 
+                            style={{
+                                backgroundColor: '#9D1B1BFF',   // fondo
+                                borderRadius: '8px',          // esquinas redondeadas
+                                padding: '6px',               // espacio interno alrededor del ícono
+                                color: '#FFFFFF',                // color del ícono
+                                fontSize: '32px'              // tamaño del ícono
+                            }}
+                        />
                     </IconButton>
                 </Box>
             ),

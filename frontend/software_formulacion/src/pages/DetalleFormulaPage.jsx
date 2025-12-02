@@ -2,8 +2,18 @@ import React, { useState, useMemo ,useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Save, X, Trash2, Edit3, Check, Plus } from 'lucide-react';
+import { useAuth } from '../context/useAuth';
+
+
+//INSTANCIA A LA API
+const API_URL_FORMULAS_REL = '/formulas/'
+
+
 
 const DetalleFormulaPage = () => {
+
+    const { axiosInstance } = useAuth();
+
     const { id } = useParams(); // Obtiene el ID de la URL (ej: FRM-001)
     const navigate = useNavigate();
 
@@ -26,7 +36,7 @@ const DetalleFormulaPage = () => {
         const fetchFormula = async () => {
             try {
                 // Ajusta la URL base a tu configuración local
-                const response = await axios.get(`http://127.0.0.1:8000/api/formulas/${id}/`);
+                const response = await axiosInstance.get(`${API_URL_FORMULAS_REL}${id}/`);
                 setFormula(response.data);
                 setFormData(response.data); // Inicializamos el form con los datos traídos
                 setLoading(false);
@@ -87,7 +97,7 @@ const DetalleFormulaPage = () => {
                 }))
             };
 
-            await axios.put(`http://127.0.0.1:8000/formulas/${id}/`, payload);
+            await axiosInstance.patch(`${API_URL_FORMULAS_REL}${id}/`, payload);
 
             alert('Fórmula actualizada correctamente');
             setIsEditing(false);
@@ -136,7 +146,7 @@ const DetalleFormulaPage = () => {
                 <div style={styles.titleContainer}>
                     <h1 style={styles.title}>
                         {isEditing ? 'Editando: ' : 'Detalle de: '}
-                        <span style={{ color: '#4dabf7' }}>{formula.idform}</span>
+                        <span style={{ color: '#4DF764FF' }}>{formula.idform}</span>
                     </h1>
                 </div>
 
@@ -144,10 +154,12 @@ const DetalleFormulaPage = () => {
                 <div style={styles.actions}>
                     {!isEditing ? (
                         <>
+                            {/* BOTON DE ELIMINACION DESCARTADO  * */}
                             <button style={{ ...styles.btnDelete, display: 'none' }} onClick={handleDelete} hidden={true}>
                                 <Trash2 size={18} /> Eliminar
                             </button>
-                            <button style={{ ...styles.btnEdit, display: 'none' }} onClick={() => setIsEditing(true)} hidden={true}>
+
+                            <button style={{ ...styles.btnEdit }} onClick={() => setIsEditing(true)} hidden={true}>
                                 <Edit3 size={18} /> Editar
                             </button>
                         </>
@@ -302,7 +314,7 @@ const styles = {
     },
     // Botones
     btnEdit: {
-        backgroundColor: '#228be6', color: 'white', border: 'none', padding: '10px 20px',
+        backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
         borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
     },
     btnDelete: {
