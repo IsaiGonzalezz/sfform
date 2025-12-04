@@ -1,72 +1,110 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useAuth } from '../context/useAuth'; // Importamos el hook de autenticación
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useAuth } from '../context/useAuth';
+import html2pdf from 'html2pdf.js';
+import ConsultarProduccionModal from '../components/ConsultarProduccionesModal';
+import ReporteProduccion from '../components/ReporteProduccion';
 import './styles/Produccion.css';
+import '../components/styles/Reporte.css';
 
-// --- ICONOS ---
-import AddIcon from '@mui/icons-material/Add';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CloseIcon from '@mui/icons-material/Close';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import PrintIcon from '@mui/icons-material/Print';
-import SaveIcon from '@mui/icons-material/Save';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
-import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
-import { ClearAll, Edit } from '@mui/icons-material';
+// --- ICONOS DE MATERIAL UI ---
+import {
+    Assignment, LibraryAdd, PlaylistAddCheck,
+    Save, Add, Edit, ClearAll, PictureAsPdf,
+    Visibility, Delete, Close, Print, Inventory2,
+    Science
+} from '@mui/icons-material';
+import CircularProgress from '@mui/material/CircularProgress';
 
-// --- URLs RELATIVAS (Ajusta si es necesario) --- 
-const API_URL_FORMULAS_REL = `/formulas/`;
-const API_URL_PRODUCCION_REL = `/produccion/`
+// --- URLs RELATIVAS ---
+const API_URL_FORMULAS_REL = '/formulas/';
+const API_URL_PRODUCCION_REL = '/produccion/';
+const API_URL_EMPRESA_REL = '/empresa/';
 
-const ProduccionPage = () => {
-    const { axiosInstance, user } = useAuth(); // Obtenemos el usuario para mandarlo en el POST
+export default function ProduccionPage() {
+    const { axiosInstance, user } = useAuth();
+    const reportePdfRef = useRef(null);
 
-    // --- ESTADOS DE PASOS ---
+    // --- ESTADOS PRINCIPALES ---
     const [paso1Completo, setPaso1Completo] = useState(false);
 
-    // --- ESTADOS DE DATOS ---
+    // Datos de Cabecera (Paso 1)
     const [produccionData, setProduccionData] = useState({
         orden: '',
         lote: ''
     });
 
-    // Estado para guardar las fórmulas traídas de la API (Base de datos)
-    const [listaFormulasBase, setListaFormulasBase] = useState([]);
-    const [isLoadingFormulas, setIsLoadingFormulas] = useState(false);
-
-    // --- Estados para el formulario del PASO 2 ---
+    // Datos de Selección (Paso 2)
     const [formulaSeleccionadaId, setFormulaSeleccionadaId] = useState('');
     const [pesoObjetivo, setPesoObjetivo] = useState('');
 
-    // Aquí guardaremos las fórmulas YA CALCULADAS listas para producción
+    // Lista de fórmulas agregadas a la producción (Tabla)
     const [formulasAgregadas, setFormulasAgregadas] = useState([]);
 
-    // --- ESTADOS DE UI ---
+    // --- ESTADOS DE CARGA Y DATOS EXTERNOS ---
+    const [listaFormulasBase, setListaFormulasBase] = useState([]);
+    const [empresaInfo, setEmpresaInfo] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [showConsultar, setShowConsultar] = useState(false);
+
+    // Estados para Modals y PDF
     const [modalOpen, setModalOpen] = useState(false);
     const [currentModalData, setCurrentModalData] = useState(null);
-    const [isSaving, setIsSaving] = useState(false);
+    const [pdfData, setPdfData] = useState(null); // Data específica para generar el PDF
 
-    // --- 1. CARGA INICIAL DE FÓRMULAS ---
+    // --- HELPER: Convertir Imagen a Base64 (Vital para el PDF) ---
+    const convertToBase64 = async (url) => {
+        if (!url) return null;
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (err) {
+            console.error('convertToBase64 error:', err);
+            return null;
+        }
+    };
+
+    // --- 1. CARGA INICIAL (Fórmulas + Empresa) ---
     useEffect(() => {
-        const fetchFormulas = async () => {
+        const fetchInitialData = async () => {
             if (!axiosInstance) return;
-            setIsLoadingFormulas(true);
+            setIsLoading(true);
             try {
-                const res = await axiosInstance.get(API_URL_FORMULAS_REL);
-                setListaFormulasBase(res.data);
-            } catch (error) {
-                console.error("Error cargando fórmulas:", error);
-                alert("Error al cargar el catálogo de fórmulas.");
+                // Usamos Promise.all para cargar todo junto
+                const [formulasRes, empresaRes] = await Promise.all([
+                    axiosInstance.get(API_URL_FORMULAS_REL),
+                    axiosInstance.get(API_URL_EMPRESA_REL)
+                ]);
+
+                setListaFormulasBase(formulasRes.data);
+
+                // Procesar logo de empresa
+                if (empresaRes.data && empresaRes.data.length > 0) {
+                    let empresaDatos = empresaRes.data[0];
+                    if (empresaDatos.logotipo) {
+                        const base64Logo = await convertToBase64(empresaDatos.logotipo);
+                        if (base64Logo) empresaDatos.logotipo = base64Logo;
+                    }
+                    setEmpresaInfo(empresaDatos);
+                }
+            } catch (err) {
+                console.error("Error cargando datos iniciales:", err);
+                alert('No se pudieron cargar los datos del servidor.');
             } finally {
-                setIsLoadingFormulas(false);
+                setIsLoading(false);
             }
         };
-        fetchFormulas();
+
+        fetchInitialData();
     }, [axiosInstance]);
 
-
-    // --- CÁLCULOS DERIVADOS (useMemo) ---
+    // --- CÁLCULOS DERIVADOS ---
     const { pesoTotal, totalFormulas } = useMemo(() => {
         const peso = formulasAgregadas.reduce((acc, f) => acc + parseFloat(f.pesform || 0), 0);
         return {
@@ -77,8 +115,17 @@ const ProduccionPage = () => {
 
     const paso2Completo = formulasAgregadas.length > 0;
 
-    // --- MANEJADORES DE EVENTOS ---
+    // --- FORMATO DE NÚMEROS ---
+    const formatearValor = (valor) => {
+        const numero = parseFloat(valor);
+        if (isNaN(numero)) return '0.00';
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numero);
+    };
 
+    // --- MANEJADORES DE EVENTOS (INPUTS) ---
     const handlePaso1Change = (e) => {
         const { name, value } = e.target;
         setProduccionData(prev => ({ ...prev, [name]: value }));
@@ -93,82 +140,72 @@ const ProduccionPage = () => {
         }
     };
 
-    // --- LÓGICA DE ESCALADO Y CÁLCULO  ---
+    // --- LÓGICA DE ESCALADO Y CÁLCULO (AÑADIR FÓRMULA) ---
     const handleAddFormula = async (e) => {
         e.preventDefault();
         const pesoObjNum = parseFloat(pesoObjetivo);
 
-        // 1. Validaciones básicas de UI
         if (!formulaSeleccionadaId || !pesoObjetivo || pesoObjNum <= 0) {
-            alert('Selecciona una fórmula E ingresa un Peso Objetivo válido (mayor a 0).');
+            alert('Selecciona una fórmula E ingresa un Peso Objetivo válido.');
             return;
         }
 
         try {
-            // 2. PETICIÓN AL BACKEND: Traemos la fórmula específica con sus detalles
-            // Usamos el ID seleccionado para obtener el JSON que me acabas de mostrar
+            // Traemos los detalles frescos del backend
             const res = await axiosInstance.get(`${API_URL_FORMULAS_REL}${formulaSeleccionadaId}/`);
             const formulaBackend = res.data;
 
-            console.log("Datos recibidos del backend:", formulaBackend);
-
-            // 3. Validar que existan los detalles (LA CLAVE: se llama 'detalles')
-            const listaDetalles = formulaBackend.detalles;
+            // 'ingredientes' para escritura o 'detalles' para lectura según tu API
+            const listaDetalles = formulaBackend.detalles || formulaBackend.ingredientes;
 
             if (!listaDetalles || listaDetalles.length === 0) {
-                alert("Error: La fórmula seleccionada no tiene ingredientes ('detalles') cargados en el sistema.");
+                alert("Error: La fórmula seleccionada no tiene ingredientes cargados.");
                 return;
             }
 
-            // 4. Calcular el peso total original de la fórmula base
-            // OJO: En tu JSON el peso viene como 'cantidad'
+            // Suma del peso base original
             const pesoTotalBase = listaDetalles.reduce((acc, det) => acc + parseFloat(det.cantidad), 0);
 
             if (pesoTotalBase === 0) {
-                alert("Error: La fórmula base suma 0 Kg. Revisa los ingredientes en el catálogo.");
+                alert("Error: La fórmula base suma 0 Kg.");
                 return;
             }
 
-            // 5. Obtener el FACTOR de escalado (Regla de tres)
+            // Factor de escalado
             const factor = pesoObjNum / pesoTotalBase;
 
-            // 6. Calcular nuevos pesos para la producción
+            // Calcular nuevos pesos
             const ingredientesCalculados = listaDetalles.map(det => {
-                const pesoBaseIng = parseFloat(det.cantidad); // Usamos 'cantidad' según tu JSON
+                const pesoBaseIng = parseFloat(det.cantidad);
                 const nuevoPeso = pesoBaseIng * factor;
 
-                // Tolerancia viene como entero (ej: 20), lo convertimos a porcentaje
                 const toleranciaPorcentaje = parseFloat(det.tolerancia || 0);
                 const valorTolerancia = nuevoPeso * (toleranciaPorcentaje / 100);
 
                 return {
                     iding: det.iding,
                     nombre: det.nombre_ingrediente || "Ingrediente",
-                    pesing: nuevoPeso.toFixed(3),        // Peso objetivo escalado
+                    pesing: nuevoPeso.toFixed(3),
                     pmax: (nuevoPeso + valorTolerancia).toFixed(3),
                     pmin: (nuevoPeso - valorTolerancia).toFixed(3),
                     pesado: 0
                 };
             });
 
-            // 7. Crear el objeto para la tabla visual en React
             const nuevaFormulaProduccion = {
                 tempId: Date.now(),
-                idform: formulaBackend.idform, // Usamos los datos frescos del backend
+                idform: formulaBackend.idform,
                 nombre: formulaBackend.nombre,
                 pesform: pesoObjNum,
                 ingredientes: ingredientesCalculados
             };
 
-            // Guardar en el estado
             setFormulasAgregadas([...formulasAgregadas, nuevaFormulaProduccion]);
-
-            // Limpiar inputs
             setFormulaSeleccionadaId('');
             setPesoObjetivo('');
 
         } catch (error) {
-            console.error("Error al obtener detalles de la fórmula:", error);
+            console.error("Error al obtener detalles:", error);
             alert("Error de conexión al buscar los detalles de la fórmula.");
         }
     };
@@ -177,30 +214,35 @@ const ProduccionPage = () => {
         setFormulasAgregadas(formulasAgregadas.filter(f => f.tempId !== tempId));
     };
 
-    // --- LÓGICA DE GUARDADO (POST LOOP) ---
+    const handleLimpiarFormulario = () => {
+        setPaso1Completo(false);
+        setProduccionData({ orden: '', lote: '' });
+        setFormulasAgregadas([]);
+        setFormulaSeleccionadaId('');
+        setPesoObjetivo('');
+        setPdfData(null);
+    };
+
+    // --- GUARDAR PRODUCCIÓN (POST LOOP) ---
     const handleRegistrarProduccion = async () => {
         if (!window.confirm("¿Estás seguro de registrar esta producción?")) return;
 
         setIsSaving(true);
         try {
-            // Recorremos cada fórmula agregada y enviamos una petición individual
-            // Esto permite que 1 Lote tenga N Fórmulas (N registros en tabla Produccion)
+            // Generamos la fecha local una sola vez para todo el lote
+            const fechaLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
+
             const promesasDeGuardado = formulasAgregadas.map(formulaItem => {
-
-                //obtenemos fecha
-                const fechaLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
-
-                // Construimos el Payload exacto para el Serializer de Produccion
                 const payload = {
                     op: produccionData.orden,
                     lote: produccionData.lote,
                     idform: formulaItem.idform,
                     pesform: formulaItem.pesform,
-                    estatus: 1, // 1 = Activa/En proceso
-                    fecha: fechaLocal, // Fecha actual
-                    idusu: user ? user.user_id : 1, // ID del usuario logueado
+                    estatus: 0,
+                    fecha: fechaLocal,
+                    idusu: user ? user.user_id : 1,
 
-                    // Aquí va la lista anidada para DetalleProduccion
+                    // Lista anidada para DetalleProduccion
                     detalles: formulaItem.ingredientes.map(ing => ({
                         iding: ing.iding,
                         pesing: parseFloat(ing.pesing),
@@ -209,74 +251,101 @@ const ProduccionPage = () => {
                         pesado: 0
                     }))
                 };
-
                 return axiosInstance.post(API_URL_PRODUCCION_REL, payload);
             });
 
-            // Esperamos a que TODAS las fórmulas se guarden
             await Promise.all(promesasDeGuardado);
 
             alert('¡Producción registrada exitosamente!');
+            handleLimpiarFormulario();
 
-            // Limpiar todo
-            setPaso1Completo(false);
-            setProduccionData({ orden: '', lote: '' });
-            setFormulasAgregadas([]);
         } catch (error) {
             console.error("Error guardando producción:", error);
-            alert("Hubo un error al guardar la producción. Revisa la consola.");
+            const msg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+            alert(`Error al guardar: ${msg}`);
         } finally {
             setIsSaving(false);
         }
     };
 
-    // --- Manejadores del Modal ---
+    // --- GENERAR PDF DEL RESUMEN ---
+    const handlePreparePdf = () => {
+        // Preparamos un objeto que combine todas las fórmulas para el reporte
+        // Nota: ReporteFormula espera 'formula', 'ingredientes', 'empresa'.
+
+        const todosLosIngredientes = [];
+        formulasAgregadas.forEach(f => {
+            // Agregamos un encabezado falso como ingrediente para separar fórmulas visualmente
+            todosLosIngredientes.push({
+                id: '---',
+                nombre: `--- FÓRMULA: ${f.nombre} (${f.pesform} Kg) ---`,
+                peso: '',
+                pmax: '',
+                pmin: ''
+            });
+            // Agregamos los ingredientes reales
+            f.ingredientes.forEach(ing => {
+                todosLosIngredientes.push({
+                    id: ing.iding,
+                    nombre: ing.nombre,
+                    peso: ing.pesing,
+                    pmax: ing.pmax,
+                    pmin: ing.pmin
+                });
+            });
+        });
+
+        setPdfData({
+            formula: { nombre: `OP: ${produccionData.orden} - Lote: ${produccionData.lote}`, id: 'N/A' },
+            ingredientes: todosLosIngredientes,
+            empresa: empresaInfo
+        });
+
+
+        // Esperamos un tick para que se renderice el componente oculto y luego imprimimos
+        setTimeout(() => {
+            if (reportePdfRef.current) {
+                const element = reportePdfRef.current;
+                const pdfFileName = `Produccion-${produccionData.orden}-${produccionData.lote}.pdf`;
+                const opt = {
+                    margin: 10,
+                    filename: pdfFileName,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().from(element).set(opt).save();
+                setPdfData(null); // Limpiamos después de guardar
+            }
+        }, 500);
+    };
+
+    // --- MANEJADORES DE MODAL DETALLE ---
     const handleOpenModal = (formula) => {
-        setCurrentModalData(formula); // Pasamos la fórmula con sus ingredientes CALCULADOS
+        setCurrentModalData(formula);
         setModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setModalOpen(false);
-        setCurrentModalData(null);
-    };
-
-    // --- FUNCIÓN AUXILIAR DE FORMATEO ---
-    const formatearValores = (valor) => {
-        const numero = parseFloat(valor);
-        if (isNaN(numero)) return '0.00';
-
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(numero);
-    };
-
-
     return (
-        <div className="produccion-page">
+        <div className="produccion-page"> {/* Asegúrate de que el CSS coincida o usa 'formula-page' si comparten estilos */}
 
             <div className="action-bar">
-                <button className="btn btn-default" onClick={() => {
-                    setFormulasAgregadas([]);
-                    setProduccionData({ orden: '', lote: '' });
-                    setPaso1Completo(false);
-                }} disabled={isSaving}>
-                    <ClearAll /> Limpiar Formulario
+                <button className="btn btn-default" onClick={handleLimpiarFormulario} disabled={isSaving}>
+                    <ClearAll /> Limpiar
                 </button>
-                <button className="btn btn-edit" disabled={isSaving}>
+                <button className="btn btn-edit" onClick={() => setShowConsultar(true)} disabled={isSaving}>
                     <Edit /> Consultar Producciones
                 </button>
             </div>
 
-            {/* --- PASO 1 --- */}
+            {/* --- PASO 1: DEFINIR --- */}
             <div className={`produccion-card-step ${paso1Completo ? 'locked' : ''}`}>
-                <h2 className="section-title"><AssignmentIcon /> Paso 1: Definir Producción</h2>
+                <h2 className="section-title"><Assignment /> Paso 1: Definir Producción</h2>
                 <form onSubmit={handleDefinirProduccion} className="form-grid">
                     <div className="form-group">
                         <label htmlFor="orden">Orden Producción</label>
                         <input
-                            type="text" // Cambiado a text por si tiene letras
+                            type="text"
                             id="orden"
                             name="orden"
                             value={produccionData.orden}
@@ -302,22 +371,16 @@ const ProduccionPage = () => {
                         />
                     </div>
                     <div className="form-actions">
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={paso1Completo}
-                            style={{ width: '100%' }}
-                        >
-                            <SaveIcon fontSize="small" />
-                            Seleccionar Fórmulas
+                        <button type="submit" className="btn btn-primary" disabled={paso1Completo} style={{ width: '100%' }}>
+                            <Save fontSize="small" /> Continuar
                         </button>
                     </div>
                 </form>
             </div>
 
-            {/* --- PASO 2 --- */}
+            {/* --- PASO 2: SELECCIONAR FÓRMULAS --- */}
             <div className={`produccion-card-step ${!paso1Completo ? 'locked' : ''}`}>
-                <h2 className="section-title"><LibraryAddIcon /> Paso 2: Seleccionar Fórmulas</h2>
+                <h2 className="section-title"><LibraryAdd /> Paso 2: Agregar Fórmulas al Lote</h2>
 
                 <form onSubmit={handleAddFormula} className="form-grid">
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
@@ -327,15 +390,11 @@ const ProduccionPage = () => {
                             className="form-select"
                             value={formulaSeleccionadaId}
                             onChange={(e) => setFormulaSeleccionadaId(e.target.value)}
-                            disabled={!paso1Completo || isLoadingFormulas}
+                            disabled={!paso1Completo || isLoading}
                         >
-                            <option value="">
-                                {isLoadingFormulas ? "Cargando..." : "Seleccionar fórmula..."}
-                            </option>
+                            <option value="">{isLoading ? "Cargando..." : "Seleccionar fórmula..."}</option>
                             {listaFormulasBase.map(f => (
-                                <option key={f.idform} value={f.idform}>
-                                    {f.nombre}
-                                </option>
+                                <option key={f.idform} value={f.idform}>{f.nombre}</option>
                             ))}
                         </select>
                     </div>
@@ -354,25 +413,22 @@ const ProduccionPage = () => {
                             step="0.01"
                         />
                     </div>
+
                     <div className="form-actions">
-                        <button
-                            type="submit"
-                            className="btn btn-warning"
-                            disabled={!paso1Completo}
-                            style={{ width: '100%' }}
-                        >
-                            <AddIcon fontSize="small" />
-                            Añadir Fórmula
+                        <button type="submit" className="btn btn-warning" disabled={!paso1Completo} style={{ width: '100%' }}>
+                            <Add fontSize="small" /> Añadir
                         </button>
                     </div>
                 </form>
+
                 <div className="divider"></div>
-                <h3 className="subsection-title">Fórmulas en esta Producción</h3>
+
+                <h3 className="subsection-title">Fórmulas Agregadas</h3>
                 <div className="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Nombre Fórmula</th>
+                                <th>Fórmula</th>
                                 <th>Peso Obj. (Kg)</th>
                                 <th>Acciones</th>
                             </tr>
@@ -381,22 +437,19 @@ const ProduccionPage = () => {
                             {formulasAgregadas.length === 0 ? (
                                 <tr>
                                     <td colSpan="3" style={{ textAlign: 'center', color: '#777' }}>
-                                        No hay fórmulas agregadas.
+                                        No hay fórmulas en este lote.
                                     </td>
                                 </tr>
                             ) : (
                                 formulasAgregadas.map((formula) => (
                                     <tr key={formula.tempId}>
                                         <td>{formula.nombre}</td>
-                                        <td>{formula.pesform.toFixed(2)}</td>
+                                        <td>{formatearValor(formula.pesform)}</td>
                                         <td className="col-acciones">
-                                            <button
-                                                className="icon-btn action-view"
-                                                onClick={() => handleOpenModal(formula)}
-                                            >
-                                                <VisibilityIcon
+                                            <button className="icon-btn action-view" onClick={() => handleOpenModal(formula)}>
+                                                <Visibility
                                                     style={{
-                                                        backgroundColor: '#1B609DFF',   // fondo
+                                                        backgroundColor: '#1B519DFF',   // fondo
                                                         borderRadius: '8px',          // esquinas redondeadas
                                                         padding: '6px',               // espacio interno alrededor del ícono
                                                         color: '#FFFFFF',                // color del ícono
@@ -404,11 +457,8 @@ const ProduccionPage = () => {
                                                     }}
                                                 />
                                             </button>
-                                            <button
-                                                className="icon-btn action-delete"
-                                                onClick={() => handleRemoveFormula(formula.tempId)}
-                                            >
-                                                <DeleteIcon 
+                                            <button className="icon-btn action-delete" onClick={() => handleRemoveFormula(formula.tempId)}>
+                                                <Delete
                                                     style={{
                                                         backgroundColor: '#9D1B1BFF',   // fondo
                                                         borderRadius: '8px',          // esquinas redondeadas
@@ -427,9 +477,9 @@ const ProduccionPage = () => {
                 </div>
             </div>
 
-            {/* --- PASO 3 --- */}
+            {/* --- PASO 3: CONFIRMAR --- */}
             <div className={`produccion-card-step ${!paso1Completo || !paso2Completo ? 'locked' : ''}`}>
-                <h2 className="section-title"><PlaylistAddCheckIcon /> Paso 3: Resumen y Registro</h2>
+                <h2 className="section-title"><PlaylistAddCheck /> Paso 3: Resumen y Registro</h2>
 
                 <div className="totals-grid">
                     <div className="total-box">
@@ -443,64 +493,59 @@ const ProduccionPage = () => {
                 </div>
 
                 <div className="production-final-actions">
-                    <button className="btn btn-secondary" disabled={!paso2Completo}>
-                        <PrintIcon fontSize="small" /> Imprimir Reporte
+                    <button className="btn btn-secondary" onClick={handlePreparePdf} disabled={!paso2Completo}>
+                        <Print fontSize="small" /> PDF Preliminar
                     </button>
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleRegistrarProduccion}
-                        disabled={!paso2Completo || isSaving}
-                    >
-                        <Inventory2Icon fontSize="small" />
-                        {isSaving ? 'Guardando...' : 'Registrar Producción'}
+                    <button className="btn btn-primary" onClick={handleRegistrarProduccion} disabled={!paso2Completo || isSaving}>
+                        {isSaving ? <CircularProgress size={20} color="inherit" /> : <Inventory2 fontSize="small" />}
+                        {isSaving ? ' Guardando...' : ' Registrar Producción'}
                     </button>
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE --- */}
+            {/* --- MODAL DETALLE DE CÁLCULO --- */}
             {modalOpen && currentModalData && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h4>Detalle Calculado: {currentModalData.nombre}</h4>
-                            <button className="modal-close-btn" onClick={handleCloseModal}>
-                                <CloseIcon />
+                            <button className="modal-close-btn" onClick={() => setModalOpen(false)}>
+                                <Close />
                             </button>
                         </div>
                         <div className="modal-body">
-                            <p
-                                className="modal-subtitle"
-                                style={{
-                                    backgroundColor: '#f0f4ff',   // color de fondo
-                                    borderRadius: '8px',          // esquinas redondeadas
-                                    padding: '6px 12px',          // espacio interno
-                                    display: 'inline-block',      // que se ajuste al contenido
-                                    color: '#333'                 // color de texto
-                                }}
-
-                            >
-                                Lote: <strong>{produccionData.lote}</strong> | Objetivo: <strong>{currentModalData.pesform}</strong> Kg
+                            <p className="modal-subtitle">
+                                Lote: <strong>{produccionData.lote}</strong> | Objetivo: <strong> {formatearValor(currentModalData.pesform)} Kg</strong>
                             </p>
-                            <p className='modal-subtitle'>
-                                Nota: Las cantidades han sido escaladas proporcionalmente según el Peso Objetivo del lote. Los rangos Min/Max reflejan el margen de error permitido (Tolerancia) por ingrediente.
+                            <p
+                                style={{
+                                    backgroundColor: '#F5F5F5',
+                                    borderRadius: '4px',
+                                    padding: '2px',
+                                    textAlign: 'center',
+                                    color: '#333333',
+                                    fontSize: '0.75rem',
+                                }}
+                            >
+                                Los datos mostrados se calculan según el valor objetivo y la tolerancia definidos en la fórmula de cada ingrediente.
                             </p>
                             <div className="table-container">
                                 <table>
                                     <thead>
                                         <tr>
                                             <th>Ingrediente</th>
-                                            <th>Peso Calc (Kg)</th>
-                                            <th>Min (Kg)</th>
-                                            <th>Max (Kg)</th>
+                                            <th style={{ textAlign: 'right' }}>Peso Calc</th>
+                                            <th style={{ textAlign: 'right' }}>Mín</th>
+                                            <th style={{ textAlign: 'right' }}>Máx</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {currentModalData.ingredientes.map((ing, idx) => (
                                             <tr key={idx}>
                                                 <td>{ing.nombre}</td>
-                                                <td style={{ textAlign: 'left' }}>{formatearValores(ing.pesing)}</td>
-                                                <td style={{ textAlign: 'right', color: 'red' }}>{formatearValores(ing.pmin)}</td>
-                                                <td style={{ textAlign: 'right', color: 'green' }}>{formatearValores(ing.pmax)}</td>
+                                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatearValor(ing.pesing)}</td>
+                                                <td style={{ textAlign: 'right', color: '#ff6b6b' }}>{formatearValor(ing.pmin)}</td>
+                                                <td style={{ textAlign: 'right', color: '#51cf66' }}>{formatearValor(ing.pmax)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -510,8 +555,33 @@ const ProduccionPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* --- MODAL CONSULTAR HISTORIAL --- */}
+            <ConsultarProduccionModal
+                isOpen={showConsultar}
+                onClose={() => setShowConsultar(false)}
+            />
+
+            {/* --- COMPONENTE OCULTO PARA GENERAR PDF --- */}
+            {pdfData && (
+                <div className="pdf-hidden-container">
+                    <ReporteProduccion
+                        ref={reportePdfRef}
+
+                        empresa={pdfData.empresa}
+                        ingredientes={pdfData.ingredientes}
+
+
+                        extraData={{
+                            op: produccionData.orden || '001',
+                            lote: produccionData.lote || 'L-000',
+                            pesoObjetivo: pesoTotal || 0,
+                            fecha: new Date(),
+                            estatus: 1
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
-};
-
-export default ProduccionPage;
+}

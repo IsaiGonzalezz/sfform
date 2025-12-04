@@ -223,11 +223,6 @@ body {
 }
 
 
-/*
-        / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
-        / / / --- LA MAGIA: ESTILOS DE IMPRESIÓN Y PDF --- / / /
-        / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /
-        */
 @media print {
     body {
         background-color: #fff;

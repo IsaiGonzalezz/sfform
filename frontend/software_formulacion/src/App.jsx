@@ -13,6 +13,7 @@ import FormulasPage from './pages/FormulasPages';
 import ProduccionPage from './pages/ProduccionPage';
 import InventarioPage from './pages/InventarioPage';
 import DetalleFormulaPage from './pages/DetalleFormulaPage';
+import DetalleProduccionPage from './pages/DetalleProduccionPage';
 
 
 
@@ -40,7 +41,8 @@ function App() {
                     <Route path='produccion' element={<ProduccionPage />} />
                     <Route path='inventario' element={<InventarioPage/>} />
                     <Route path="/detalle-formula/:id" element={<DetalleFormulaPage />} />
-                    
+                    <Route path="/detalle-produccion/:folio" element={<DetalleProduccionPage />} />
+
                     <Route path="*" element={<div>Página no encontrada</div>} />
 
                 </Route>

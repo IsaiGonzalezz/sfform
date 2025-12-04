@@ -5,9 +5,11 @@ import { Search, FileText, X, Loader } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import ReporteFormula from './ReporteFormula';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import './styles/ConsultaFormulas.css'
 
+const API_URL_FORMULAS = '/formulas/';
+const API_URL_EMPRESA = '/empresa/'
 
 const convertToBase64 = async (url) => {
     try {
@@ -30,6 +32,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     const [formulasList, setFormulasList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
+    const { axiosInstance } = useAuth();
 
     const [empresaInfo, setEmpresaInfo] = useState(null); // Guardar info de la empresa
     const [pdfData, setPdfData] = useState(null); // Datos para el PDF (formula, ingredientes, empresa)
@@ -45,7 +48,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
 
     const cargarFormulas = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/formulas/');
+            const response = await axiosInstance.get(`${API_URL_FORMULAS}`);
 
             // Si Django devuelve paginación, los datos están en 'response.data.results'
             // Si no, están en 'response.data'
@@ -67,7 +70,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
 
     const cargarEmpresaInfo = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/empresa');
+            const response = await axiosInstance.get(`${API_URL_EMPRESA}`);
             if (response.data && response.data.length > 0) {
                 let empresaDatos = response.data[0]; // Tomamos el primer objeto
 
@@ -99,7 +102,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
         setIsGeneratingPdf(formula.idform);
 
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/formulas/${formula.idform}/`);
+            const response = await axiosInstance.get(`${API_URL_FORMULAS}${formula.idform}/`);
             const formulaData = response.data;
             const ingredientesOriginales = formulaData.detalles || [];
             const ingredientesTransformados = ingredientesOriginales.map(ing => ({

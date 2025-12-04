@@ -1,6 +1,5 @@
 import React, { useState, useMemo ,useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { ArrowLeft, Save, X, Trash2, Edit3, Check, Plus } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
@@ -83,7 +82,7 @@ const DetalleFormulaPage = () => {
         setFormData({ ...formData, detalles: nuevosDetalles });
     };
 
-    // 2. PUT: Guardar Cambios
+    // 2. PATCH: Guardar Cambios
     const handleSave = async () => {
         try {
             
@@ -114,7 +113,7 @@ const DetalleFormulaPage = () => {
     const handleDelete = async () => {
         if (window.confirm(`¿Estás seguro de eliminar la fórmula ${id}? Esta acción no se puede deshacer.`)) {
             try {
-                await axios.delete(`http://127.0.0.1:8000/api/formulas/${id}/`);
+                await axiosInstance.delete(`${API_URL_FORMULAS_REL}${id}/`);
                 alert('Fórmula eliminada.');
                 navigate('/formulas'); // Te regresa a la lista principal
             } catch (err) {
