@@ -1,35 +1,32 @@
-/* --- ESTILOS BASE (Pantalla y General) --- */
 .reporte-industrial {
     font-family: 'Arial', sans-serif;
     color: #000;
     background: white;
     width: 100%;
-    max-width: 216mm;
-    /* Vista previa en pantalla */
-    min-height: 277mm;
-    /* Vista previa en pantalla */
+    max-width: 216mm; 
+    min-height: 255mm; 
+    
     margin: 0 auto;
     box-sizing: border-box;
     background-color: #fff;
     position: relative;
 
-    /* Flexbox SOLO para pantalla (para que se vea bonito el preview) */
+    /* Flexbox SOLO para pantalla */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
 
-/* --- HEADER (Parte Superior) --- */
+/* --- HEADER --- */
 .seccion-encabezado {
     background: white;
     width: 100%;
-    /* El borde superior e izquierdo/derecho del "marco" */
 }
 
 .header-box {
     display: flex;
     border: 2px solid #000;
-    height: 28mm;
+    height: 24mm; 
 }
 
 .header-logo {
@@ -64,9 +61,9 @@
 }
 
 .doc-title {
-    font-size: 13pt;
+    font-size: 12pt;
     font-weight: 900;
-    margin: 2px 0;
+    margin: 1px 0;
     background-color: #ffffff;
     border-top: 1px solid #ffffff;
     border-bottom: 1px solid #ffffff;
@@ -123,9 +120,7 @@
     grid-template-columns: repeat(4, 1fr);
     border: 2px solid #000;
     border-top: none;
-    /* Para pegar con el header */
     margin-bottom: 0;
-    /* Sin margen inferior en el bloque fijo */
 }
 
 .info-cell {
@@ -157,8 +152,7 @@
 /* --- BODY (Contenido Central) --- */
 .seccion-cuerpo {
     flex-grow: 1;
-    padding: 10mm 0;
-    /* Espacio en pantalla */
+    padding: 5mm 0; 
 }
 
 .tabla-industrial {
@@ -196,15 +190,15 @@
 .seccion-pie {
     background: white;
     width: 100%;
-    padding-top: 5px;
+    padding-top: 2px;
 }
 
 .observaciones-box {
     border: 1px solid #000;
-    padding: 4px;
-    min-height: 12mm;
+    padding: 2px;
+    min-height: 10mm;
     background-color: #fafafa;
-    margin-bottom: 4mm;
+    margin-bottom: 2mm;
 }
 
 .box-title {
@@ -227,7 +221,7 @@
 .firma-box {
     flex: 1;
     text-align: center;
-    margin-top: 5mm;
+    margin-top: 2mm;
 }
 
 .firma-line {
@@ -250,13 +244,12 @@
 
 
 /* ==========================================================================
-   MEDIA PRINT - LA MAGIA DE "POSITION: FIXED"
+   MEDIA PRINT - SOLUCIÓN NUCLEAR (ADIÓS PÁGINA 2)
    ========================================================================== */
 @media print {
     @page {
         size: letter;
-        margin: 5mm;
-        /* Pequeño margen físico para la impresora */
+        margin: 5mm; 
     }
 
     body {
@@ -265,16 +258,18 @@
         background: white;
     }
 
-    /* Desactivar Flexbox y alturas forzadas del contenedor */
     .reporte-industrial {
         display: block;
         width: 100%;
         height: auto;
+        
+        /* BLINDAJE ANTIDESBORDE */
         min-height: 0;
+        overflow: hidden; /* Corta cualquier pixel sobrante */
+        
         margin: 0;
         padding: 0;
         border: none;
-        /* Quitamos el borde general, usaremos los de las secciones */
     }
 
     /* 1. ENCABEZADO FIJO */
@@ -283,11 +278,9 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 45mm;
-        /* Altura calculada (Header + Grid) */
+        height: 35mm; 
         z-index: 100;
-        /* Borde visual simulado */
-        padding-bottom: 5px;
+        padding-bottom: 2px;
     }
 
     /* 2. PIE DE PÁGINA FIJO */
@@ -296,19 +289,16 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 45mm;
-        /* Altura calculada (Firmas + Obs) */
+        height: 30mm; 
         z-index: 100;
     }
 
-    /* 3. EL CUERPO CON PADDING PARA NO CHOCAR */
+    /* 3. EL CUERPO */
     .seccion-cuerpo {
-        /* Dejamos espacio arriba para el header fijo */
-        margin-top: 48mm;
-        /* Dejamos espacio abajo para el footer fijo */
-        margin-bottom: 48mm;
-
-        /* Importante para que la tabla repita cabeceras */
+        margin-top: 36mm; 
+        
+        /* IMPORTANTE: Un margen más conservador */
+        margin-bottom: 32mm; 
     }
 
     .tabla-industrial thead {

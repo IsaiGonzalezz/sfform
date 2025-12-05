@@ -1,133 +1,132 @@
 import React, { forwardRef } from 'react';
+import './styles/Reporte.css'; // Asegúrate de importar el nuevo CSS
 
 const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} }, ref) => {
 
     const fechaActual = new Date().toLocaleString('es-MX', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
     });
 
-    let acumulado = 0;
+    // Cálculos Generales
     const pesoTotal = ingredientes.reduce((total, ing) => total + parseFloat(ing.peso || 0), 0);
+    const totalItems = ingredientes.length;
 
-    // --- ¡LA FUNCIÓN BUENA! ---
+    // Formateador de moneda/números
     const formatNumero = (num) => {
-        const numeroLimpo = parseFloat(num || 0);
-        
-        // Formatea el número usando el estándar 'en-US' (o 'es-MX'):
-        // - Usa ',' para miles (ej: 1,000)
-        // - Usa '.' para decimales (ej: 12.5)
-        // - MÁXIMO 3 decimales (no los fuerza si no existen)
-        return numeroLimpo.toLocaleString('en-US', {
-            maximumFractionDigits: 3 
+        return parseFloat(num || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 3
         });
     };
-    // ----------------------------
 
     return (
-        <div ref={ref} className="reporte-a4">
-            {/* ENCABEZADO */}
-            <header className="encabezado">
+        <div ref={ref} className="reporte-carta">
+            
+            {/* --- 1. ENCABEZADO "TIPO CUADRO" --- */}
+            <header className="header-fijo">
+                <div className="header-grid">
+                    {/* Columna 1: Logo */}
+                    <div className="header-col logo-col">
+                        {empresa?.logotipo && (
+                            <img src={empresa.logotipo} alt="Logo" className="img-logo" onError={(e) => e.target.style.display='none'}/>
+                        )}
+                    </div>
 
-                {/* Izquierda: Logo y empresa */}
-                <div className="encab-left">
-                    {empresa?.logotipo && (
-                        <img
-                            src={empresa.logotipo}
-                            alt="Logotipo"
-                            className="logo-empresa"
-                            onError={(e) => (e.target.style.display = "none")}
-                        />
-                    )}
-                    <div className="info-empresa">
-                        <h2 className="empresa-nombre">{empresa?.nombre || 'Nombre de la Empresa'}</h2>
-                        <h5 className="empresa-rfc"> {empresa?.rfc || 'RFC'} </h5>
+                    {/* Columna 2: Datos Empresa y Título */}
+                    <div className="header-col title-col">
+                        <h3 className="empresa-nombre">{empresa?.nombre || 'NOMBRE DE LA EMPRESA S.A. DE C.V.'}</h3>
+                        <h1 className="doc-titulo">REPORTE DE FÓRMULA</h1>
+                    </div>
+
+                    {/* Columna 3: Metadatos (Folio, Fecha) */}
+                    <div className="header-col meta-col">
+                        <div className="meta-row border-bottom">
+                            <span className="meta-label">ID FÓRMULA:</span>
+                            <span className="meta-value text-red">{formula?.id || 'N/A'}</span>
+                        </div>
+                        <div className="meta-row border-bottom">
+                            <span className="meta-label">IMPRESIÓN:</span>
+                            <span className="meta-value">{fechaActual}</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Derecha: Folio y Fecha */}
-                <div className="encab-right">
-                    <p className="fecha"><strong></strong> {fechaActual}</p>
+                {/* BARRA DE INFORMACIÓN (La tira gris debajo del header) */}
+                <div className="summary-strip">
+                    <div className="sum-item border-right">
+                        <span className="sum-label">NOMBRE DE FÓRMULA</span>
+                        <span className="sum-value">{formula?.nombre || 'Sin Nombre'}</span>
+                    </div>
+                    <div className="sum-item border-right">
+                        <span className="sum-label">PESO TOTAL</span>
+                        <span className="sum-value">{formatNumero(pesoTotal)} kg</span>
+                    </div>
+                    <div className="sum-item">
+                        <span className="sum-label">TOTAL ÍTEMS</span>
+                        <span className="sum-value">{totalItems}</span>
+                    </div>
                 </div>
             </header>
-            <main className='contenido-principal'>
-                {/* SUBTITULO Y ID */}
-                <div className="titulo-formula">
-                    <h5>Detalle</h5>
-                    <span className="formula-id">ID: {formula?.id || 'N/A'}</span>
-                </div>
 
+            {/* --- 2. CONTENIDO (TABLA) --- */}
+            <main className="contenido-principal">
+                <table className="tabla-industrial">
+                    <thead>
+                        <tr>
+                            <th style={{width: '15%'}}>CLAVE / ID</th>
+                            <th style={{width: '40%'}}>DESCRIPCIÓN / INGREDIENTE</th>
+                            <th style={{width: '15%'}}>CANT. META (KG)</th>
+                            <th style={{width: '10%'}}>TOL. (%)</th>
+                            <th style={{width: '20%'}}>RANGO (KG)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {ingredientes.map((ing, index) => {
+                            const peso = parseFloat(ing.peso || 0);
+                            const tol = parseFloat(ing.tolerancia || 0);
+                            const min = peso - (peso * (tol / 100));
+                            const max = peso + (peso * (tol / 100));
 
-                {/* INFORMACIÓN GENERAL */}
-                <section className="info-general">
-                    <div className="info-item">
-                        <label>Nombre de Fórmula</label>
-                        <span>{formula?.nombre}</span>
-                    </div>
-
-                    <div className="info-item">
-                        <label>Peso Total Calculado</label>
-                        {/* --- CAMBIO 1 --- */}
-                        <span style={{textAlign:'center'}}>{formatNumero(pesoTotal)} kg</span>
-                    </div>
-
-                    <div className="info-item">
-                        <label>Total de Ingredientes</label>
-                        <span style={{textAlign:'center'}}>{ingredientes.length}</span>
-                    </div>
-                </section>
-
-                {/* TABLA */}
-                <section className="tabla-section">
-                    <h5>Composición de la Fórmula</h5>
-
-                    <table className="tabla-formula">
-                        <thead>
+                            return (
+                                <tr key={index}>
+                                    <td className="text-center bold">{ing.clave || ing.id || '---'}</td>
+                                    <td>{ing.nombre}</td>
+                                    <td className="text-right bold">{formatNumero(peso)}</td>
+                                    <td className="text-center">{tol}%</td>
+                                    <td className="text-right text-small">
+                                        {formatNumero(min)} - {formatNumero(max)}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {/* Fila de relleno si no hay datos */}
+                        {ingredientes.length === 0 && (
                             <tr>
-                                <th>Clave</th>
-                                <th>Descripción</th>
-                                <th style={{textAlign: 'right'}}>Cant. Obj. (kg)</th>
-                                <th style={{textAlign: 'right'}}>Tolerancia (%)</th>
-                                <th style={{textAlign: 'right'}}>Acumulado (kg)</th>
+                                <td colSpan="5" className="text-center padding-xl">No hay ingredientes cargados.</td>
                             </tr>
-                        </thead>
-
-                        <tbody>
-                            {ingredientes.map((ing) => {
-                                acumulado += parseFloat(ing.peso || 0);
-                                return (
-                                    <tr key={ing.id}>
-                                        <td>{ing.id}</td>
-                                        <td>{ing.nombre}</td>
-                                        
-                                        {/* --- CAMBIO 2 --- */}
-                                        <td className="num">{formatNumero(ing.peso)}</td>
-                                        
-                                        <td className="num">{ing.tolerancia}</td>
-                                        
-                                        {/* --- CAMBIO 3 --- */}
-                                        <td className="num">{formatNumero(acumulado)}</td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                        
-                    </table>
-                </section>
+                        )}
+                    </tbody>
+                </table>
+                <div className="observaciones-container">
+                    <div className="obs-header">OBSERVACIONES GENERALES:</div>
+                    <div className="obs-lines">
+                        <div className="line"></div>
+                        <div className="line"></div>
+                        <div className="line"></div>
+                    </div>
+                </div>
             </main>
-            {/* PIE DE PÁGINA */}
-            <footer className="pie">
-                <p>
-                    {empresa?.calle || ''} {empresa?.colonia || ''},
-                    {empresa?.ciudad || ''}, {empresa?.estado || ''} C.P. {empresa?.cp || ''}
-                </p>
-                <p>
-                    Tel: {empresa?.telefono || ''} — {empresa?.correo || ''}
-                </p>
+
+            {/* --- 3. PIE DE PÁGINA (OBSERVACIONES) --- */}
+            <footer className="footer-fijo">
+                <div className="sistema-meta">
+                    
+                            {empresa?.calle} {empresa?.colonia}, {empresa?.ciudad} {empresa?.estado} C.P.: {empresa?.cp}
+                        
+                </div>
             </footer>
+
         </div>
     );
 });

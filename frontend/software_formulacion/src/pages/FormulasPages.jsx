@@ -62,6 +62,16 @@ export default function FormulaPage() {
         }
     };
 
+    // --- FORMATO DE NÚMEROS ---
+    const formatearValor = (valor) => {
+        const numero = parseFloat(valor);
+        if (isNaN(numero)) return '0.00';
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numero);
+    };
+
     // --- EFECTO DE CARGA (useEffect) ---
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -387,7 +397,7 @@ export default function FormulaPage() {
                                     <tr key={index}>
                                         <td>{ing.id}</td>
                                         <td>{ing.nombre}</td>
-                                        <td style={{textAlign:'right'}}>{ing.peso}</td>
+                                        <td style={{textAlign:'right'}}>{formatearValor(ing.peso)}</td>
                                         <td style={{textAlign:'right'}}>{ing.tolerancia}%</td>
                                         <td className="table-actions">
                                             <button className="btn-icon btn-icon-edit" disabled={isSaving} onClick={() => handleEditIngrediente(ing)}>
@@ -436,7 +446,7 @@ export default function FormulaPage() {
                 <div className="summary-grid">
                     <div className="summary-card">
                         <span className="summary-label">Peso Total Calculado</span>
-                        <span className="summary-value">{pesoTotalCalculado} Kg</span>
+                        <span className="summary-value">{formatearValor(pesoTotalCalculado)} Kg</span>
                     </div>
                     <div className="summary-card">
                         <span className="summary-label">Total de Ingredientes</span>
@@ -445,7 +455,7 @@ export default function FormulaPage() {
                 </div>
                 <div className="form-actions-final">
                     <button
-                        className="btn btn-default"
+                        className="btn btn-danger"
                         disabled={ingredientes.length === 0 || isSaving}
                         onClick={handleDownloadPdf}
                     >

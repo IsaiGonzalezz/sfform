@@ -306,13 +306,13 @@ export default function ProduccionPage() {
         setTimeout(() => {
             if (reportePdfRef.current) {
                 const element = reportePdfRef.current;
-                const pdfFileName = `Produccion-${produccionData.orden}-${produccionData.lote}.pdf`;
+                const pdfFileName = `Produccion-${produccionData.orden}.pdf`;
                 const opt = {
                     margin: 10,
                     filename: pdfFileName,
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
                 };
                 html2pdf().from(element).set(opt).save();
                 setPdfData(null); // Limpiamos después de guardar
@@ -330,8 +330,8 @@ export default function ProduccionPage() {
         <div className="produccion-page"> {/* Asegúrate de que el CSS coincida o usa 'formula-page' si comparten estilos */}
 
             <div className="action-bar">
-                <button className="btn btn-default" onClick={handleLimpiarFormulario} disabled={isSaving}>
-                    <ClearAll /> Limpiar
+                <button className="btn btn-secondary" onClick={handleLimpiarFormulario} disabled={isSaving}>
+                    <ClearAll /> Limpiar Formulario
                 </button>
                 <button className="btn btn-edit" onClick={() => setShowConsultar(true)} disabled={isSaving}>
                     <Edit /> Consultar Producciones
@@ -484,7 +484,7 @@ export default function ProduccionPage() {
                 <div className="totals-grid">
                     <div className="total-box">
                         <p>Peso Total Lote</p>
-                        <div className="total-value">{pesoTotal} Kg</div>
+                        <div className="total-value"> {formatearValor(pesoTotal)} Kg</div>
                     </div>
                     <div className="total-box">
                         <p>Fórmulas</p>
@@ -493,8 +493,8 @@ export default function ProduccionPage() {
                 </div>
 
                 <div className="production-final-actions">
-                    <button className="btn btn-secondary" onClick={handlePreparePdf} disabled={!paso2Completo}>
-                        <Print fontSize="small" /> PDF Preliminar
+                    <button className="btn btn-danger" onClick={handlePreparePdf} disabled={!paso2Completo}>
+                        <Print fontSize="small" /> Descargar PDF
                     </button>
                     <button className="btn btn-primary" onClick={handleRegistrarProduccion} disabled={!paso2Completo || isSaving}>
                         {isSaving ? <CircularProgress size={20} color="inherit" /> : <Inventory2 fontSize="small" />}

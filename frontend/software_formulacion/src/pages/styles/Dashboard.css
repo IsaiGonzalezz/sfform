@@ -1,110 +1,141 @@
-/* Tu body original */
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #000000;
-    color: #e0e0e0;
-}
-
-/* --- MODIFICACIÓN DEL GRID --- */
-.dashboard {
-    display: grid;
-    /* 4 columnas iguales */
-    grid-template-columns: repeat(4, 1fr);
-    
-    /* 3 filas: Cuadritos, Líneas, Barras/Pastel */
-    grid-template-areas:
-        "card1 card2 card3 card4"
-        "line  line  line  line"
-        "bar   bar   bar   pie";
-    
-    /* Altura de filas: auto para cuadritos, 300px para gráficas */
-    grid-template-rows: auto 300px 300px;
-    gap: 1.5rem;
-    padding: 2rem;
-}
-
-/* --- TUS GRÁFICAS ORIGINALES (SOLO CAMBIA EL GRID-AREA) --- */
-.chart-box {
-    background-color: #1e1e1e;
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-    transition: transform 0.3s ease;
-}
-
-.chart-box:hover {
-    transform: scale(1.02);
-}
-
-.chart-box h2 {
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    color: #ffffff;
-    border-bottom: 1px solid #444;
-    padding-bottom: 0.5rem;
-}
-
-.line-chart {
-    grid-area: line;
-}
-
-.pie-chart {
-    grid-area: pie;
-}
-
-.bar-chart {
-    grid-area: bar;
-}
-
-/* --- NUEVOS ESTILOS PARA LOS "CUADRITOS" --- */
+/* --- Estilos base de las Cards --- */
 .stat-card {
     background-color: #1e1e1e;
     border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-    text-align: center;
-    color: #fff;
-    transition: transform 0.3s ease;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
 }
 
 .stat-card:hover {
-    transform: scale(1.02);
+    transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+}
+
+.stat-icon-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
 }
 
 .stat-title {
     font-size: 0.9rem;
-    font-weight: 500;
-    color: #ccc;
-    margin: 0 0 0.5rem 0;
-    text-transform: uppercase;
-}
-
-.stat-number {
-    font-size: 2.2rem;
-    font-weight: bold;
+    color: #888;
     margin: 0;
 }
 
-/* --- Asignación de área para los "cuadritos" --- */
-/* (Esto coincide con las clases que puse en tu Dashboard.jsx) */
-.stat-card-1 { 
-    grid-area: card1;
-    /* Color de acento para el número (Pendientes) */
-    .stat-number { color: #F44336; } 
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 5px 0 0 0;
 }
-.stat-card-2 { 
-    grid-area: card2;
-    /* (En Proceso) */
-    .stat-number { color: #3CA7FFFF; } 
+
+.stat-desc {
+    font-size: 0.75rem;
+    color: #666;
 }
-.stat-card-3 { 
-    grid-area: card3;
-    /* (Completados) */
-    .stat-number { color: #4CAF50; } 
+
+/* --- ESTRUCTURA GENERAL DEL DASHBOARD --- */
+/* Agregamos esto para controlar la alineación */
+
+.dashboard {
+    min-height: 100vh;
+    color: #e0e0e0;
 }
-.stat-card-4 { 
-    grid-area: card4;
-    /* (Calidad) */
-    .stat-number { color: #00FF80FF; } 
+
+.dashboard-header {
+    border-bottom: 1px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+/* Grid de Tarjetas Superiores */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Grid de Gráficas */
+.charts-grid {
+    display: grid;
+    /* Esto hace que todas las gráficas tengan el mismo ancho base */
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
+    gap: 20px;
+}
+
+.chart-box {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* CORRECCIÓN SOLICITADA: */
+/* Forzamos al pastel a ocupar solo 1 columna (auto), anulando el estilo inline si existiera */
+.chart-box.pie-chart {
+    grid-column: auto !important; 
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.chart-header h2 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: #ddd;
+}
+
+/* --- ANIMACIONES DE ICONOS --- */
+
+/* Latido suave (para el reloj) */
+@keyframes pulse-soft {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+.pulse-icon {
+    animation: pulse-soft 2s infinite ease-in-out;
+}
+
+/* Rebote pequeño (para el check) */
+@keyframes bounce-small {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+.bounce-icon {
+    animation: bounce-small 2s infinite;
+}
+
+/* Giro suave al hacer hover (para la medalla) */
+.spin-hover {
+    transition: transform 0.5s ease;
+}
+.stat-card:hover .spin-hover {
+    transform: rotate(360deg);
+}
+
+/* Giro continuo lento (para el loader) */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.spin-slow {
+    animation: spin 3s linear infinite;
 }

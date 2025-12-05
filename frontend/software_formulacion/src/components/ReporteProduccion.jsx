@@ -23,7 +23,7 @@ const ReporteProduccion = forwardRef(({ ingredientes = [], empresa = {}, extraDa
 
     return (
         <div ref={ref} className="reporte-industrial">
-            
+
             {/* --- 1. BLOQUE SUPERIOR (FIJO EN IMPRESIÓN) --- */}
             <div className="seccion-encabezado">
                 <header className="header-box">
@@ -35,14 +35,11 @@ const ReporteProduccion = forwardRef(({ ingredientes = [], empresa = {}, extraDa
                     <div className="header-titles">
                         <h1 className="company-name">{empresa?.nombre || 'NOMBRE DE LA EMPRESA'}</h1>
                         <h2 className="doc-title">ORDEN DE PRODUCCIÓN</h2>
-                        <p className="company-address">
-                            {empresa?.calle} {empresa?.numero}, {empresa?.colonia}, {empresa?.ciudad}. CP: {empresa?.cp}
-                        </p>
                     </div>
                     <div className="header-meta">
                         <div className="meta-row"><span className="meta-label">FOLIO OP:</span><span className="meta-value highlight">{extraData.op || '---'}</span></div>
                         <div className="meta-row"><span className="meta-label">FECHA:</span><span className="meta-value">{fechaOrden}</span></div>
-                        <div className="meta-row"><span className="meta-label">IMPRESIÓN:</span><span className="meta-value" style={{fontSize: '6pt'}}>{fechaImpresion}</span></div>
+                        <div className="meta-row"><span className="meta-label">IMPRESIÓN:</span><span className="meta-value" style={{ fontSize: '6pt' }}>{fechaImpresion}</span></div>
                     </div>
                 </header>
 
@@ -59,11 +56,11 @@ const ReporteProduccion = forwardRef(({ ingredientes = [], empresa = {}, extraDa
                 <table className="tabla-industrial">
                     <thead>
                         <tr>
-                            <th style={{width: '15%'}}>CLAVE</th>
-                            <th style={{width: '45%'}}>DESCRIPCIÓN / INGREDIENTE</th>
-                            <th style={{width: '15%', textAlign: 'right'}}>CANT. META (kg)</th>
-                            <th style={{width: '10%', textAlign: 'right'}}>TOL. (%)</th>
-                            <th style={{width: '15%', textAlign: 'right'}}>RANGO (KG)</th>
+                            <th style={{ width: '15%' }}>CLAVE</th>
+                            <th style={{ width: '45%' }}>DESCRIPCIÓN / INGREDIENTE</th>
+                            <th style={{ width: '12%' }}>CANT. META (KG)</th>
+                            <th style={{ width: '8%' }}>TOL. (%)</th>
+                            <th style={{ width: '15%' }}>RANGO (KG)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,36 +70,38 @@ const ReporteProduccion = forwardRef(({ ingredientes = [], empresa = {}, extraDa
                                     <tr key={index} className="row-separator"><td colSpan="5">{ing.nombre}</td></tr>
                                 );
                             }
-                            
+
                             const peso = parseFloat(ing.peso || 0);
                             let tol = parseFloat(ing.tolerancia || 0);
                             const pmaxRaw = parseFloat(ing.pmax || 0);
-                            
+
                             if (tol === 0 && pmaxRaw > 0 && peso > 0) {
                                 tol = ((pmaxRaw - peso) / peso) * 100;
                             }
 
-                            const pmin = ing.pmin ? ing.pmin : (peso - (peso * (tol/100)));
-                            const pmax = ing.pmax ? ing.pmax : (peso + (peso * (tol/100)));
+                            const pmin = ing.pmin ? ing.pmin : (peso - (peso * (tol / 100)));
+                            const pmax = ing.pmax ? ing.pmax : (peso + (peso * (tol / 100)));
 
                             return (
                                 <tr key={index}>
-                                    <td style={{fontFamily: 'monospace', fontWeight: 'bold', textAlign:'center'}}>{ing.id}</td>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold', textAlign: 'center' }}>{ing.id}</td>
                                     <td>{ing.nombre}</td>
-                                    <td className="num-cell" style={{fontWeight: 'bold'}}>{formatNumero(peso)}</td>
+                                    <td className="num-cell" style={{ fontWeight: 'bold' }}>{formatNumero(peso)}</td>
                                     <td className="num-cell">{Number(tol).toLocaleString('en-US', { maximumFractionDigits: 2 })}%</td>
-                                    <td className="num-cell" style={{fontSize: '8pt'}}>
+                                    <td className="num-cell" style={{ fontSize: '8pt' }}>
                                         {formatNumero(pmin)} - {formatNumero(pmax)}
                                     </td>
                                 </tr>
                             );
                         })}
-                        {ingredientes.length === 0 && <tr><td colSpan="5" style={{textAlign: 'center', padding: '20px'}}>-- SIN DATOS --</td></tr>}
+                        {ingredientes.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>-- SIN DATOS --</td></tr>}
                     </tbody>
                 </table>
                 <div className="observaciones-box">
                     <div className="box-title">OBSERVACIONES GENERALES:</div>
                     <div className="box-content-lines">
+                        <div className="line"></div>
+                        <div className="line"></div>
                         <div className="line"></div>
                         <div className="line"></div>
                     </div>
@@ -111,17 +110,17 @@ const ReporteProduccion = forwardRef(({ ingredientes = [], empresa = {}, extraDa
 
             {/* --- 3. BLOQUE INFERIOR (FIJO EN IMPRESIÓN) --- */}
             <footer className="seccion-pie">
-                
-                {/* 
+
+                {/*  POR SI SE OCUPAN FIRMAS
                 <div className="firmas-grid">
                     <div className="firma-box"><div className="firma-line"></div><span className="firma-label">PROGRAMÓ / AUTORIZÓ</span></div>
                     <div className="firma-box"><div className="firma-line"></div><span className="firma-label">OPERADOR RESPONSABLE</span></div>
                     <div className="firma-box"><div className="firma-line"></div><span className="firma-label">VERIFICACIÓN CALIDAD</span></div>
                 </div>
                 */}
-                
+
                 <div className="footer-meta">
-                    Generado por Sistema de Formulación &nbsp;|&nbsp; {extraData.uuid || 'GOGI040422DN0'}
+                    {empresa?.calle} {empresa?.numero},{empresa?.colonia},{empresa?.ciudad}. C.P.: {empresa?.cp}
                 </div>
             </footer>
         </div>

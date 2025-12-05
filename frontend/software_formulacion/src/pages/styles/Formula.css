@@ -161,14 +161,17 @@
 } /* Verde Oscuro */
 .btn-primary:hover:not(:disabled) { background-color: #1b5e20; transform: scale(1.02); }
 
+.btn-default { background-color: #546e7a; } /* Naranja/Ámbar */
+.btn-default:hover:not(:disabled) { background-color: #37474f; transform: scale(1.02); }
+
 .btn-warning { background-color: #ed6c02; } /* Naranja/Ámbar */
 .btn-warning:hover:not(:disabled) { background-color: #e65100; transform: scale(1.02); }
 
-.btn-default { background-color: #f84545; } /* Rojo */
-.btn-default:hover:not(:disabled) { background-color: #c00404; transform: scale(1.02); }
+.btn-danger { background-color: #f84545; } /* Rojo */
+.btn-danger:hover:not(:disabled) { background-color: #c00404; transform: scale(1.02); }
 
-.btn-edit { background-color: #c1902d; } 
-.btn-edit:hover:not(:disabled) { background-color: #c37f00; transform: scale(1.02); }
+.btn-edit { background-color: #c14d2d; } 
+.btn-edit:hover:not(:disabled) { background-color: #c14d2d; transform: scale(1.02); }
 
 
 /* --- Tabla de Ingredientes --- */
