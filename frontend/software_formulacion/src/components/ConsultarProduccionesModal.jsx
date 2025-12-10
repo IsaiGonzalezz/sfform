@@ -298,11 +298,11 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                                                     p.formulasContenidas.map((f, idx) => (
                                                         <span key={idx} style={{
                                                             fontSize: '0.85em',
-                                                            backgroundColor: '#333437FF',
+                                                            backgroundColor: 'var(--bg-color)',
                                                             padding: '2px 6px',
                                                             borderRadius: '4px',
-                                                            border: '1px solid #333437FF',
-                                                            color: '#e0e0e0'
+                                                            border: '1px solid var(--border-color)',
+                                                            color: 'var(--text-color)'
                                                         }}>
                                                             {f.nombre}
                                                         </span>

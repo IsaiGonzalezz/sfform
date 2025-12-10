@@ -4,29 +4,26 @@ import {
     InputAdornment, IconButton, useTheme
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { useAuth } from '../context/useAuth'; 
+import { useAuth } from '../context/useAuth';
 
 // --- Iconos ---
 import {
     PersonOutline, LockOutlined, Visibility, VisibilityOff,
-    ScienceOutlined, Login, BiotechOutlined
+    BiotechOutlined, Login
 } from '@mui/icons-material';
 
 import './styles/Login.css';
 import logoAnimado from '../assets/GifSiaumex.gif';
 
-
 function LoginPage() {
-    const theme = useTheme(); 
-
-    // Accede a la función de login del contexto
-    const { loginUser } = useAuth(); 
+    const theme = useTheme();
+    const { loginUser } = useAuth();
 
     const [correo, setCorreo] = useState('');
     const [password, setPassword] = useState('');
     const [showContraseña, setShowContraseña] = useState(false);
-    const [loading, setLoading] = useState(false); 
-    const [errorMessage, setErrorMessage] = useState(''); // Estado para manejar errores
+    const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // ---------------------- LÓGICA DE LOGIN ----------------------
     const handleLogin = async (e) => {
@@ -35,22 +32,12 @@ function LoginPage() {
         setErrorMessage('');
 
         try {
-            // Llama a la función de login del contexto (que hace la llamada axios)
-            // Pasamos un objeto con las credenciales
-            const credentials = {
-                correo: correo,
-                password: password
-            };
-            console.log("JSON enviado a /api/token/:", credentials);
-            await loginUser(credentials); 
-            
-            // Si tiene éxito, el contexto se encarga de redirigir (navigate('/'))
+            const credentials = { correo, password };
+            await loginUser(credentials);
         } catch (error) {
-            // Captura el error lanzado desde el AuthContext y lo muestra
             setErrorMessage(error.message || "Error desconocido al iniciar sesión.");
-            
         } finally {
-            setLoading(false); // Detiene el indicador de carga
+            setLoading(false);
         }
     };
 
@@ -58,164 +45,168 @@ function LoginPage() {
     const handleMouseDownPassword = (e) => e.preventDefault();
 
     return (
-        <Grid container component="main" sx={{ minHeight: '100vh' }}>
-            {/* ... COLUMNA IZQUIERDA (Contenido estático) ... */}
-            <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={7} 
+        // 1. EL CONTENEDOR PRINCIPAL OCUPA EL 100% DE LA ALTURA (100vh)
+        <Grid container component="main" sx={{ height: '100vh', overflow: 'hidden' }}>
+            
+            {/* ------------------------------------------------------- */}
+            {/* COLUMNA IZQUIERDA (7/12 del ancho) - BRANDING Y BURBUJAS */}
+            {/* ------------------------------------------------------- */}
+            <Grid
+                item
+                xs={false} // Se oculta en móviles
+                sm={4}
+                md={7}
                 sx={{
-                    position: 'relative', 
-                    display: { xs: 'none', sm: 'flex' },
+                    position: 'relative',
+                    backgroundImage: 'url(https://source.unsplash.com/random?science)', // Opcional: fondo imagen si falla el color
+                    backgroundRepeat: 'no-repeat',
+                    backgroundColor: theme.palette.background.default, // Tu fondo base
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    display: { xs: 'none', sm: 'flex' }, // Flex para centrar contenido
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    p: 4,
-                    backgroundColor: theme.palette.background.default, 
-                    color: '#fff',
                     textAlign: 'center',
-                    overflow: 'hidden',
                 }}
             >
+                {/* Capa de animación (Burbujas) */}
                 <div className="login-animation-wrapper">
                     {Array.from(Array(15)).map((_, i) => (
                         <div key={i} className="bubble"></div>
                     ))}
                 </div>
-                <Box sx={{ zIndex: 2, position: 'relative' }}>
-                    <BiotechOutlined 
-                        sx={{ fontSize: 70}} 
-                        style={{
-                            color : '#33799CFF'
+
+                {/* Contenido Texto/Icono Izquierda (Encima de las burbujas) */}
+                <Box sx={{ zIndex: 2, position: 'relative', p: 4 }}>
+                    <BiotechOutlined sx={{ fontSize: 80, color: '#33799CFF', mb: 2 }} />
+                    
+                    <Typography
+                        variant="h2"
+                        sx={{
+                            fontWeight: 800,
+                            letterSpacing: '-0.5px',
+                            background: (theme) => theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, #FFFFFF 0%, #cfcfcf 100%)'
+                                : 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: (theme) => theme.palette.mode === 'dark'
+                                ? 'drop-shadow(0px 2px 4px rgba(255,255,255,0.1))'
+                                : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))',
+                            fontSize: { xs: '2rem', md: '3.5rem' }
                         }}
-                    />
-                    <Typography 
-                        variant="h2" 
-                        sx={{ fontWeight: 600, mt: 2, letterSpacing: '1px' }}
                     >
                         Software de Formulación
                     </Typography>
-                    <Typography 
-                        variant="h6" 
-                        sx={{ color: 'text.secondary', mt: 1, fontWeight: 300 }}
+
+                    <Typography
+                        variant="h5"
+                        sx={{
+                            mt: 2,
+                            fontWeight: 600,
+                            color: '#33799CFF',
+                            letterSpacing: '1px'
+                        }}
                     >
                         Precisión y Control.
                     </Typography>
                 </Box>
             </Grid>
 
-            {/* --- 2. COLUMNA DERECHA (Formulario) --- */}
-            <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={5} 
-                component={Paper} 
-                elevation={6} 
-                square 
+            {/* ------------------------------------------------------- */}
+            {/* COLUMNA DERECHA (5/12 del ancho) - FORMULARIO DE ACCESO */}
+            {/* ------------------------------------------------------- */}
+            <Grid
+                item
+                xs={12}
+                sm={8}
+                md={5}
+                component={Paper}
+                elevation={6}
+                square
                 sx={{
-                    backgroundColor: theme.palette.background.paper, 
-                    display: 'flex',
+                    display: 'flex',            // Flexbox para centrar
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    p: { xs: 3, md: 6 },
+                    alignItems: 'center',       // Centrado horizontal
+                    justifyContent: 'center',   // Centrado vertical (La clave)
+                    height: '100%',             // Asegura que ocupe toda la altura
+                    backgroundColor: theme.palette.background.paper,
                 }}
             >
+                {/* CAJA CONTENEDORA DEL FORMULARIO (Limita el ancho para que no se estire feo) */}
                 <Box
                     sx={{
+                        my: 8,
+                        mx: 4,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         width: '100%',
-                        maxWidth: 400,
+                        maxWidth: '450px' // Ancho máximo del formulario
                     }}
                 >
+                    {/* Logo de la empresa */}
                     <Box
                         component="img"
-                        src={logoAnimado} // Tu variable importada
-                        alt="Logo Empresa Animado"
-                        sx={{
-                            width: 70,       
-                            height: 'auto',
-                            mb: 2, // Margen abajo para separarlo del texto
-                        }}
-                        style={{
-                            backgroundColor : '#FFFFFFFF',
-                            borderRadius: '8px',
-                            padding: '3px', 
-                        }}
+                        src={logoAnimado}
+                        alt="Logo Empresa"
+                        sx={{ width: 80, height: 'auto', mb: 3 }}
                     />
 
-                    <Typography variant="h4" sx={{ mb: 1, fontWeight: 500, color: '#fff' }}>
+                    <Typography component="h1" variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
                         Iniciar Sesión
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
-                        Accede al sistema de formulación
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+                        Ingresa tus credenciales para continuar
                     </Typography>
 
-                    {/* MOSTRAR ERROR */}
+                    {/* Mensaje de Error */}
                     {errorMessage && (
-                        <Typography 
-                            variant="body2" 
-                            color="error" 
-                            sx={{ mb: 2, fontWeight: 500 }}
-                        >
+                        <Typography color="error" variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
                             {errorMessage}
                         </Typography>
                     )}
 
-                    {/* Formulario */}
-                    <Box component="form" onSubmit={handleLogin} sx={{ width: '100%' }}>
+                    {/* Inputs */}
+                    <Box component="form" onSubmit={handleLogin} sx={{ mt: 1, width: '100%' }}>
                         <TextField
                             margin="normal"
                             required
                             fullWidth
                             id="correo"
-                            label="Correo"
+                            label="Correo Electrónico"
                             name="correo"
+                            autoComplete="email"
                             autoFocus
                             value={correo}
                             onChange={(e) => setCorreo(e.target.value)}
+                            // Aquí usamos tus estilos de inputs modernos si ya los aplicaste en CSS global
+                            // o dejamos props básicas limpias
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <PersonOutline sx={{ color: 'text.secondary' }} />
+                                        <PersonOutline color="action" />
                                     </InputAdornment>
                                 ),
-                            }}
-                            InputLabelProps={{ sx: { color: 'text.secondary' } }}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                    '&:hover fieldset': { borderColor: 'primary.main' },
-                                    color: '#fff',
-                                },
                             }}
                         />
                         <TextField
                             margin="normal"
                             required
                             fullWidth
-                            name="password" // CLAVE CORREGIDA
+                            name="password"
                             label="Contraseña"
                             type={showContraseña ? 'text' : 'password'}
-                            id="contraseña"
+                            id="password"
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            InputLabelProps={{ sx: { color: 'text.secondary' } }}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                    '&:hover fieldset': { borderColor: 'primary.main' },
-                                    color: '#fff',
-                                },
-                            }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <LockOutlined sx={{ color: 'text.secondary' }} />
+                                        <LockOutlined color="action" />
                                     </InputAdornment>
                                 ),
                                 endAdornment: (
@@ -225,7 +216,6 @@ function LoginPage() {
                                             onClick={handleClickShowPassword}
                                             onMouseDown={handleMouseDownPassword}
                                             edge="end"
-                                            sx={{ color: 'text.secondary' }}
                                         >
                                             {showContraseña ? <VisibilityOff /> : <Visibility />}
                                         </IconButton>
@@ -234,40 +224,34 @@ function LoginPage() {
                             }}
                         />
 
-                        {/* Botón de Login (con carga) */}
                         <LoadingButton
                             type="submit"
                             fullWidth
                             variant="contained"
-                            color="primary"
                             loading={loading}
                             loadingPosition="start"
                             startIcon={<Login />}
                             sx={{
-                                mt: 3,
+                                mt: 4,
+                                mb: 2,
                                 py: 1.5,
-                                fontWeight: 700,
                                 fontSize: '1rem',
+                                fontWeight: 'bold',
                                 borderRadius: '10px',
                                 textTransform: 'none',
                                 background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                                 '&:hover': {
-                                    background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                                    boxShadow: `0 0 15px ${theme.palette.primary.main}55`,
-                                },
+                                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                                }
                             }}
                         >
                             Acceder
                         </LoadingButton>
-                    </Box>
 
-                    {/* Pie con info */}
-                    <Typography
-                        variant="caption"
-                        sx={{ color: 'text.disabled', mt: 5, textAlign: 'center' }}
-                    >
-                        © Implementaciones SIAUMEX {new Date().getFullYear()}
-                    </Typography>
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 5 }}>
+                            © Implementaciones SIAUMEX {new Date().getFullYear()}
+                        </Typography>
+                    </Box>
                 </Box>
             </Grid>
         </Grid>

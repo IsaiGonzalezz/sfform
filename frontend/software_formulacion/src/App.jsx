@@ -14,43 +14,45 @@ import ProduccionPage from './pages/ProduccionPage';
 import InventarioPage from './pages/InventarioPage';
 import DetalleFormulaPage from './pages/DetalleFormulaPage';
 import DetalleProduccionPage from './pages/DetalleProduccionPage';
-
+import { ColorModeProvider } from './context/ThemeContext'; // <--- 1. Importar esto
 
 
 function App() {
     return (
-        <Routes>
+        <ColorModeProvider>
+            <Routes>
 
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            
-            
-            <Route element={<PrivateRoute />}>
-                
-                {/* Capa de Layout: Renderiza el MainLayout para todas las rutas internas protegidas */}
-                <Route element={<MainLayout />}>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
 
 
-                    <Route path="dashboard" element={<DashboardPage />} /> 
-                    <Route path="usuarios" element={<UserPage />} />
-                    <Route path="estaciones" element={<EstacionesPage />} />
-                    <Route path="operadores" element={<OperadoresPage />} />
-                    <Route path="empresa" element={<EmpresaPage />} />
-                    <Route path="ingredientes" element={<IngredientesPage />} />
-                    <Route path="formulas" element={<FormulasPage />} />
-                    <Route path='produccion' element={<ProduccionPage />} />
-                    <Route path='inventario' element={<InventarioPage/>} />
-                    <Route path="/detalle-formula/:id" element={<DetalleFormulaPage />} />
-                    <Route path="/detalle-produccion/:folio" element={<DetalleProduccionPage />} />
+                <Route element={<PrivateRoute />}>
 
-                    <Route path="*" element={<div>Página no encontrada</div>} />
+                    {/* Capa de Layout: Renderiza el MainLayout para todas las rutas internas protegidas */}
+                    <Route element={<MainLayout />}>
 
+
+                        <Route path="dashboard" element={<DashboardPage />} />
+                        <Route path="usuarios" element={<UserPage />} />
+                        <Route path="estaciones" element={<EstacionesPage />} />
+                        <Route path="operadores" element={<OperadoresPage />} />
+                        <Route path="empresa" element={<EmpresaPage />} />
+                        <Route path="ingredientes" element={<IngredientesPage />} />
+                        <Route path="formulas" element={<FormulasPage />} />
+                        <Route path='produccion' element={<ProduccionPage />} />
+                        <Route path='inventario' element={<InventarioPage />} />
+                        <Route path="/detalle-formula/:id" element={<DetalleFormulaPage />} />
+                        <Route path="/detalle-produccion/:folio" element={<DetalleProduccionPage />} />
+
+                        <Route path="*" element={<div>Página no encontrada</div>} />
+
+                    </Route>
                 </Route>
-            </Route>
-            
-            <Route path="*" element={<div>Página no encontrada</div>} />
 
-        </Routes>
+                <Route path="*" element={<div>Página no encontrada</div>} />
+
+            </Routes>
+        </ColorModeProvider>
     );
 }
 

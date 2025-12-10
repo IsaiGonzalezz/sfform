@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/UseAuth'; 
+import { useAuth } from '../context/useAuth'; 
 
 const PrivateRoute = () => {
     // 1. Obtener el usuario del estado global

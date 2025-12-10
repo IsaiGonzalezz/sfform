@@ -1,11 +1,10 @@
-/* --- Estilos para EmpresaPage.css --- */
-
 .empresa-container {
     padding: 24px;
-    background-color: #111827; /* Fondo oscuro principal */
+    background-color: var(--bg-color); 
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    color: #e0e0e0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .empresa-container.empty-state {
@@ -13,10 +12,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 300px; /* Asegura algo de altura */
+    min-height: 300px;
     text-align: center;
 }
-
 
 .empresa-header {
     display: flex;
@@ -24,96 +22,98 @@
     align-items: center;
     margin-bottom: 32px;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color); 
 }
 
 .empresa-title {
     display: flex;
     align-items: center;
-    gap: 12px; /* Espacio entre icono y texto */
+    gap: 12px;
     font-weight: bold;
-    color: #60A5FA; /* Azul claro */
+    color: #3572dc;
 }
 
 .edit-button {
-    color: #60A5FA !important; /* !important para sobreescribir MUI */
-    border-color: rgba(96, 165, 250, 0.5) !important;
+    color: #3572dc !important; 
+    border-color: rgba(53, 114, 220, 0.5) !important;
     font-weight: bold !important;
     transition: all 0.3s ease !important;
 }
 
 .edit-button:hover {
-    background-color: rgba(96, 165, 250, 0.1) !important;
-    border-color: #60A5FA !important;
+    background-color: rgba(53, 114, 220, 0.1) !important;
+    border-color: #3572dc !important;
     transform: scale(1.05);
 }
 
 .profile-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Columnas responsivas */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
 }
 
 .section-title {
-    font-weight: bold !important; /* !important para sobreescribir MUI */
+    font-weight: bold !important;
     margin-bottom: 16px !important;
-    color: #90CAF9; /* Azul más claro para títulos de sección */
+    color: var(--text-color); 
+    opacity: 0.9;
     display: flex;
     align-items: center;
     gap: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
 .info-section {
-    background-color: #1e293b; /* Fondo ligeramente más claro para secciones */
+    background-color: var(--card-bg); 
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease;
 }
 
 .info-section p {
     margin-bottom: 10px;
     line-height: 1.6;
-    color: #d1d5db; /* Gris claro para el texto */
-    display: flex; /* Para alinear icono de teléfono */
+    color: var(--text-color); 
+    opacity: 0.8;
+    display: flex;
     align-items: center;
     gap: 6px;
 }
 
 .info-section strong {
-    color: #9ca3af; /* Gris un poco más oscuro para etiquetas */
+    color: var(--text-color);
+    opacity: 0.6;
     margin-right: 8px;
 }
 
-
-/* --- Estilos específicos para el logo --- */
 .logo-section {
-    grid-column: 1 / -1; /* Ocupa todo el ancho en layout de una columna */
-    text-align: center; /* Centra el contenido */
-    background-color: #1e293b;
+    grid-column: 1 / -1;
+    text-align: center;
+    background-color: var(--card-bg); 
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease;
 }
 
 @media (min-width: 768px) {
   .logo-section {
-     grid-column: auto; /* Vuelve a ocupar una columna en pantallas más grandes */
+     grid-column: auto;
      text-align: left;
   }
 }
 
-
 .empresa-logo {
-    max-width: 200px; /* Tamaño máximo del logo */
+    max-width: 200px;
     max-height: 150px;
     height: auto;
-    display: block; /* Para centrar con margin: auto si es necesario */
-    margin: 10px auto 0 auto; /* Espacio arriba, centrado horizontal */
+    display: block;
+    margin: 10px auto 0 auto;
     border-radius: 8px;
-    object-fit: contain; /* Asegura que la imagen se vea completa */
-    background-color: rgba(255, 255, 255, 0.05); /* Fondo sutil por si la imagen es transparente */
+    object-fit: contain;
+    background-color: rgba(128, 128, 128, 0.1); 
     padding: 5px;
 }
 
@@ -123,23 +123,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #9ca3af;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--text-color);
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
     margin: 10px auto 0 auto;
 }
 
-/* --- Estilos para carga y error --- */
 .loading-container, .error-message {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 200px;
     padding: 20px;
-    color: #9ca3af;
+    color: var(--text-color);
+    opacity: 0.7;
 }
 
 .error-message {
-    color: #f87171; /* Rojo */
+    color: #f87171;
+    opacity: 1;
 }

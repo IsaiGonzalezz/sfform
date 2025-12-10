@@ -1,4 +1,39 @@
-/* --- Contenedor de la Animación --- */
+/* --- 1. Contenedor Principal de la Página de Login --- */
+/* (Asegúrate de que tu <div> principal tenga esta clase) */
+.login-page {
+    position: relative; /* Necesario para que las burbujas absolutas se queden aquí */
+    min-height: 100vh;
+    width: 100%;
+    
+    /* EL CAMBIO MÁGICO: El fondo cambia según el tema */
+    background-color: var(--bg-color); 
+    
+    /* El texto cambia de color */
+    color: var(--text-color);
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Para que las burbujas no estiren la pantalla */
+    transition: background-color 0.3s ease;
+}
+
+/* --- 2. Tarjeta del Formulario (Donde escriben usuario/pass) --- */
+/* Si tienes una tarjeta central, usa esto: */
+.login-card {
+    background-color: var(--card-bg); /* Blanco en día / Gris en noche */
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); /* Sombra un poco más fuerte para resaltar */
+    z-index: 10; /* IMPORTANTE: Por encima de las burbujas */
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid var(--border-color); /* Borde sutil */
+    transition: background-color 0.3s ease;
+}
+
+/* --- 3. Contenedor de la Animación --- */
 .login-animation-wrapper {
     position: absolute;
     top: 0;
@@ -6,27 +41,88 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    z-index: 1; /* Detrás del texto, pero visible */
+    z-index: 1; /* Detrás de la tarjeta (.login-card tiene z-index 10) */
+    
+    /* TRUCO DE ORO: Esto permite dar click "a través" de las burbujas 
+       por si alguna pasa por encima de un botón */
+    pointer-events: none; 
 }
 
-/* --- Burbujas Individuales --- */
+/* --- 4. Burbujas Individuales --- */
 .bubble {
     position: absolute;
-    bottom: -100px; /* Empiezan abajo, fuera de la pantalla */
+    bottom: -100px;
     width: 40px;
     height: 40px;
     
-    /* Usamos el color 'primary' del tema de MUI */
-    background-color: rgba(0, 191, 165, 0.1); /* (Este es el teal que te gustó) */
+    /* Mantenemos el Teal, se ve genial en ambos modos */
+    /* Le subí un pelín la opacidad a 0.15 para que se note más en el blanco */
+    background-color: rgba(0, 191, 165, 0.15); 
     
     border-radius: 50%;
     opacity: 0;
-    
-    /* Animación */
     animation: floatUp 10s infinite ease-in;
 }
 
-/* --- Keyframes para la animación --- */
+
+/* --- Inputs Modernos --- */
+
+.input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    margin-left: 4px; /* Alineado con el borde redondeado */
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px 16px; /* Más espacio interno = más elegante */
+    
+    /* Fondo dinámico:
+       - En modo claro será un gris muy sutil (#f0f0f0 aprox).
+       - En modo oscuro será un gris oscuro (#2c2c2c).
+       Usamos una transparencia sobre el color de texto para lograrlo automáticamente.
+    */
+    background-color: rgba(128, 128, 128, 0.08); 
+    
+    /* Borde sutil */
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; /* Bordes muy redondeados (Estilo iOS/Modern) */
+    
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 500;
+    
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); /* Sombrita interna sutil */
+}
+
+/* Efecto al escribir (Focus) */
+.input-group input:focus {
+    outline: none;
+    background-color: transparent; /* Se limpia el fondo */
+    border-color: #00BFA5; /* Tu color Teal */
+    box-shadow: 0 0 0 4px rgba(0, 191, 165, 0.1); /* Aura suave alrededor */
+    transform: translateY(-1px); /* Se levanta un milímetro */
+}
+
+/* Iconos dentro del input (Si usas InputAdornment de MUI o iconos absolutos) */
+/* Si tus iconos son <i> o <svg> dentro del .input-group */
+.input-group svg {
+    color: var(--text-color);
+    opacity: 0.5;
+    transition: color 0.3s;
+}
+
+.input-group:focus-within svg {
+    color: #00BFA5; /* El icono también se pinta de Teal al escribir */
+    opacity: 1;
+}
+
+
+/* --- Keyframes (Igual que antes) --- */
 @keyframes floatUp {
     0% {
         transform: translateY(0);
@@ -39,13 +135,12 @@
         opacity: 1;
     }
     100% {
-        transform: translateY(-100vh); /* Sube 100% de la altura de la pantalla */
+        transform: translateY(-100vh);
         opacity: 0;
     }
 }
 
-/* --- Variaciones de las Burbujas --- */
-/* Hacemos que salgan en diferentes lugares y a diferentes velocidades/tamaños */
+/* --- Variaciones (Tu código original) --- */
 .bubble:nth-child(1) { left: 10%; animation-duration: 12s; width: 20px; height: 20px; }
 .bubble:nth-child(2) { left: 20%; animation-duration: 7s; animation-delay: 1s; width: 30px; height: 30px; }
 .bubble:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 2s; }

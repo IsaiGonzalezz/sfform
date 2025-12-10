@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 
 
-const API_URL_OPERADORES = 'http://127.0.0.1:8000/api/operadores/';
+const API_URL_OPERADORES_REL = '/operadores/';
 
 // Esquema de Validación para Operadores
 const validationSchema = yup.object().shape({
@@ -41,6 +41,7 @@ const validationSchema = yup.object().shape({
 // Props: open, onClose, onSaveSuccess, operadorToEdit, estacionesList
 function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estacionesList }) {
 
+    const { axiosInstance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const isEditMode = operadorToEdit !== null;
 
@@ -72,9 +73,9 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
             if (isEditMode) {
                 const dataToUpdate = { ...data };
                 if (!dataToUpdate.contraseña) delete dataToUpdate.contraseña;
-                await axios.put(`${API_URL_OPERADORES}${operadorToEdit.rfid}/`, dataToUpdate);
+                await axiosInstance.put(`${API_URL_OPERADORES_REL}${operadorToEdit.rfid}/`, dataToUpdate);
             } else {
-                await axios.post(API_URL_OPERADORES, data);
+                await axiosInstance.post(API_URL_OPERADORES_REL, data);
             }
             console.log('¡Operación de operador exitosa!');
             success = true;
@@ -98,7 +99,7 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
             onClose={onClose}
             PaperProps={{
                 sx: {
-                    backgroundColor: '#1e1e1e',
+                    backgroundColor: 'var(--bg-color)',
                     color: '#fff',
                     borderRadius: '12px',
                     width: '100%',
@@ -108,13 +109,13 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
         >
             <form onSubmit={handleSubmit(onSubmit)}>
 
-                <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, color : 'var(--text-color)' }}>
                     {isEditMode ? <EditOutlined /> : <EngineeringOutlined />}
                     {isEditMode ? 'Editar Operador' : 'Agregar Nuevo Operador'}
                 </DialogTitle>
 
                 <DialogContent>
-                    {/* Usamos un Box para dar espaciado uniforme */}
+                    
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
 
                         {/* --- CAMPO RFID --- */}
@@ -134,12 +135,12 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <Badge sx={{ color: 'text.secondary' }} />
+                                                <Badge sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />
@@ -160,12 +161,12 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <PersonOutline sx={{ color: 'text.secondary' }} />
+                                                <PersonOutline sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />
@@ -187,7 +188,7 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <LockOutlined sx={{ color: 'text.secondary' }} />
+                                                <LockOutlined sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                         endAdornment: (
@@ -195,15 +196,15 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                                 <IconButton
                                                     onClick={() => setShowPassword(!showPassword)}
                                                     edge="end"
-                                                    sx={{ color: 'text.secondary' }}
+                                                    sx={{ color: 'var(--text-color)' }}
                                                 >
                                                     {showPassword ? <VisibilityOff /> : <Visibility />}
                                                 </IconButton>
                                             </InputAdornment>
                                         )
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />
@@ -214,26 +215,26 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                             control={control}
                             render={({ field }) => (
                                 <FormControl fullWidth disabled={isSaving || !estacionesList} error={!!errors.idest}>
-                                    <InputLabel id="estacion-select-label" sx={{ color: '#bbb' }}>Estación Asignada</InputLabel>
+                                    <InputLabel id="estacion-select-label" sx={{ color: 'var(--text-color)' }}>Estación Asignada</InputLabel>
                                     <Select
                                         {...field}
                                         labelId="estacion-select-label"
                                         label="Estación Asignada"
                                         startAdornment={
-                                            <InputAdornment position="start" sx={{ ml: 1.5, color: 'text.secondary' }}>
+                                            <InputAdornment position="start" sx={{ ml: 1.5, color: 'var(--text-color)' }}>
                                                 <WarehouseOutlined />
                                             </InputAdornment>
                                         }
                                         sx={{
-                                            color: '#fff',
-                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                            '& .MuiSvgIcon-root': { color: '#fff' },
+                                            color: 'var(--text-color)',
+                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
+                                            '& .MuiSvgIcon-root': { color: 'var(--text-color)' },
                                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
                                             '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.4)' },
                                         }}
                                         MenuProps={{
                                             PaperProps: {
-                                                sx: { backgroundColor: '#2b2b2b', color: '#fff' }
+                                                sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)'}
                                             }
                                         }}
                                     >

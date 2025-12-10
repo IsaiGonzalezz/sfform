@@ -7,7 +7,7 @@ import {
     Collapse
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
+import { useColorMode } from '../context/ThemeContext';
 // Iconos Generales
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -37,7 +37,7 @@ const mainItems = [
     { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
     { text: 'Fórmulas', path: '/formulas', icon: <ReceiptLongIcon /> },
     { text: 'Producción', path: '/produccion', icon: <FactoryIcon /> },
-    { text: 'Inventario', path: '/inventario',  icon: <Inventory2Icon />}
+    { text: 'Inventario', path: '/inventario', icon: <Inventory2Icon /> }
 ];
 
 const catalogosItems = [
@@ -55,9 +55,10 @@ function MainLayout() {
     const { user, logoutUser } = useAuth();
     const location = useLocation();
     const theme = useTheme();
+    const { toggleColorMode, mode } = useColorMode();
 
     const [open, setOpen] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    //const [isDarkMode, setIsDarkMode] = useState(true);
     const [menuOpen, setMenuOpen] = useState({ catalogos: false, herramientas: false });
 
     const handleToggleDrawer = () => setOpen(!open);
@@ -115,7 +116,7 @@ function MainLayout() {
             <ListItemIcon sx={{ color: theme.palette.text.secondary }}>
                 {item.icon}
             </ListItemIcon>
-            <ListItemText primary={item.text} primaryTypographyProps={{ variant: 'body2' }}/>
+            <ListItemText primary={item.text} primaryTypographyProps={{ variant: 'body2' }} />
         </ListItemButton>
     );
 
@@ -125,22 +126,37 @@ function MainLayout() {
             <AppBar
                 position="fixed"
                 sx={{
-                    backgroundColor: '#000000FF',
-                    color: theme.palette.text.primary,
+                    backgroundColor: (theme) => theme.palette.mode === 'dark'
+                        ? '#000000'
+                        : '#ffffff',
+                    color: (theme) => theme.palette.mode === 'dark'
+                        ? theme.palette.text.primary
+                        : theme.palette.text.primary,
                     boxShadow: 'none',
-                    borderBottom: '1px solid rgba(255,255,255,0.12)',
-                    zIndex: theme.zIndex.drawer + 1,
-                    transition: transition(['left', 'width']),
+                    borderBottom: (theme) => theme.palette.mode === 'dark'
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.12)',
+                    zIndex: (theme) => theme.zIndex.drawer + 1,
+                    transition: (theme) => theme.transitions.create(['left', 'width'], {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.leavingScreen,
+                    }),
                     left: open ? `${drawerWidth}px` : `${collapsedWidth}px`,
                     width: open ? `calc(100% - ${drawerWidth}px)` : `calc(100% - ${collapsedWidth}px)`,
                 }}
             >
                 <Toolbar>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Software Formulación
+                    <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+                        SIAUMEX - Formulación
                     </Typography>
-                    
-                    {/* Nombre de Usuario */}
+                    {/* Switch de Tema */}
+                    <IconButton
+                        onClick={toggleColorMode}
+                        color="inherit"
+                        title={mode === 'dark' ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+                    >
+                        {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                    </IconButton>
                     <Box
                         sx={{
                             display: 'flex',
@@ -148,17 +164,26 @@ function MainLayout() {
                             px: 1.5,
                             py: 0.5,
                             borderRadius: '16px',
-                            backgroundColor: '#3e3e3eff',
-                            color: 'white',
                             fontWeight: 'bold',
+                            backgroundColor: (theme) => theme.palette.mode === 'dark'
+                                ? '#3e3e3eff'
+                                : 'rgba(0, 0, 0, 0.06)',
+                            color: (theme) => theme.palette.mode === 'dark'
+                                ? 'white'
+                                : theme.palette.text.primary,
+                            border: (theme) => theme.palette.mode === 'dark'
+                                ? 'none'
+                                : '1px solid rgba(0,0,0,0.05)',
+                            transition: 'all 0.3s ease'
                         }}
                     >
-                        <Typography variant="subtitle1" sx={{ color: 'inherit' }}>
+                        <Typography variant="subtitle1" sx={{ color: 'inherit', fontWeight: 'bold', fontSize: '0.9rem' }}>
                             {user ? user.nombre : 'Usuario'}
                         </Typography>
                     </Box>
                 </Toolbar>
             </AppBar>
+
 
             {/* ======= DRAWER ======= */}
             <Drawer
@@ -179,7 +204,7 @@ function MainLayout() {
                         overflowX: 'hidden',
                         // ESTO ES CLAVE: Flex column para empujar items al fondo
                         display: 'flex',
-                        flexDirection: 'column', 
+                        flexDirection: 'column',
                     },
                 }}
             >
@@ -225,7 +250,7 @@ function MainLayout() {
                             <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: theme.palette.text.primary }}>
                                 <BuildIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Herramientas" sx={{ opacity: open ? 1 : 0 }} primaryTypographyProps={{ variant: 'body2' }}/>
+                            <ListItemText primary="Herramientas" sx={{ opacity: open ? 1 : 0 }} primaryTypographyProps={{ variant: 'body2' }} />
                             {open ? (menuOpen.herramientas ? <ExpandLess /> : <ExpandMore />) : null}
                         </ListItemButton>
                     </ListItem>
@@ -238,25 +263,8 @@ function MainLayout() {
 
                 {/* ======= ITEMS INFERIORES (LOGOUT Y TEMA) ======= */}
                 {/* marginTop: 'auto' es el truco para empujarlo al fondo */}
-                <List sx={{ marginTop: 'auto' }}> 
+                <List sx={{ marginTop: 'auto' }}>
                     <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
-                    
-                    {/* Switch de Tema */}
-                    <ListItem disablePadding sx={{ display: 'block' }}>
-                        <ListItemButton
-                            onClick={() => setIsDarkMode(!isDarkMode)}
-                            sx={{
-                                minHeight: 48,
-                                justifyContent: open ? 'initial' : 'center',
-                                px: 2.5,
-                            }}
-                        >
-                            <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: theme.palette.text.primary }}>
-                                {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-                            </ListItemIcon>
-                            <ListItemText primary="Tema" sx={{ opacity: open ? 1 : 0 }} primaryTypographyProps={{ variant: 'body2' }} />
-                        </ListItemButton>
-                    </ListItem>
 
                     {/* Logout */}
                     <ListItem disablePadding sx={{ display: 'block' }}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -13,7 +13,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // Icono para sub
 import BusinessIcon from '@mui/icons-material/Business';
 
 
-const API_URL_EMPRESA = 'http://127.0.0.1:8000/api/empresa/';
+const API_URL_EMPRESA_REL = '/empresa/';
 
 // --- Esquema de Validación ---
 // Ajusta los 'required' según necesites
@@ -55,7 +55,7 @@ const VisuallyHiddenInput = styled('input')({
 
 // --- Componente Principal ---
 function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
-
+    const { axiosInstance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [logoPreview, setLogoPreview] = useState(null); // Para la previsualización
     const isEditMode = empresaToEdit !== null;
@@ -145,10 +145,10 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
 
             if (isEditMode) {
                 // PUT para actualizar (usando el RFC como identificador)
-                response = await axios.put(`${API_URL_EMPRESA}${empresaToEdit.rfc}/`, formDataToSend, config);
+                response = await axiosInstance.put(`${API_URL_EMPRESA_REL}${empresaToEdit.rfc}/`, formDataToSend, config);
             } else {
                 // POST para crear
-                response = await axios.post(API_URL_EMPRESA, formDataToSend, config);
+                response = await axiosInstance.post(API_URL_EMPRESA_REL, formDataToSend, config);
             }
             console.log('¡Operación de empresa exitosa!', response.data);
             success = true;
@@ -178,42 +178,51 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
             fullWidth
             PaperProps={{
                 sx: {
-                    backgroundColor: '#1e1e1e',
-                    color: '#fff',
-                    borderRadius: '12px',
-                    boxShadow: '0px 10px 40px rgba(0,0,0,0.5)',
+                    // Fondo de la tarjeta del modal
+                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e1e1e' : '#ffffff',
+                    color: 'text.primary',
+                    borderRadius: '16px', // Bordes más redondeados
+                    backgroundImage: 'none',
+                    boxShadow: (theme) => theme.palette.mode === 'dark'
+                        ? '0px 10px 40px rgba(0,0,0,0.6)'
+                        : '0px 10px 40px rgba(0,0,0,0.1)',
                 },
             }}
         >
             <form onSubmit={handleSubmit(onSubmit)}>
                 {/* --- CABECERA --- */}
-                <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
-                    <Typography variant="h5" fontWeight="bold">
+                <DialogTitle sx={{
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    pb: 2
+                }}>
+                    <Typography variant="h5" fontWeight="800" sx={{ color: 'text.primary' }}>
                         {isEditMode ? 'Editar Empresa' : 'Registrar Empresa'}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#888', mt: 0.5 }}>
-                        Complete la información fiscal y de contacto de la organización.
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                        Información fiscal y general de la organización.
                     </Typography>
                 </DialogTitle>
 
-                <DialogContent sx={{ py: 3 }}>
+                <DialogContent sx={{ py: 4 }}>
 
                     {/* --- SECCIÓN 1: DATOS FISCALES --- */}
                     <Box sx={{ mb: 4 }}>
                         <Typography
-                            variant="subtitle2"
+                            variant="overline"
                             sx={{
-                                color: '#03D000FF',
+                                color: 'primary.main', // Usa el color principal de tu tema
                                 fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                letterSpacing: '1px',
-                                mb: 2
+                                letterSpacing: '1.2px',
+                                fontSize: '0.75rem',
+                                mb: 2,
+                                display: 'block'
                             }}
                         >
                             Datos Fiscales
                         </Typography>
 
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* RFC */}
                             <Grid item xs={12} sm={4}>
                                 <Controller
@@ -224,17 +233,25 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="RFC"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving || isEditMode}
                                             error={!!errors.rfc}
                                             helperText={errors.rfc?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
+                                            // ESTILO SUAVE PARA LOS INPUTS
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                                    '&:hover fieldset': { borderColor: '#fff' }
-                                                }
+                                                    // Fondo: Gris transparente suave (NO NEGRO)
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark'
+                                                        ? 'rgba(255, 255, 255, 0.05)'
+                                                        : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' }, // Quitamos el borde gris feo
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`, // Anillo de color al enfocar
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -251,20 +268,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Razón Social / Nombre"
                                             fullWidth
-                                            style={{
-                                                width : '490px'
-                                            }}
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.nombre}
                                             helperText={errors.nombre?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                                    '&:hover fieldset': { borderColor: '#fff' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -273,24 +291,23 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                         </Grid>
                     </Box>
 
-                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
-
                     {/* --- SECCIÓN 2: UBICACIÓN --- */}
                     <Box sx={{ mb: 4 }}>
                         <Typography
-                            variant="subtitle2"
+                            variant="overline"
                             sx={{
-                                color: '#03D000FF',
+                                color: 'primary.main',
                                 fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                letterSpacing: '1px',
-                                mb: 2
+                                letterSpacing: '1.2px',
+                                fontSize: '0.75rem',
+                                mb: 2,
+                                display: 'block'
                             }}
                         >
                             Ubicación
                         </Typography>
 
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* Calle */}
                             <Grid item xs={12} sm={8}>
                                 <Controller
@@ -301,16 +318,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Calle y Número"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.calle}
                                             helperText={errors.calle?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -327,16 +349,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Colonia"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.colonia}
                                             helperText={errors.colonia?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -353,16 +380,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Ciudad"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.ciudad}
                                             helperText={errors.ciudad?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -379,16 +411,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Estado"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.estado}
                                             helperText={errors.estado?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -405,16 +442,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="C.P."
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.cp}
                                             helperText={errors.cp?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -423,24 +465,23 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                         </Grid>
                     </Box>
 
-                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
-
                     {/* --- SECCIÓN 3: CONTACTO --- */}
                     <Box sx={{ mb: 4 }}>
                         <Typography
-                            variant="subtitle2"
+                            variant="overline"
                             sx={{
-                                color: '#03D000FF',
+                                color: 'primary.main',
                                 fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                letterSpacing: '1px',
-                                mb: 2
+                                letterSpacing: '1.2px',
+                                fontSize: '0.75rem',
+                                mb: 2,
+                                display: 'block'
                             }}
                         >
                             Contacto
                         </Typography>
 
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* Nombre Contacto */}
                             <Grid item xs={12}>
                                 <Controller
@@ -451,16 +492,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Nombre Completo del Responsable"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.contacto}
                                             helperText={errors.contacto?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -477,16 +523,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             {...field}
                                             label="Teléfono"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.telefono}
                                             helperText={errors.telefono?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -504,16 +555,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                             label="Correo Electrónico"
                                             type="email"
                                             fullWidth
-                                            variant="outlined"
                                             disabled={isSaving}
                                             error={!!errors.correo}
                                             helperText={errors.correo?.message}
-                                            InputLabelProps={{ sx: { color: '#aaa' } }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: '#fff',
-                                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
-                                                }
+                                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                                                    borderRadius: '8px',
+                                                    '& fieldset': { border: 'none' },
+                                                    '&:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: 'transparent',
+                                                        boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': { color: 'text.secondary' }
                                             }}
                                         />
                                     )}
@@ -522,18 +578,17 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                         </Grid>
                     </Box>
 
-                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)', mb: 4 }} />
-
-                    {/* --- SECCIÓN 4: BRANDING / LOGO --- */}
+                    {/* --- SECCIÓN 4: BRANDING --- */}
                     <Box>
                         <Typography
-                            variant="subtitle2"
+                            variant="overline"
                             sx={{
-                                color: '#03D000FF',
+                                color: 'primary.main',
                                 fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                letterSpacing: '1px',
-                                mb: 2
+                                letterSpacing: '1.2px',
+                                fontSize: '0.75rem',
+                                mb: 2,
+                                display: 'block'
                             }}
                         >
                             Branding
@@ -546,13 +601,15 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                 alignItems: 'center',
                                 gap: 4,
                                 p: 3,
-                                border: '1px dashed rgba(255,255,255,0.2)',
-                                borderRadius: '8px',
-                                backgroundColor: 'rgba(255,255,255,0.02)',
+                                // Borde sutil
+                                border: '1px dashed',
+                                borderColor: 'divider',
+                                borderRadius: '12px',
+                                backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                                 transition: '0.3s',
                                 '&:hover': {
-                                    borderColor: '#03D000FF',
-                                    backgroundColor: 'rgba(3, 208, 0, 0.05)'
+                                    borderColor: 'primary.main',
+                                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
                                 }
                             }}
                         >
@@ -563,11 +620,13 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                 sx={{
                                     width: 100,
                                     height: 100,
-                                    bgcolor: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)'
+                                    bgcolor: 'background.paper',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    p: 1
                                 }}
                             >
-                                <BusinessIcon sx={{ color: '#666', fontSize: 40 }} />
+                                <BusinessIcon sx={{ color: 'text.disabled', fontSize: 40 }} />
                             </Avatar>
 
                             {/* Botón de Carga */}
@@ -577,16 +636,10 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     variant="outlined"
                                     startIcon={<CloudUploadIcon />}
                                     sx={{
-                                        color: '#fff',
-                                        borderColor: 'rgba(255,255,255,0.3)',
+                                        borderRadius: '8px',
                                         textTransform: 'none',
                                         fontWeight: 'bold',
-                                        mb: 1,
-                                        '&:hover': {
-                                            borderColor: '#03D000FF',
-                                            color: '#03D000FF',
-                                            backgroundColor: 'transparent'
-                                        }
+                                        mb: 1
                                     }}
                                 >
                                     {isEditMode && logoPreview ? 'Cambiar Logotipo' : 'Subir Logotipo'}
@@ -606,7 +659,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     />
                                 </Button>
 
-                                <Typography variant="caption" display="block" sx={{ color: '#666' }}>
+                                <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
                                     Formato recomendado: PNG transparente.
                                 </Typography>
 
@@ -623,14 +676,14 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                 </DialogContent>
 
                 {/* --- PIE DE PÁGINA (ACCIONES) --- */}
-                <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <DialogActions sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Button
                         onClick={onClose}
                         sx={{
-                            color: '#aaa',
+                            color: 'text.secondary',
                             mr: 2,
                             textTransform: 'none',
-                            '&:hover': { color: '#fff' }
+                            '&:hover': { color: 'text.primary', backgroundColor: 'transparent' }
                         }}
                         disabled={isSaving}
                     >
@@ -641,15 +694,16 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                         disabled={isSaving}
                         variant="contained"
                         sx={{
-                            bgcolor: '#03D000FF',
+                            backgroundColor: '#03D000FF', // Tu verde de marca
                             color: '#fff',
                             fontWeight: 'bold',
                             px: 4,
+                            borderRadius: '8px',
                             textTransform: 'none',
-                            boxShadow: '0 0 10px rgba(3, 208, 0, 0.3)',
+                            boxShadow: '0 4px 14px rgba(3, 208, 0, 0.4)',
                             '&:hover': {
-                                bgcolor: '#02a100',
-                                boxShadow: '0 0 20px rgba(3, 208, 0, 0.5)',
+                                backgroundColor: '#02a100',
+                                boxShadow: '0 6px 20px rgba(3, 208, 0, 0.6)',
                             }
                         }}
                     >
@@ -659,6 +713,8 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
             </form>
         </Dialog>
     );
+
+
 }
 
 export default EmpresaFormModal;

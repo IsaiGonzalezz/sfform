@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import { useForm, Controller } from 'react-hook-form'; // <-- React Hook Form
 import { yupResolver } from '@hookform/resolvers/yup'; // <-- Resolver para Yup
 import * as yup from 'yup'; // <-- Yup para el esquema
@@ -25,7 +25,7 @@ import {
     EditOutlined // Título de Editar
 } from '@mui/icons-material';
 
-const API_URL = 'http://127.0.0.1:8000/api/usuarios/';
+const API_URL_USUARIO_REL = '/usuarios/';
 
 // --- Esquema de Validación con Yup ---
 const validationSchema = yup.object().shape({
@@ -48,6 +48,7 @@ const validationSchema = yup.object().shape({
 
 function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
 
+    const { axiosInstance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const isEditMode = userToEdit !== null;
 
@@ -90,9 +91,9 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 if (!dataToUpdate.contraseña) {
                     delete dataToUpdate.contraseña;
                 }
-                await axios.put(`${API_URL}${userToEdit.id}/`, dataToUpdate);
+                await axiosInstance.put(`${API_URL_USUARIO_REL}${userToEdit.id}/`, dataToUpdate);
             } else {
-                await axios.post(API_URL, data);
+                await axiosInstance.post(API_URL_USUARIO_REL, data);
             }
             console.log('¡Operación exitosa!');
             success = true;
@@ -117,8 +118,8 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 onClose={onClose}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#1e1e1e',
-                        color: '#fff',
+                        backgroundColor: 'var(--bg-color)',
+                        color:'var(--text-color)',
                         borderRadius: '12px',
                         width: '100%',
                         maxWidth: '500px' // Un ancho máximo definido
@@ -154,15 +155,12 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Badge sx={{ color: 'text.secondary' }} />
+                                                    <Badge sx={{ color: 'var(--text-color)' }} />
                                                 </InputAdornment>
                                             ),
                                         }}
-                                        // (Los 'sx' e 'InputLabelProps' ya no son necesarios
-                                        // si usas el ThemeProvider de MUI, pero los
-                                        // mantenemos por si acaso)
-                                        InputLabelProps={{ sx: { color: '#bbb' } }}
-                                        sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                        InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                        sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                     />
                                 )}
                             />
@@ -183,12 +181,12 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <PersonOutline sx={{ color: 'text.secondary' }} />
+                                                    <PersonOutline sx={{ color: 'var(--text-color)' }} />
                                                 </InputAdornment>
                                             ),
                                         }}
-                                        InputLabelProps={{ sx: { color: '#bbb' } }}
-                                        sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                        InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                        sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                     />
                                 )}
                             />
@@ -210,12 +208,12 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <AlternateEmail sx={{ color: 'text.secondary' }} />
+                                                    <AlternateEmail sx={{ color: 'var(--text-color)' }} />
                                                 </InputAdornment>
                                             ),
                                         }}
-                                        InputLabelProps={{ sx: { color: '#bbb' } }}
-                                        sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                        InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                        sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                     />
                                 )}
                             />
@@ -238,7 +236,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <LockOutlined sx={{ color: 'text.secondary' }} />
+                                                    <LockOutlined sx={{ color: 'var(--text-color)' }} />
                                                 </InputAdornment>
                                             ),
                                             // Botón para mostrar/ocultar
@@ -247,15 +245,15 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                                     <IconButton
                                                         onClick={() => setShowPassword(!showPassword)}
                                                         edge="end"
-                                                        sx={{ color: 'text.secondary' }}
+                                                        sx={{ color: 'var(--text-color)' }}
                                                     >
                                                         {showPassword ? <VisibilityOff /> : <Visibility />}
                                                     </IconButton>
                                                 </InputAdornment>
                                             )
                                         }}
-                                        InputLabelProps={{ sx: { color: '#bbb' } }}
-                                        sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                        InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                        sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                     />
                                 )}
                             />
@@ -266,28 +264,28 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                 control={control}
                                 render={({ field }) => (
                                     <FormControl fullWidth disabled={isSaving} error={!!errors.rol}>
-                                        <InputLabel id="rol-label-id" sx={{ color: '#bbb' }}>Rol</InputLabel>
+                                        <InputLabel id="rol-label-id" sx={{ color: 'var(--text-color)' }}>Rol</InputLabel>
                                         <Select
                                             {...field}
                                             labelId="rol-label-id"
                                             label="Rol"
                                             // Icono para el Select
                                             startAdornment={
-                                                <InputAdornment position="start" sx={{ ml: 1.5, color: 'text.secondary' }}>
+                                                <InputAdornment position="start" sx={{ ml: 1.5, color: 'var(--text-color)' }}>
                                                     <ManageAccountsOutlined />
                                                 </InputAdornment>
                                             }
                                             sx={{
                                                 color: '#fff',
-                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-                                                '& .MuiSvgIcon-root': { color: '#fff' },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
-                                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
+                                                '& .MuiSvgIcon-root': { color: 'var(--text-color)' },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
                                             }}
                                             // Estilos del Menú desplegable
                                             MenuProps={{
                                                 PaperProps: {
-                                                    sx: { backgroundColor: '#2b2b2b', color: '#fff' }
+                                                    sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }
                                                 }
                                             }}
                                         >

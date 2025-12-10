@@ -9,7 +9,6 @@ from Formulas.models import Formulas
 from Usuarios.models import Usuario
 
 class DashboardDataView(APIView):
-    # permission_classes = [IsAuthenticated] # Descomentar si usas autenticación
 
     def get(self, request):
         today = timezone.now()
@@ -70,13 +69,13 @@ class DashboardDataView(APIView):
         # ==========================================
         # 3. GRÁFICO BARRAS (Top 5 Fórmulas)
         # ==========================================
-        # RELACIÓN CLAVE: Produccion.idform -> Formulas.nombre
-        # En Django el lookup es campoFK__campoRelacionado
+        # Produccion.idform -> Formulas.nombre
+        
         top_formulas_query = (
             Produccion.objects
             .filter(estatus=1)
-            .values('idform__nombre')  # Aquí corregido: idform (tu campo FK) __ nombre (modelo Formulas)
-            .annotate(total_lotes=Count('folio')) # Usamos PK 'folio' para contar
+            .values('idform__nombre') 
+            .annotate(total_lotes=Count('folio'))
             .order_by('-total_lotes')[:5]
         )
 
@@ -90,11 +89,11 @@ class DashboardDataView(APIView):
         # ==========================================
         # 4. GRÁFICO PASTEL (Top Operadores)
         # ==========================================
-        # RELACIÓN CLAVE: Produccion.idusu -> Usuario.nombre
+        # Produccion.idusu -> Usuario.nombre
         top_operadores_query = (
             Produccion.objects
             .filter(estatus=1)
-            .values('idusu__nombre') # Aquí corregido: idusu (tu campo FK) __ nombre (modelo Usuario)
+            .values('idusu__nombre')
             .annotate(total=Count('folio'))
             .order_by('-total')[:5]
         )

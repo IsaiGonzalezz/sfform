@@ -5,7 +5,6 @@ import {
     Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -15,14 +14,6 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // <-- Icono pa
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 const API_URL_REL = `/usuarios/`;
-
-const darkTheme = createTheme({
-    palette: {
-        mode: 'dark',
-        primary: { main: '#11998e' },
-        background: { paper: '#1e1e1e' },
-    },
-});
 
 
 function CustomNoRowsOverlay() {
@@ -175,7 +166,7 @@ function UsersPage() {
                     alignItems: 'center',
                     mb: 3, // Incrementado margen inferior
                     p: 2,
-                    background: 'linear-gradient(90deg, #292929FF, #292929FF)', // Fondo degradado sutil
+                    background: 'var(--bg-color)',
                     borderRadius: '12px',
                     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', // Sombra más sutil
                 }}
@@ -187,7 +178,7 @@ function UsersPage() {
                         component="h1"
                         sx={{
                             fontWeight: 'bold',
-                            color: '#E0E0E0',
+                            color: 'var(--text-color)',
                             letterSpacing: '0.5px',
                             // textShadow: '0 0 10px rgba(0, 119, 209, 0.3)', // Sombra de texto opcional
                         }}
@@ -207,7 +198,7 @@ function UsersPage() {
                         py: 1,
                         // --- CAMBIO: Color azul sólido ---
                         backgroundColor: '#004F8CFF', // Azul principal
-                        color: '#fff',
+                        color: '#FFFFFF',
                         boxShadow: '0 0 10px rgba(0, 119, 209, 0.5)', // Mantenemos sombra azul
                         transition: 'all 0.3s ease',
                         '&:hover': {
@@ -221,14 +212,14 @@ function UsersPage() {
                 </Button>
             </Box>
 
-            <ThemeProvider theme={darkTheme}>
+
                 <Paper
                     sx={{
                         flexGrow: 1,
                         width: '100%',
                         borderRadius: '14px',
                         overflow: 'hidden',
-                        backgroundColor: '#292929FF', // Fondo del Paper/Tabla
+                        backgroundColor: 'var(--bg-color)',
                         boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', // Sombra más sutil
                     }}
                 >
@@ -241,11 +232,11 @@ function UsersPage() {
                         autoHeight={users.length === 0}
                         sx={{
                             border: 'none',
-                            color: '#E0E0E0', // Color general del texto en la tabla
+                            color:'var(--text-color)', // Color general del texto en la tabla
                             // Encabezados de Columna
                             '& .MuiDataGrid-columnHeaders': {
                                 background: 'linear-gradient(90deg, #1E293B, #0F172A)', // Fondo degradado
-                                color: '#DFF1FFFF', // Color azul claro para títulos
+                                color: 'var(--text-color)', // Color azul claro para títulos
                                 fontWeight: 'bold',
                                 fontSize: '0.95rem',
                                 borderBottom: '1px solid rgba(255,255,255,0.1)',
@@ -270,7 +261,7 @@ function UsersPage() {
                             },
                             // Footer de la Tabla
                             '& .MuiDataGrid-footerContainer': {
-                                backgroundColor: '#292929FF', // Fondo oscuro
+                                backgroundColor: 'var(--bg-color)', // Fondo oscuro
                                 borderTop: '1px solid rgba(255,255,255,0.1)',
                             },
                             // Scrollbars
@@ -296,8 +287,8 @@ function UsersPage() {
                     onClose={handleCloseConfirm}
                     PaperProps={{
                         sx: {
-                            backgroundColor: '#1E1E1E',
-                            color: '#FFFFFF',
+                            backgroundColor:'var(--bg-color)',
+                            color: 'var(--text-color)',
                             borderRadius: '12px',
                             boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)',
                         },
@@ -316,7 +307,7 @@ function UsersPage() {
                         Confirmar Eliminación
                     </DialogTitle>
                     <DialogContent>
-                        <DialogContentText sx={{ color: '#D1D5DB' }}>
+                        <DialogContentText sx={{ color: 'var(--text-color)' }}>
                             ¿Estás seguro de que deseas eliminar al usuario
                             <strong style={{ color: '#60A5FA' }}> {userToDelete?.nombre}</strong>?
                             Esta acción no se puede deshacer.
@@ -326,7 +317,7 @@ function UsersPage() {
                         <Button
                             onClick={handleCloseConfirm}
                             sx={{
-                                color: '#A5A5A5',
+                                color: 'var(--text-color)',
                                 border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '8px',
                                 textTransform: 'none',
@@ -359,7 +350,7 @@ function UsersPage() {
                         </Button>
                     </DialogActions>
                 </Dialog>
-            </ThemeProvider>
+
         </>
     );
 

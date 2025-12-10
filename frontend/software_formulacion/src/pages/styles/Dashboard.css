@@ -1,17 +1,22 @@
 /* --- Estilos base de las Cards --- */
 .stat-card {
-    background-color: #1e1e1e;
+    /* Fondo dinámico */
+    background-color: var(--card-bg);
     border-radius: 12px;
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease;
+    
+    /* Sombra suave que funciona en ambos modos */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+    
+    /* Animación suave para el cambio de color */
+    transition: transform 0.2s ease, background-color 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+    transform: translateY(-5px); 
 }
 
 .stat-icon-container {
@@ -21,6 +26,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    /* (Opcional) Si quisieras un fondito suave detrás del icono:
+       background-color: var(--bg-color); */
 }
 
 .stat-info {
@@ -30,32 +37,41 @@
 
 .stat-title {
     font-size: 0.9rem;
-    color: #888;
+    /* TRUCO: Usamos el color principal pero con transparencia */
+    color: var(--text-color);
+    opacity: 0.7; 
     margin: 0;
 }
 
 .stat-number {
     font-size: 1.8rem;
     font-weight: bold;
-    color: #fff;
+    /* Color principal puro */
+    color: var(--text-color); 
     margin: 5px 0 0 0;
 }
 
 .stat-desc {
     font-size: 0.75rem;
-    color: #666;
+    /* Texto aún más suave */
+    color: var(--text-color);
+    opacity: 0.5;
 }
 
 /* --- ESTRUCTURA GENERAL DEL DASHBOARD --- */
-/* Agregamos esto para controlar la alineación */
 
 .dashboard {
     min-height: 100vh;
-    color: #e0e0e0;
+    /* El color base de todo el texto en el dashboard */
+    color: var(--text-color);
+    /* Aseguramos que el fondo general coincida (por si el componente no llena la pantalla) */
+    background-color: var(--bg-color); 
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dashboard-header {
-    border-bottom: 1px solid #333;
+    /* Borde dinámico */
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 20px;
     margin-bottom: 20px;
 }
@@ -71,20 +87,22 @@
 /* Grid de Gráficas */
 .charts-grid {
     display: grid;
-    /* Esto hace que todas las gráficas tengan el mismo ancho base */
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
     gap: 20px;
 }
 
 .chart-box {
-    background-color: #1e1e1e;
+    /* Fondo de tarjeta dinámico */
+    background-color: var(--card-bg);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    
+    /* Transición suave */
+    transition: background-color 0.3s ease;
 }
 
-/* CORRECCIÓN SOLICITADA: */
-/* Forzamos al pastel a ocupar solo 1 columna (auto), anulando el estilo inline si existiera */
+/* Corrección para gráfica de pastel */
 .chart-box.pie-chart {
     grid-column: auto !important; 
 }
@@ -99,12 +117,14 @@
 .chart-header h2 {
     font-size: 1.1rem;
     margin: 0;
-    color: #ddd;
+    /* Título de gráfica dinámico */
+    color: var(--text-color);
 }
 
 /* --- ANIMACIONES DE ICONOS --- */
+/* Estas se quedan igual, las animaciones no dependen del color */
 
-/* Latido suave (para el reloj) */
+/* Latido suave */
 @keyframes pulse-soft {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
@@ -114,7 +134,7 @@
     animation: pulse-soft 2s infinite ease-in-out;
 }
 
-/* Rebote pequeño (para el check) */
+/* Rebote pequeño */
 @keyframes bounce-small {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-3px); }
@@ -123,7 +143,7 @@
     animation: bounce-small 2s infinite;
 }
 
-/* Giro suave al hacer hover (para la medalla) */
+/* Giro suave al hacer hover */
 .spin-hover {
     transition: transform 0.5s ease;
 }
@@ -131,7 +151,7 @@
     transform: rotate(360deg);
 }
 
-/* Giro continuo lento (para el loader) */
+/* Giro continuo lento */
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }

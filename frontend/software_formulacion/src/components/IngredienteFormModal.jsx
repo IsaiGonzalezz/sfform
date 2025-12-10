@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'; // <-- 1. AÑADIDO useState
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -7,21 +7,20 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     InputAdornment, Box, Stack,
     TextField, Button, FormControlLabel, Checkbox, FormHelperText, Grid
-    // CircularProgress ya no se importa aquí
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab'; // <-- 2. AÑADIDO LoadingButton
+import { LoadingButton } from '@mui/lab'; 
 import {
     // Iconos para el formulario
     ScienceOutlined, // Para el título y nombre
     Badge,             // Para el ID
     ScaleOutlined,     // Para Presentación (peso/volumen)
-    NotesOutlined,     // Para Observaciones
-    Close,             // <-- 3. AÑADIDO Close
-    SaveOutlined       // <-- 4. AÑADIDO SaveOutlined
+    NotesOutlined,     
+    Close,             
+    SaveOutlined       
 } from '@mui/icons-material';
 
 // URL de la API
-const API_URL_INGREDIENTES = 'http://127.0.0.1:8000/api/ingredientes/';
+const API_URL_INGREDIENTES_REL = '/ingredientes/';
 
 // Esquema de Validación (Tu código original)
 const validationSchema = yup.object().shape({
@@ -36,10 +35,11 @@ const validationSchema = yup.object().shape({
 function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit }) {
 
     // --- Estados ---
+    
+    const { axiosInstance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const isEditMode = ingredienteToEdit !== null;
 
-    // (showPassword no se usa aquí, así que no se añade)
 
     // --- React Hook Form (Tu código original) ---
     const { handleSubmit, control, reset, formState: { errors } } = useForm({
@@ -78,10 +78,10 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                 // Tu prueba de API (la foto) demostró que el backend SÍ quiere
                 // el 'iding' en el cuerpo del JSON para el PUT.
                 // Así que enviamos 'data' directamente.
-                await axios.put(`${API_URL_INGREDIENTES}${ingredienteToEdit.iding}/`, data);
+                await axiosInstance.put(`${API_URL_INGREDIENTES_REL}${ingredienteToEdit.iding}/`, data);
             } else {
                 // POST: También enviamos 'data' (que tiene el 'iding' tecleado)
-                await axios.post(API_URL_INGREDIENTES, data);
+                await axiosInstance.post(API_URL_INGREDIENTES_REL, data);
             }
             success = true;
             console.log('¡Operación de ingrediente exitosa!');
@@ -98,34 +98,27 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
         }
     };
 
-    // --- Estilos Consistentes ---
-    const darkModalStyle = {
-        bgcolor: '#1e1e1e',
-        color: '#e0e0e0',
-        borderRadius: '12px',
-    };
 
-    // --- ESTILOS CORREGIDOS (Sin azules) ---
     const inputStyle = {
         width: '100%',
         '& .MuiOutlinedInput-root': {
-            color: '#e0e0e0',
-            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
-            '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
-            '&.Mui-focused fieldset': { borderColor: 'primary.main' }, // <-- USA EL TEMA
+            color: 'var(--text-color)',
+            '& fieldset': { borderColor: 'var(--border-color)' },
+            '&:hover fieldset': { borderColor: 'var(--border-color)' },
+            '&.Mui-focused fieldset': { borderColor: 'primary.main' }, 
             '&.Mui-disabled': {
-                backgroundColor: 'rgba(70, 70, 70, 0.5)',
-                color: '#888',
-                '& fieldset': { borderColor: 'rgba(100, 100, 100, 0.3)' },
+                backgroundColor: 'var(--border-color)',
+                color: 'var(--text-color)',
+                '& fieldset': { borderColor: 'var(--border-color)'},
             },
         },
-        '& .MuiInputLabel-root': { color: '#bbb' },
+        '& .MuiInputLabel-root': { color: 'var(--text-color)' },
         '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' }, // <-- USA EL TEMA
     };
 
     const checkboxStyle = {
-        color: '#bbb',
-        '&.Mui-checked': { color: 'primary.main' }, // <-- USA EL TEMA
+        color: 'var(--text-color)',
+        '&.Mui-checked': { color: 'var(--text-color)' }, // <-- USA EL TEMA
         '&.Mui-disabled': { color: '#555' }
     };
 
@@ -135,7 +128,7 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ sx: darkModalStyle }}
+            PaperProps={{}}
         >
             <form onSubmit={handleSubmit(onSubmit)}>
                 {/* Título */}
@@ -205,7 +198,7 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                                                 inputProps: { step: 'any' },
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <ScaleOutlined sx={{ color: 'text.secondary' }} />
+                                                        <ScaleOutlined sx={{ color: 'var(--text-color)' }} />
                                                     </InputAdornment>
                                                 ),
                                             }}

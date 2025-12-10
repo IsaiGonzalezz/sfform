@@ -353,6 +353,7 @@ export default function ProduccionPage() {
                             disabled={paso1Completo}
                             className="form-input"
                             placeholder="Ej: OP-1001"
+                            style={{ width: '100%' }}
                             required
                         />
                     </div>

@@ -265,38 +265,45 @@ const DetalleFormulaPage = () => {
     );
 };
 
-// --- ESTILOS DARK MODE EN JS (INLINE) ---
 const styles = {
     container: {
         minHeight: '100vh',
-        backgroundColor: '#121212', // Fondo muy oscuro
-        color: '#e0e0e0',
+        // Fondo dinámico (Gris claro en día / Negro en noche)
+        backgroundColor: 'var(--bg-color)', 
+        color: 'var(--text-color)',
         padding: '40px',
-        fontFamily: 'Arial, sans-serif'
+        fontFamily: 'Arial, sans-serif',
+        transition: 'background-color 0.3s ease, color 0.3s ease'
     },
     centerMsg: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: '#121212', color: '#fff', fontSize: '1.2rem'
+        backgroundColor: 'var(--bg-color)', 
+        color: 'var(--text-color)', 
+        fontSize: '1.2rem'
     },
     centerMsgError: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: '#121212', color: '#ff6b6b', fontSize: '1.2rem'
+        backgroundColor: 'var(--bg-color)', 
+        color: '#ff6b6b', // El rojo de error se ve bien en ambos
+        fontSize: '1.2rem'
     },
     header: {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '30px',
-        borderBottom: '1px solid #333',
+        borderBottom: '1px solid var(--border-color)', // Borde dinámico
         paddingBottom: '20px'
     },
     backBtn: {
         background: 'transparent',
         border: 'none',
-        color: '#888',
+        color: 'var(--text-color)', // El icono de volver se adapta
+        opacity: 0.6, // Le damos opacidad para que parezca secundario
         cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: '5px',
-        fontSize: '1rem'
+        fontSize: '1rem',
+        transition: 'opacity 0.2s'
     },
     titleContainer: {
         flex: 1,
@@ -305,13 +312,16 @@ const styles = {
     title: {
         margin: 0,
         fontSize: '1.8rem',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        color: 'var(--text-color)'
     },
     actions: {
         display: 'flex',
         gap: '15px'
     },
-    // Botones
+    // --- BOTONES ---
+    // (Los colores de fondo se mantienen fijos porque son indicadores de estado,
+    // y el texto 'white' se mantiene porque esos colores son oscuros/fuertes)
     btnEdit: {
         backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
         borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
@@ -328,45 +338,50 @@ const styles = {
         backgroundColor: '#495057', color: 'white', border: 'none', padding: '10px 20px',
         borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
     },
-    // Tarjetas y Formulario
+    // --- TARJETAS Y FORMULARIO ---
     card: {
-        backgroundColor: '#1e1e1e', // Un poco más claro que el fondo
+        // Fondo de tarjeta (Blanco en día / Gris oscuro en noche)
+        backgroundColor: 'var(--card-bg)', 
         padding: '25px',
         borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-        marginBottom: '25px'
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Sombra más suave
+        marginBottom: '25px',
+        transition: 'background-color 0.3s ease'
     },
     formGroup: {
         marginBottom: '10px'
     },
     label: {
         display: 'block',
-        color: '#888',
+        color: 'var(--text-color)',
+        opacity: 0.7, // Grisáceo visualmente
         fontSize: '0.9rem',
         marginBottom: '8px'
     },
     textData: {
         fontSize: '1.5rem',
-        color: '#fff',
+        color: 'var(--text-color)', // Texto principal
         margin: 0
     },
     input: {
         width: '100%',
         padding: '12px',
-        backgroundColor: '#2d2d2d',
-        border: '1px solid #444',
+        // Truco: Usamos el color de fondo general para el input dentro de la tarjeta
+        backgroundColor: 'var(--bg-color)', 
+        border: '1px solid var(--border-color)',
         borderRadius: '6px',
-        color: 'white',
+        color: 'var(--text-color)',
         fontSize: '1.1rem',
-        outline: 'none'
+        outline: 'none',
+        transition: 'border-color 0.2s'
     },
-    // Tabla
+    // --- TABLA ---
     subTitle: {
         marginTop: 0,
         marginBottom: '20px',
         borderLeft: '4px solid #4dabf7',
         paddingLeft: '10px',
-        color: '#fff'
+        color: 'var(--text-color)'
     },
     tableContainer: {
         overflowX: 'auto'
@@ -374,24 +389,26 @@ const styles = {
     table: {
         width: '100%',
         borderCollapse: 'collapse',
-        color: '#e0e0e0'
+        color: 'var(--text-color)'
     },
     th: {
         textAlign: 'left',
         padding: '12px',
-        borderBottom: '2px solid #444',
-        color: '#adb5bd'
+        borderBottom: '2px solid var(--border-color)',
+        color: 'var(--text-color)',
+        opacity: 0.8
     },
     td: {
         padding: '15px 12px',
+        borderBottom: '1px solid var(--border-color)' // Agregué borde a las filas para mejor lectura
     },
     inputTable: {
         width: '100px',
         padding: '8px',
-        backgroundColor: '#2d2d2d',
-        border: '1px solid #444',
+        backgroundColor: 'var(--bg-color)', // Mismo truco que arriba
+        border: '1px solid var(--border-color)',
         borderRadius: '4px',
-        color: 'white',
+        color: 'var(--text-color)',
         textAlign: 'center'
     }
 };

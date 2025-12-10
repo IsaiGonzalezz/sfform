@@ -252,7 +252,7 @@ const DetalleProduccionPage = () => {
                     <div className="summary-card">
                         <span className="summary-label">Suma de Ingredientes</span>
                         <span className="summary-value" style={{
-                            color: parseFloat(sumaIngredientes.replace(/,/g, '')) !== parseFloat(formData.pesform) ? '#ffec99' : '#fff'
+                            color: parseFloat(sumaIngredientes.replace(/,/g, '')) !== parseFloat(formData.pesform) ? '#ffec99' : 'var(--text-color)'
                         }}>
                             {sumaIngredientes} Kg
                         </span>
@@ -272,7 +272,7 @@ const DetalleProduccionPage = () => {
                         <thead>
                             <tr>
                                 <th style={styles.th}>Ingrediente</th>
-                                <th style={{ ...styles.th, textAlign: 'right' }}>Meta (Kg)</th>
+                                <th style={styles.thRight}>Meta (Kg)</th>
                                 <th style={{ ...styles.th, textAlign: 'right' }}>Mín (Kg)</th>
                                 <th style={{ ...styles.th, textAlign: 'right' }}>Máx (Kg)</th>
                             </tr>
@@ -287,7 +287,7 @@ const DetalleProduccionPage = () => {
                                         {isEditing ? (
                                             <input type="number" style={styles.inputTable} value={item.pesing} onChange={(e) => handleDetalleChange(index, 'pesing', e.target.value)} />
                                         ) : (
-                                            <div style={{ textAlign: 'right', fontWeight: 'bold', color: '#fff' }}>
+                                            <div style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--text-color)' }}>
                                                 {formatNumero(item.pesing)}
                                             </div>
                                         )}
@@ -331,33 +331,50 @@ const DetalleProduccionPage = () => {
 const styles = {
     container: {
         minHeight: '100vh',
-        backgroundColor: '#121212',
-        color: '#e0e0e0',
+        // Fondo dinámico
+        backgroundColor: 'var(--bg-color)', 
+        color: 'var(--text-color)',
         padding: '20px 40px 40px 40px',
-        fontFamily: 'Arial, sans-serif'
+        fontFamily: 'Arial, sans-serif',
+        transition: 'background-color 0.3s ease, color 0.3s ease'
     },
     centerMsg: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: '#121212', color: '#fff', fontSize: '1.2rem'
+        backgroundColor: 'var(--bg-color)', 
+        color: 'var(--text-color)', 
+        fontSize: '1.2rem'
     },
     centerMsgError: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: '#121212', color: '#ff6b6b', fontSize: '1.2rem'
+        backgroundColor: 'var(--bg-color)', 
+        color: '#ff6b6b', // Rojo de error (se ve bien en ambos)
+        fontSize: '1.2rem'
     },
     header: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: '20px',
-        borderBottom: '1px solid #333', paddingBottom: '15px'
+        borderBottom: '1px solid var(--border-color)', // Borde dinámico
+        paddingBottom: '15px'
     },
     backBtn: {
-        background: 'transparent', border: 'none', color: '#888', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: '5px', fontSize: '1rem'
+        background: 'transparent', 
+        border: 'none', 
+        color: 'var(--text-color)', 
+        opacity: 0.6, // Un poco transparente para que no compita con el título
+        cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: '5px', fontSize: '1rem',
+        transition: 'opacity 0.2s'
     },
     titleContainer: { flex: 1, marginLeft: '20px' },
-    title: { margin: 0, fontSize: '1.8rem', fontWeight: 'bold' },
+    title: { 
+        margin: 0, 
+        fontSize: '1.8rem', 
+        fontWeight: 'bold',
+        color: 'var(--text-color)' 
+    },
     actions: { display: 'flex', gap: '15px' },
 
-    // ESTILOS NUEVOS PARA TABS
+    // --- TABS (Adaptados) ---
     tabsContainer: {
         marginBottom: '20px',
     },
@@ -368,6 +385,7 @@ const styles = {
         paddingBottom: '5px'
     },
     tabActive: {
+        // El azul se queda fijo, funciona bien como "Highlight" en ambos temas
         backgroundColor: '#4dabf7',
         color: '#fff',
         border: 'none',
@@ -379,9 +397,11 @@ const styles = {
         boxShadow: '0 2px 4px rgba(77, 171, 247, 0.4)'
     },
     tabInactive: {
-        backgroundColor: '#2d2d2d',
-        color: '#888',
-        border: '1px solid #444',
+        // Fondo neutro: transparente o ligeramente grisáceo
+        backgroundColor: 'transparent', 
+        color: 'var(--text-color)',
+        opacity: 0.6, // Texto más apagado
+        border: '1px solid var(--border-color)', // Borde sutil
         padding: '8px 20px',
         borderRadius: '20px',
         cursor: 'pointer',
@@ -389,6 +409,7 @@ const styles = {
         transition: 'all 0.2s'
     },
 
+    // --- BOTONES (Se quedan con texto blanco para contraste sobre el color fuerte) ---
     btnEdit: {
         display: 'none',
         backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
@@ -402,31 +423,84 @@ const styles = {
         backgroundColor: '#495057', color: 'white', border: 'none', padding: '10px 20px',
         borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
     },
+
+    // --- CARD Y FORMULARIO ---
     card: {
-        backgroundColor: '#1e1e1e', padding: '25px', borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.3)', marginBottom: '25px'
+        backgroundColor: 'var(--card-bg)', // Blanco(día) / Gris(noche)
+        padding: '25px', 
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Sombra más suave
+        marginBottom: '25px',
+        transition: 'background-color 0.3s ease'
     },
     formGrid: {
         display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px'
     },
     formGroup: { marginBottom: '10px' },
-    label: { display: 'block', color: '#888', fontSize: '0.9rem', marginBottom: '8px' },
-    textData: { fontSize: '1.5rem', color: '#fff', margin: 0 },
+    label: { 
+        display: 'block', 
+        color: 'var(--text-color)', 
+        opacity: 0.7, 
+        fontSize: '0.9rem', 
+        marginBottom: '8px' 
+    },
+    textData: { 
+        fontSize: '1.5rem', 
+        color: 'var(--text-color)', // Texto principal
+        margin: 0 
+    },
     input: {
-        width: '100%', padding: '12px', backgroundColor: '#2d2d2d', border: '1px solid #444',
-        borderRadius: '6px', color: 'white', fontSize: '1.1rem', outline: 'none'
+        width: '100%', 
+        padding: '12px', 
+        backgroundColor: 'var(--bg-color)', // Contraste contra el fondo de la tarjeta
+        border: '1px solid var(--border-color)',
+        borderRadius: '6px', 
+        color: 'var(--text-color)', 
+        fontSize: '1.1rem', 
+        outline: 'none',
+        transition: 'border-color 0.2s'
     },
     subTitle: {
-        marginTop: 0, marginBottom: '20px', borderLeft: '4px solid #4dabf7',
-        paddingLeft: '10px', color: '#fff'
+        marginTop: 0, 
+        marginBottom: '20px', 
+        borderLeft: '4px solid #4dabf7',
+        paddingLeft: '10px', 
+        color: 'var(--text-color)' 
     },
+
+    // --- TABLA ---
     tableContainer: { overflowX: 'auto' },
-    table: { width: '100%', borderCollapse: 'collapse', color: '#e0e0e0' },
-    th: { textAlign: 'left', padding: '12px', borderBottom: '2px solid #444', color: '#adb5bd' },
+    table: { 
+        width: '100%', 
+        borderCollapse: 'collapse', 
+        color: 'var(--text-color)' 
+    },
+
+    thRight: {
+        textAlign: 'right',
+        padding: '12px',
+        borderBottom: '2px solid var(--border-color)', 
+        color: 'var(--text-color)',
+        opacity: 0.8,
+        fontWeight: 'bold' // (Opcional) Para que resalte un poco más que el resto
+    },
+
+    th: { 
+        textAlign: 'left', 
+        padding: '12px', 
+        borderBottom: '2px solid var(--border-color)', 
+        color: 'var(--text-color)',
+        opacity: 0.8 
+    },
     td: { padding: '15px 12px' },
     inputTable: {
-        width: '100%', padding: '8px', backgroundColor: '#2d2d2d', border: '1px solid #444',
-        borderRadius: '4px', color: 'white', textAlign: 'right'
+        width: '100%', 
+        padding: '8px', 
+        backgroundColor: 'var(--bg-color)', 
+        border: '1px solid var(--border-color)',
+        borderRadius: '4px', 
+        color: 'var(--text-color)', 
+        textAlign: 'right'
     }
 };
 

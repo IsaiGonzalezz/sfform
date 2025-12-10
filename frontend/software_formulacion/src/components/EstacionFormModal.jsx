@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/useAuth';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -8,13 +8,11 @@ import {
     TextField, Button, FormHelperText
 } from '@mui/material';
 import {
-    // Tus imports de MUI (asumo que ya tienes los básicos)
     Box,
     InputAdornment
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab'; // Botón de carga
 import {
-    // Iconos para el formulario
     Badge, // ID Estación
     WarehouseOutlined, // Nombre Estación
     NotesOutlined, // Observaciones
@@ -26,7 +24,7 @@ import {
 
 
 // URL de la API para Estaciones
-const API_URL_ESTACIONES = 'http://127.0.0.1:8000/api/estaciones/';
+const API_URL_ESTACIONES_REL = '/estaciones/';
 
 // Esquema de Validación para Estaciones
 const validationSchema = yup.object().shape({
@@ -37,6 +35,7 @@ const validationSchema = yup.object().shape({
 
 function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
 
+    const { axiosInstance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const isEditMode = estacionToEdit !== null;
 
@@ -66,10 +65,10 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
         try {
             if (isEditMode) {
                 // PUT para actualizar
-                await axios.put(`${API_URL_ESTACIONES}${estacionToEdit.idest}/`, data);
+                await axiosInstance.put(`${API_URL_ESTACIONES_REL}${estacionToEdit.idest}/`, data);
             } else {
                 // POST para crear
-                await axios.post(API_URL_ESTACIONES, data);
+                await axiosInstance.post(API_URL_ESTACIONES_REL, data);
             }
             console.log('¡Operación de estación exitosa!');
             success = true;
@@ -92,11 +91,11 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
             onClose={onClose} // Permite cerrar con clic afuera/escape
             PaperProps={{
                 sx: {
-                    backgroundColor: '#1e1e1e',
-                    color: '#fff',
+                    backgroundColor: 'var(--bg-color)',
+                    color: 'var(--text-color)',
                     borderRadius: '12px',
                     width: '100%',
-                    maxWidth: '500px' // Ancho definido
+                    maxWidth: '500px' 
                 }
             }}
         >
@@ -129,12 +128,12 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <Badge sx={{ color: 'text.secondary' }} />
+                                                <Badge sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />
@@ -155,12 +154,12 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <WarehouseOutlined sx={{ color: 'text.secondary' }} />
+                                                <WarehouseOutlined sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />
@@ -186,12 +185,12 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                                 alignItems: 'flex-start',
                                                 pt: 1.5
                                             }}>
-                                                <NotesOutlined sx={{ color: 'text.secondary' }} />
+                                                <NotesOutlined sx={{ color: 'var(--text-color)' }} />
                                             </InputAdornment>
                                         ),
                                     }}
-                                    InputLabelProps={{ sx: { color: '#bbb' } }}
-                                    sx={{ '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' } } }}
+                                    InputLabelProps={{ sx: { color: 'var(--text-color)' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { color: 'var(--text-color)', '& fieldset': { borderColor: 'var(--border-color)' } } }}
                                 />
                             )}
                         />

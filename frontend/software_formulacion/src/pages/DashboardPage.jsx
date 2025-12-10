@@ -80,7 +80,7 @@ export default function Dashboard() {
         <div className="dashboard">
             {/* TÍTULO CON ESTILO */}
             <div className="dashboard-header" style={{ marginBottom: '20px' }}>
-                <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <TrendingUp color="#3CA7FF" /> Panel de Control
                 </h1>
                 <p style={{ color: '#666', margin: 0 }}>Vista general de producción en tiempo real</p>
@@ -139,7 +139,7 @@ export default function Dashboard() {
                 {/* LINEAL: Producción Diaria */}
                 <div className="chart-box line-chart">
                     <div className="chart-header">
-                        <TrendingUp size={20} color="#00E808" />
+                        <TrendingUp size={20} color="#FF8000FF" />
                         <h2>Producción Diaria (Kg)</h2>
                     </div>
                     <ResponsiveContainer width="100%" height={300}>
@@ -148,15 +148,20 @@ export default function Dashboard() {
                             <XAxis dataKey="dia" stroke="#888" tick={{ fill: '#888' }} />
                             <YAxis stroke="#888" tick={{ fill: '#888' }} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
+                                contentStyle={{
+                                    backgroundColor: 'var(--card-bg)',
+                                    borderColor: 'var(--border-color)',
+                                    borderRadius: '8px'
+                                }}
+                                itemStyle={{ color: 'var(--text-color)' }}
+                                labelStyle={{ color: 'var(--text-color)' }} // Agregado por si tienes título en el tooltip
                             />
                             <Legend />
                             <Line
                                 type="monotone"
                                 dataKey="kgs"
                                 name="Kilos Producidos"
-                                stroke="#00E808"
+                                stroke="#FF8000FF"
                                 strokeWidth={3}
                                 dot={{ r: 4, fill: '#1e1e1e', strokeWidth: 2 }}
                                 activeDot={{ r: 8 }}
@@ -183,8 +188,13 @@ export default function Dashboard() {
                                 style={{ fontSize: '11px' }}
                             />
                             <Tooltip
-                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
+                                cursor={{ fill: 'rgba(136, 136, 136, 0.1)' }} // Gris neutro, funciona en ambos temas
+                                contentStyle={{
+                                    backgroundColor: 'var(--card-bg)',
+                                    borderColor: 'var(--border-color)',
+                                    borderRadius: '8px'
+                                }}
+                                itemStyle={{ color: 'var(--text-color)' }}
                             />
                             <Legend />
                             <Bar
@@ -201,7 +211,7 @@ export default function Dashboard() {
                 {/* PASTEL: Top Operadores (Ocupa ancho completo si es impar o se ajusta) */}
                 <div className="chart-box pie-chart" style={{ gridColumn: '1 / -1' }}>
                     <div className="chart-header">
-                        <PieIcon size={20} color="#3CA7FF" />
+                        <PieIcon size={20} color="#6D1FFFFF" />
                         <h2>Eficiencia por Operador</h2>
                     </div>
                     <ResponsiveContainer width="100%" height={300}>
@@ -219,10 +229,16 @@ export default function Dashboard() {
                             >
                                 {stats.pieData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                                ))}
+                                ))} 
                             </Pie>
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
+                                contentStyle={{
+                                    backgroundColor: 'var(--card-bg)',
+                                    borderColor: 'var(--border-color)',
+                                    borderRadius: '8px',
+                                    color: 'var(--text-color)'
+                                }}
+                                itemStyle={{ color: 'var(--text-color)' }}
                             />
                             <Legend />
                         </PieChart>
