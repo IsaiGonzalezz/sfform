@@ -1,26 +1,22 @@
-# tu_app/serializers.py
-
 from rest_framework import serializers 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import check_password
 from Usuarios.models import Usuario
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    # 1. CAMPOS DE ENTRADA (Input que viene del frontend/DRF web)
-    # Definimos el campo de login como 'correo' y la contraseña como 'password'.
+    
     correo = serializers.CharField(max_length=50)
     password = serializers.CharField(max_length=256, write_only=True)
 
     # 2. MENSAJES DE ERROR PARA LA VALIDACIÓN
     default_error_messages = {
-        # El 400 ya no debería salir por error de campos, sino por la lógica de validación
         'no_fields': 'Debe proporcionar correo y contraseña.', 
         'no_active_account': 'Credenciales inválidas.', 
+        'account_disabled': 'Tu cuenta ha sido desactivada. Contacta a soporte.', # Nuevo mensaje
+        'permission_denied': 'Acceso denegado. Se requieren permisos de Administrador.', # Nuevo mensaje
         'no_token': 'No se proporcionó token en la petición.',
     }
     
-    # 3. ELIMINAMOS COMPLETAMENTE EL MÉTODO __init__
-
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -34,7 +30,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         # Capturamos los datos de entrada
         correo = attrs.get('correo')
-        contraseña_recibida = attrs.get('password') # <-- Usa el campo de entrada 'password'
+        contraseña_recibida = attrs.get('password') 
         
         if not correo or not contraseña_recibida:
             raise self.fail("no_fields")
@@ -46,9 +42,23 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise self.fail("no_active_account") 
 
         # Verificación de la contraseña hasheada
-        # Usa el campo de la BD (usuario.password) contra la contraseña recibida
         if not check_password(contraseña_recibida, usuario.password):
             raise self.fail("no_active_account")
+        
+        # =================================================================
+        # NUEVAS VALIDACIONES DE SEGURIDAD
+        # =================================================================
+
+        # 1. Validar si el usuario está ACTIVO (Soft Delete check)
+        if not usuario.activo:
+            raise self.fail("account_disabled")
+
+        # 2. Validar si el usuario es ADMINISTRADOR
+        # Convertimos a minúsculas por si en la BD dice "Administrador" o "ADMINISTRADOR"
+        if str(usuario.rol).lower() != 'administrador':
+            raise self.fail("permission_denied")
+
+        # =================================================================
         
         # 4. Éxito: Generación de tokens
         refresh = self.get_token(usuario)
@@ -56,5 +66,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = {}
         data['refresh'] = str(refresh)
         data['access'] = str(refresh.access_token)
+        
+        # Opcional: Puedes devolver el rol aquí para que el frontend lo guarde
+        data['rol'] = usuario.rol 
         
         return data

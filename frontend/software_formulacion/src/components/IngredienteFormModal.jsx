@@ -29,6 +29,7 @@ const validationSchema = yup.object().shape({
     presentacion: yup.number().typeError('Debe ser número').nullable(),
     observaciones: yup.string().nullable(),
     pesado: yup.boolean(),
+    activo : yup.boolean()
 });
 
 // Props: open, onClose, onSaveSuccess, ingredienteToEdit
@@ -44,7 +45,7 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
     // --- React Hook Form (Tu código original) ---
     const { handleSubmit, control, reset, formState: { errors } } = useForm({
         resolver: yupResolver(validationSchema),
-        defaultValues: { iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false }
+        defaultValues: { iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : false }
     });
 
     // --- Efecto para Cargar Datos/Resetear (Tu código original) ---
@@ -57,9 +58,10 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                     presentacion: ingredienteToEdit.presentacion || null,
                     observaciones: ingredienteToEdit.observaciones || '',
                     pesado: Boolean(ingredienteToEdit.pesado),
+                    activo: Boolean(ingredienteToEdit.activo),
                 });
             } else {
-                reset({ iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false });
+                reset({ iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : false});
             }
         }
     }, [ingredienteToEdit, open, reset, isEditMode]);
@@ -68,16 +70,8 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
     const onSubmit = async (data) => {
         setIsSaving(true);
         let success = false;
-
-        // 'data' es el objeto del formulario, que SÍ incluye 'iding'
-        // gracias a tu 'validationSchema' y 'useEffect/reset'.
-
         try {
             if (isEditMode) {
-                // ¡CORRECCIÓN!
-                // Tu prueba de API (la foto) demostró que el backend SÍ quiere
-                // el 'iding' en el cuerpo del JSON para el PUT.
-                // Así que enviamos 'data' directamente.
                 await axiosInstance.put(`${API_URL_INGREDIENTES_REL}${ingredienteToEdit.iding}/`, data);
             } else {
                 // POST: También enviamos 'data' (que tiene el 'iding' tecleado)
@@ -278,7 +272,33 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                                             />
                                         }
                                         label="¿Requiere Pesado?"
-                                        sx={{ color: '#bbb' }}
+                                        sx={{ color: 'var(--text-color)' }}
+                                    />
+                                )}
+                            />
+                            {errors.pesado && (
+                                <FormHelperText error sx={{ ml: 1.5 }}>
+                                    {errors.pesado.message}
+                                </FormHelperText>
+                            )}
+                        </Box>
+
+                        <Box>
+                            <Controller
+                                name="activo"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                {...field}
+                                                checked={field.value}
+                                                disabled={isSaving}
+                                                sx={checkboxStyle}
+                                            />
+                                        }
+                                        label="Estatus"
+                                        sx={{ color: 'var(--text-color)'}}
                                     />
                                 )}
                             />

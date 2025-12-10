@@ -14,7 +14,7 @@ class OperadorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Operadores
         # Incluimos todos los campos del modelo
-        fields = ['rfid', 'nombre', 'contraseña', 'idest']
+        fields = ['rfid', 'nombre', 'contraseña', 'idest', 'activo']
         extra_kwargs = {
             'contraseña': {
                 'write_only': True, # No devolver el hash

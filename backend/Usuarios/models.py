@@ -9,6 +9,7 @@ class Usuario(AbstractBaseUser):
     password = models.CharField(max_length=256)
     rol = models.CharField(max_length=50)
     last_login = models.DateTimeField(blank=True, null=True) 
+    activo = models.BooleanField()
 
     # Propiedades requeridas por AbstractBaseUser y JWT
     USERNAME_FIELD = 'correo' 

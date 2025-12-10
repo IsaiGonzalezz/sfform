@@ -26,7 +26,6 @@ class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
             instance = self.get_queryset().get(id=id_value)
             
             # 2. Ejecución de la Eliminación (SQL Directo)
-            # Como no podemos confiar en instance.delete() por el error INT, 
             # usamos SQL puro para forzar la eliminación por RFID (VARCHAR).
             with connection.cursor() as cursor:
                 # Usamos una consulta parametrizada para seguridad

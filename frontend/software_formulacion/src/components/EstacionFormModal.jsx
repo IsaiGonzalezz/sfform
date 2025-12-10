@@ -5,7 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, Button, FormHelperText
+    TextField, Button, FormHelperText, Checkbox, FormControlLabel
 } from '@mui/material';
 import {
     Box,
@@ -30,7 +30,8 @@ const API_URL_ESTACIONES_REL = '/estaciones/';
 const validationSchema = yup.object().shape({
     idest: yup.string().required('El ID de estación es obligatorio'),
     nombre: yup.string().required('El nombre es obligatorio'),
-    obs: yup.string().nullable(), // Observaciones son opcionales
+    obs: yup.string().nullable(),
+    activo: yup.boolean()
 });
 
 function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
@@ -41,7 +42,7 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
 
     const { handleSubmit, control, reset, formState: { errors } } = useForm({
         resolver: yupResolver(validationSchema),
-        defaultValues: { idest: '', nombre: '', obs: '' }
+        defaultValues: { idest: '', nombre: '', obs: '', activo: true }
     });
 
     useEffect(() => {
@@ -51,9 +52,10 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                     idest: estacionToEdit.idest || '',
                     nombre: estacionToEdit.nombre || '',
                     obs: estacionToEdit.obs || '',
+                    activo: Boolean(estacionToEdit.activo)
                 });
             } else {
-                reset({ idest: '', nombre: '', obs: '' });
+                reset({ idest: '', nombre: '', obs: '', activo: false });
             }
         }
     }, [estacionToEdit, open, reset, isEditMode]);
@@ -95,7 +97,7 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                     color: 'var(--text-color)',
                     borderRadius: '12px',
                     width: '100%',
-                    maxWidth: '500px' 
+                    maxWidth: '500px'
                 }
             }}
         >
@@ -194,6 +196,28 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                 />
                             )}
                         />
+                        <Controller
+                            name="activo"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            {...field}
+                                            checked={field.value}
+                                            disabled={isSaving}
+                                        />
+                                    }
+                                    label="Estatus"
+                                    sx={{ color: 'var(--text-color)' }}
+                                />
+                            )}
+                        />
+                        {errors.pesado && (
+                            <FormHelperText error sx={{ ml: 1.5 }}>
+                                {errors.pesado.message}
+                            </FormHelperText>
+                        )}
                     </Box>
                 </DialogContent>
 

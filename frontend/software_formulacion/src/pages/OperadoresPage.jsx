@@ -5,7 +5,7 @@ import { useAuth } from '../context/useAuth';
 // ===============================================
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -101,13 +101,15 @@ function OperadoresPage() {
     const handleDeleteOperador = async () => {
         if (!operadorToDelete) return;
         try {
-            // === CAMBIO 5: Usar axiosInstance.delete ===
-            await axiosInstance.delete(`${API_URL_OPERADORES_REL}${operadorToDelete.rfid}/`);
-            // ============================================
-            console.log('Operador borrado:', operadorToDelete.rfid);
+
+            await axiosInstance.patch(`${API_URL_OPERADORES_REL}${operadorToDelete.rfid}/`, {
+                activo: false
+            });
+
+            console.log('Operador Desactivado:', operadorToDelete.rfid);
             fetchOperadores(); // Recargar tabla
         } catch (error) {
-            console.error('Error al borrar operador:', error.response?.data || error.message);
+            console.error('Error al desactivar operador:', error.response?.data || error.message);
         } finally {
             handleCloseConfirm();
         }
@@ -135,6 +137,12 @@ function OperadoresPage() {
         { field: 'rfid', headerName: 'RFID', width: 150 },
         { field: 'nombre', headerName: 'Nombre Operador', flex: 1 },
         { field: 'idest', headerName: 'ID Estación Asignada', width: 200 },
+        {
+            field: 'activo', headerName: 'Estatus', width: 150,
+            renderCell: (params) => ( // Renderizar un Checkbox
+                <Checkbox checked={Boolean(params.value)} disabled size="small" />
+            ),
+        },
         {
             field: 'actions', headerName: 'Acciones', width: 120, sortable: false, disableColumnMenu: true,
             renderCell: (params) => (
@@ -255,7 +263,7 @@ function OperadoresPage() {
                 open={confirmOpen}
                 onClose={handleCloseConfirm}
                 PaperProps={{
-                    sx: { backgroundColor: '#1E1E1E', color: '#FFFFFF', borderRadius: '12px', boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)' },
+                    sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderRadius: '12px', boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)' },
                 }}
             >
                 <DialogTitle
@@ -263,21 +271,20 @@ function OperadoresPage() {
                         fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1
                     }}
                 >
-                    <WarningAmberIcon /> Confirmar Eliminación
+                    <WarningAmberIcon /> Confirmar Desactivación
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText sx={{ color: '#D1D5DB' }}>
-                        ¿Estás seguro de que deseas eliminar al operador
+                    <DialogContentText sx={{ color: 'var(--text-color)' }}>
+                        ¿Estás seguro de que deseas desactivar al operador?
                         <strong style={{ color: '#60A5FA' }}> {operadorToDelete?.nombre}</strong>
                         (RFID: {operadorToDelete?.rfid})?
-                        Esta acción no se puede deshacer.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button
                         onClick={handleCloseConfirm}
                         sx={{
-                            color: '#A5A5A5', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s ease', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
+                            color: 'var(--text-color)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', textTransform: 'none', transition: 'all 0.2s ease', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
                         }}
                     >
                         Cancelar
@@ -294,7 +301,7 @@ function OperadoresPage() {
                         }}
                         autoFocus
                     >
-                        Eliminar
+                        Desactivar
                     </Button>
                 </DialogActions>
             </Dialog>

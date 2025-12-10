@@ -5,7 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, IconButton,
-    TextField, Button, FormControl, InputLabel, Select, MenuItem, FormHelperText, Box, CircularProgress // Añadido Box y CircularProgress
+    TextField, Button, FormControl, InputLabel, Select, MenuItem, FormHelperText, Box, CircularProgress, Checkbox, 
+    FormControlLabel
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab'; // Botón de carga
 import {
@@ -36,6 +37,7 @@ const validationSchema = yup.object().shape({
             otherwise: (schema) => schema.nullable().transform(value => value || null).min(8, 'Si ingresas nueva contraseña, mínimo 8 caracteres'),
         }),
     idest: yup.string().required('Debes seleccionar una estación'), // Campo para el ID de la estación
+    activo: yup.boolean(),
 });
 
 // Props: open, onClose, onSaveSuccess, operadorToEdit, estacionesList
@@ -48,8 +50,14 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
     const { handleSubmit, control, reset, formState: { errors } } = useForm({
         resolver: yupResolver(validationSchema),
         context: { isEditMode },
-        defaultValues: { rfid: '', nombre: '', contraseña: '', idest: '' } // idest inicializado vacío
+        defaultValues: { rfid: '', nombre: '', contraseña: '', idest: '', activo: true } // idest inicializado vacío
     });
+
+    const checkboxStyle = {
+        color: 'var(--text-color)',
+        '&.Mui-checked': { color: 'var(--text-color)' }, // <-- USA EL TEMA
+        '&.Mui-disabled': { color: '#555' }
+    };
 
     useEffect(() => {
         if (open) {
@@ -59,9 +67,10 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                     nombre: operadorToEdit.nombre || '',
                     idest: operadorToEdit.idest || '', // Llenar el ID de la estación
                     contraseña: '',
+                    activo: Boolean(operadorToEdit.activo)
                 });
             } else {
-                reset({ rfid: '', nombre: '', contraseña: '', idest: '' });
+                reset({ rfid: '', nombre: '', contraseña: '', idest: '', activo: false });
             }
         }
     }, [operadorToEdit, open, reset, isEditMode]);
@@ -109,13 +118,13 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
         >
             <form onSubmit={handleSubmit(onSubmit)}>
 
-                <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, color : 'var(--text-color)' }}>
+                <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, color: 'var(--text-color)' }}>
                     {isEditMode ? <EditOutlined /> : <EngineeringOutlined />}
                     {isEditMode ? 'Editar Operador' : 'Agregar Nuevo Operador'}
                 </DialogTitle>
 
                 <DialogContent>
-                    
+
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
 
                         {/* --- CAMPO RFID --- */}
@@ -234,7 +243,7 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                         }}
                                         MenuProps={{
                                             PaperProps: {
-                                                sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)'}
+                                                sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }
                                             }
                                         }}
                                     >
@@ -261,6 +270,29 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                                 </FormControl>
                             )}
                         />
+                        <Controller
+                            name="activo"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            {...field}
+                                            checked={field.value}
+                                            disabled={isSaving}
+                                            sx={checkboxStyle}
+                                        />
+                                    }
+                                    label="Estatus"
+                                    sx={{ color: 'var(--text-color)' }}
+                                />
+                            )}
+                        />
+                        {errors.pesado && (
+                            <FormHelperText error sx={{ ml: 1.5 }}>
+                                {errors.pesado.message}
+                            </FormHelperText>
+                        )}
                     </Box>
                 </DialogContent>
 

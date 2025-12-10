@@ -6,7 +6,7 @@ import * as yup from 'yup'; // <-- Yup para el esquema
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, FormControl, InputLabel, Select, MenuItem, FormHelperText, Box,
-    InputAdornment, IconButton  // <-- FormHelperText para errores
+    InputAdornment, IconButton, FormControlLabel, Checkbox
 } from '@mui/material';
 
 import { LoadingButton } from '@mui/lab'; // <-- Botón de carga
@@ -44,6 +44,7 @@ const validationSchema = yup.object().shape({
         }),
     rol: yup.string()
         .required('Debes seleccionar un rol'),
+    activo: yup.boolean()
 });
 
 function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
@@ -57,7 +58,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
         resolver: yupResolver(validationSchema),
         context: { isEditMode }, // Pasamos el contexto para la validación condicional
         defaultValues: { // Valores por defecto
-            rfid: '', nombre: '', correo: '', contraseña: '', rol: ''
+            rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: false
         }
     });
 
@@ -70,11 +71,12 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                     nombre: userToEdit.nombre || '',
                     correo: userToEdit.correo || '',
                     rol: userToEdit.rol || '',
-                    contraseña: '', // Siempre vacía al inicio de la edición
+                    activo: userToEdit.activo,
+                    contraseña: '',
                 });
             } else {
                 reset({ // Limpiar para crear
-                    rfid: '', nombre: '', correo: '', contraseña: '', rol: ''
+                    rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: false
                 });
             }
         }
@@ -119,7 +121,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--bg-color)',
-                        color:'var(--text-color)',
+                        color: 'var(--text-color)',
                         borderRadius: '12px',
                         width: '100%',
                         maxWidth: '500px' // Un ancho máximo definido
@@ -276,7 +278,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                                 </InputAdornment>
                                             }
                                             sx={{
-                                                color: '#fff',
+                                                color: 'var(--text-color)',
                                                 '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
                                                 '& .MuiSvgIcon-root': { color: 'var(--text-color)' },
                                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
@@ -296,6 +298,29 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                     </FormControl>
                                 )}
                             />
+                            {/* Campo para estatus */}
+                            <Controller
+                                name="activo"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                {...field}
+                                                checked={field.value}
+                                                disabled={isSaving}
+                                            />
+                                        }
+                                        label="Estatus"
+                                        sx={{ color: 'var(--text-color)' }}
+                                    />
+                                )}
+                            />
+                            {errors.pesado && (
+                                <FormHelperText error sx={{ ml: 1.5 }}>
+                                    {errors.pesado.message}
+                                </FormHelperText>
+                            )}
                         </Box>
                     </DialogContent>
 

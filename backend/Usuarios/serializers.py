@@ -7,7 +7,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         # Especificamos todos los campos que tu modelo tiene
-        fields = ['id','rfid', 'nombre', 'correo', 'password', 'rol']
+        fields = ['id','rfid', 'nombre', 'correo', 'password', 'rol', 'activo']
         
         # Hacemos la contraseña opcional al leer y no requerida al escribir
         extra_kwargs = {

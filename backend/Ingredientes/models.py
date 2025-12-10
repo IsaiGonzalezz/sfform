@@ -7,6 +7,7 @@ class Ingredientes(models.Model):
     presentacion = models.FloatField()
     observaciones = models.CharField(max_length=50)
     pesado = models.BooleanField()
+    activo = models.BooleanField()
 
     class Meta:
         db_table = 'Ingredientes'

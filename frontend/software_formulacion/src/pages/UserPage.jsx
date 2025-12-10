@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'; // <-- 1. Impor
 import { useAuth } from '../context/useAuth';
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -103,7 +103,9 @@ function UsersPage() {
 
         try {
             // Hacemos la petición DELETE a la URL específica del usuario
-            await axiosInstance.delete(`${API_URL_REL}${userToDelete.id}/`);
+            await axiosInstance.patch(`${API_URL_REL}${userToDelete.id}/`,{
+                activo : false
+            });
             console.log('Usuario borrado exitosamente:', userToDelete.id);
             fetchUsers(); // Recargamos la tabla para que desaparezca el usuario
         } catch (error) {
@@ -120,6 +122,14 @@ function UsersPage() {
         { field: 'nombre', headerName: 'Nombre', flex: 1 },
         { field: 'correo', headerName: 'Correo', width: 200 },
         { field: 'rol', headerName: 'Rol', width: 150 },
+        {
+            field: 'activo',
+            headerName: 'Estatus',
+            width: 100,
+            renderCell: (params) => ( // Renderizar un Checkbox
+                <Checkbox checked={Boolean(params.value)} disabled size="small" />
+            ),
+        },
         {
             field: 'actions',
             headerName: 'Acciones',
@@ -304,13 +314,12 @@ function UsersPage() {
                         }}
                     >
                         <WarningAmberIcon /> {/* <-- Icono Advertencia */}
-                        Confirmar Eliminación
+                        Confirmar Desactivación
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText sx={{ color: 'var(--text-color)' }}>
-                            ¿Estás seguro de que deseas eliminar al usuario
+                            ¿Estás seguro de que deseas desactivar al usuario
                             <strong style={{ color: '#60A5FA' }}> {userToDelete?.nombre}</strong>?
-                            Esta acción no se puede deshacer.
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2 }}>

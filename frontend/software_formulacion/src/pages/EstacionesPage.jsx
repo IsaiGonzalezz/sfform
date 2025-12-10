@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/useAuth';
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -93,11 +93,13 @@ function EstacionesPage() {
     const handleDeleteStation = async () => {
         if (!stationToDelete) return;
         try {
-            await axiosInstance.delete(`${API_URL_ESTACIONES_REL}${stationToDelete.idest}/`);
-            console.log('Estación borrada:', stationToDelete.idest);
+            await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${stationToDelete.idest}/`,{
+                activo : false
+            });
+            console.log('Estación desactivada:', stationToDelete.idest);
             fetchEstaciones();
         } catch (error) {
-            console.error('Error al borrar la estación:', error);
+            console.error('Error al desactivar la estación:', error);
         } finally {
             handleCloseConfirm();
         }
@@ -108,6 +110,14 @@ function EstacionesPage() {
         { field: 'idest', headerName: 'ID Estación', width: 150 },
         { field: 'nombre', headerName: 'Nombre Estación', flex: 1, minWidth: 200 },
         { field: 'obs', headerName: 'Observaciones', flex: 1, minWidth: 250 },
+        {
+            field: 'activo',
+            headerName: 'Estatus',
+            width: 100,
+            renderCell: (params) => ( // Renderizar un Checkbox
+                <Checkbox checked={Boolean(params.value)} disabled size="small" />
+            ),
+        },
         {
             field: 'actions',
             headerName: 'Acciones',
@@ -281,14 +291,13 @@ function EstacionesPage() {
                 }}
             >
                 <DialogTitle sx={{ fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningAmberIcon /> Confirmar Eliminación
+                    <WarningAmberIcon /> Confirmar Desactivación
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ color: 'var(--text-color)', opacity: 0.8 }}>
-                        ¿Estás seguro de que deseas eliminar la estación
+                        ¿Estás seguro de que deseas desactivar la estación
                         <strong style={{ color: '#004F8C' }}> {stationToDelete?.nombre}</strong>
                         (ID: {stationToDelete?.idest})?
-                        <br />Esta acción no se puede deshacer.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -318,7 +327,7 @@ function EstacionesPage() {
                         }}
                         autoFocus
                     >
-                        Eliminar
+                        Desactivar
                     </Button>
                 </DialogActions>
             </Dialog>

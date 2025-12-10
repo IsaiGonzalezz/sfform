@@ -104,11 +104,13 @@ function IngredientesPage() {
         if (!ingredienteToDelete) return;
         try {
             // === CAMBIO 4: Usar axiosInstance.delete ===
-            await axiosInstance.delete(`${API_URL_INGREDIENTES_REL}${ingredienteToDelete.iding}/`);
+            await axiosInstance.patch(`${API_URL_INGREDIENTES_REL}${ingredienteToDelete.iding}/`,{
+                activo : false
+            });
             // ============================================
             fetchIngredientes();
         } catch (error) {
-            console.error('Error al borrar ingrediente:', error);
+            console.error('Error al desactivar ingrediente:', error);
         }
         finally { handleCloseConfirm(); }
     };
@@ -122,6 +124,14 @@ function IngredientesPage() {
         {
             field: 'pesado',
             headerName: 'Pesado',
+            width: 100,
+            renderCell: (params) => ( // Renderizar un Checkbox
+                <Checkbox checked={Boolean(params.value)} disabled size="small" />
+            ),
+        },
+        {
+            field: 'activo',
+            headerName: 'Estatus',
             width: 100,
             renderCell: (params) => ( // Renderizar un Checkbox
                 <Checkbox checked={Boolean(params.value)} disabled size="small" />
@@ -261,12 +271,11 @@ function IngredientesPage() {
 
             {/* Modal Confirmación Borrar (Adaptado) */}
             <Dialog open={confirmOpen} onClose={handleCloseConfirm} PaperProps={{ /* ... */ }}>
-                <DialogTitle sx={{ /* ... */ }}><WarningAmberIcon /> Confirmar Eliminación</DialogTitle>
+                <DialogTitle sx={{ /* ... */ }}><WarningAmberIcon /> Confirmar Desactivación</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ color: 'var(--text-color)'}}>
-                        ¿Estás seguro de que deseas eliminar el ingrediente
+                        ¿Estás seguro de que deseas desactivar el ingrediente
                         <strong style={{ color: '#60A5FA' }}> {ingredienteToDelete?.nombre}</strong>?
-                        Esta acción no se puede deshacer.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ /* ... */ }}>
@@ -278,7 +287,7 @@ function IngredientesPage() {
                         sx={{ 
                             backgroundColor : '#FA6060FF' ,
                             color: '#FFFFFFFF'
-                        }} autoFocus>Eliminar</Button>
+                        }} autoFocus>Desactivar</Button>
                 </DialogActions>
             </Dialog>
         </>

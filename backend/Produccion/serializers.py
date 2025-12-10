@@ -17,7 +17,6 @@ class DetalleProduccionSerializer(serializers.ModelSerializer):
         model = DetalleProduccion
         fields = [
             'iddetalleproduccion',
-            # 'folioproduccion',  <-- Lo quitamos o lo dejamos read_only, se gestiona arriba
             'iding', 
             'nombre_ingrediente',
             'pesing',
