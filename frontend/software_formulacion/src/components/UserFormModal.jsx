@@ -76,7 +76,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 });
             } else {
                 reset({ // Limpiar para crear
-                    rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: false
+                    rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: true
                 });
             }
         }
@@ -93,7 +93,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                 if (!dataToUpdate.contraseña) {
                     delete dataToUpdate.contraseña;
                 }
-                await axiosInstance.put(`${API_URL_USUARIO_REL}${userToEdit.id}/`, dataToUpdate);
+                await axiosInstance.patch(`${API_URL_USUARIO_REL}${userToEdit.id}/`, dataToUpdate);
             } else {
                 await axiosInstance.post(API_URL_USUARIO_REL, data);
             }

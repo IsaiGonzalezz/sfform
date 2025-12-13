@@ -104,7 +104,7 @@ function IngredientesPage() {
         if (!ingredienteToDelete) return;
         try {
             // === CAMBIO 4: Usar axiosInstance.delete ===
-            await axiosInstance.patch(`${API_URL_INGREDIENTES_REL}${ingredienteToDelete.iding}/`,{
+            await axiosInstance.put(`${API_URL_INGREDIENTES_REL}${ingredienteToDelete.iding}/`,{
                 activo : false
             });
             // ============================================

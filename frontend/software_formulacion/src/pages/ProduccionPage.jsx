@@ -238,7 +238,7 @@ export default function ProduccionPage() {
                     lote: produccionData.lote,
                     idform: formulaItem.idform,
                     pesform: formulaItem.pesform,
-                    estatus: 0,
+                    estatus: 1,
                     fecha: fechaLocal,
                     idusu: user ? user.user_id : 1,
 

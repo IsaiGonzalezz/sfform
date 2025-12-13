@@ -70,7 +70,7 @@ function OperadorFormModal({ open, onClose, onSaveSuccess, operadorToEdit, estac
                     activo: Boolean(operadorToEdit.activo)
                 });
             } else {
-                reset({ rfid: '', nombre: '', contraseña: '', idest: '', activo: false });
+                reset({ rfid: '', nombre: '', contraseña: '', idest: '', activo: true });
             }
         }
     }, [operadorToEdit, open, reset, isEditMode]);

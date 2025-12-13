@@ -82,7 +82,7 @@ function OperadoresPage() {
             // === CAMBIO 4: Usar axiosInstance.get (Segunda llamada) ===
             const response = await axiosInstance.get(API_URL_ESTACIONES_REL);
             // ==========================================================
-            setEstaciones(response.data.map(est => ({ id: est.idest, nombre: est.nombre })) || []);
+            setEstaciones(response.data.map(est => ({ id: est.IdEst, nombre: est.Nombre })) || []);
         } catch (error) {
             console.error("Error al obtener las estaciones para el modal:", error);
             setEstaciones([]);

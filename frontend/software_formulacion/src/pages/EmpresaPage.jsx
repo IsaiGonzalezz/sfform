@@ -26,7 +26,7 @@ import EmpresaFormModal from '../components/EmpresaFormModal';
 
 // URLs RELATIVAS: Usaremos estas para la instancia de Axios
 const API_URL_EMPRESA_REL = '/empresa/'; 
-
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Pequeño componente helper para mostrar la info (sin cambios)
 const InfoItem = ({ icon, label, value }) => {
@@ -203,9 +203,9 @@ function EmpresaPage() {
                             border: `2px dashed ${theme.palette.divider}`, display: 'flex', alignItems: 'center',
                             justifyContent: 'center', overflow: 'hidden', backgroundColor: theme.palette.action.hover, 
                         }}>
-                            {empresaData.logotipo ? (
+                            {empresaData.Logotipo ? (
                                 <img
-                                    src={`${empresaData.logotipo}`}
+                                    src={`${BASE_URL}/${empresaData.Logotipo}`}
                                     alt="Logotipo de la empresa"
                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                     onError={(e) => {
@@ -216,7 +216,7 @@ function EmpresaPage() {
                                 />
                             ) : null}
                             <Box sx={{ 
-                                display: empresaData.logotipo ? 'none' : 'flex',
+                                display: empresaData.Logotipo ? 'none' : 'flex',
                                 color: 'text.secondary' 
                             }}>
                                 Sin Logotipo
@@ -233,12 +233,12 @@ function EmpresaPage() {
                         <InfoItem
                             icon={<FingerprintIcon />}
                             label="RFC"
-                            value={empresaData.rfc}
+                            value={empresaData.RFC}
                         />
                         <InfoItem
                             icon={<BusinessIcon />}
                             label="Nombre"
-                            value={empresaData.nombre}
+                            value={empresaData.Nombre}
                         />
 
                         <Divider sx={{ my: 3 }} />
@@ -249,11 +249,11 @@ function EmpresaPage() {
                             label="Dirección"
                             value={
                                 [
-                                    empresaData.calle,
-                                    empresaData.colonia ? `Col. ${empresaData.colonia}` : null,
-                                    empresaData.ciudad,
-                                    empresaData.estado,
-                                    empresaData.cp ? `C.P. ${empresaData.cp}` : null
+                                    empresaData.Calle,
+                                    empresaData.Colonia ? `Col. ${empresaData.Colonia}` : null,
+                                    empresaData.Ciudad,
+                                    empresaData.Estado,
+                                    empresaData.CP ? `C.P. ${empresaData.CP}` : null
                                 ]
                                 .filter(Boolean) 
                                 .join(', ') 
@@ -271,17 +271,17 @@ function EmpresaPage() {
                         <InfoItem
                             icon={<PersonIcon />}
                             label="Contacto"
-                            value={empresaData.contacto}
+                            value={empresaData.Contacto}
                         />
                         <InfoItem
                             icon={<AlternateEmailIcon />}
                             label="Correo"
-                            value={empresaData.correo}
+                            value={empresaData.Correo}
                         />
                         <InfoItem
                             icon={<PhoneIcon />}
                             label="Teléfono"
-                            value={empresaData.telefono}
+                            value={empresaData.Telefono}
                         />
                     </Grid>
                 </Grid>

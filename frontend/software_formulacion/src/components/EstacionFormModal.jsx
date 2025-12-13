@@ -49,9 +49,9 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
         if (open) {
             if (isEditMode && estacionToEdit) {
                 reset({
-                    idest: estacionToEdit.idest || '',
-                    nombre: estacionToEdit.nombre || '',
-                    obs: estacionToEdit.obs || '',
+                    idest: estacionToEdit.IdEst || '',
+                    nombre: estacionToEdit.Nombre || '',
+                    obs: estacionToEdit.Obs || '',
                     activo: Boolean(estacionToEdit.activo)
                 });
             } else {
@@ -67,7 +67,7 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
         try {
             if (isEditMode) {
                 // PUT para actualizar
-                await axiosInstance.put(`${API_URL_ESTACIONES_REL}${estacionToEdit.idest}/`, data);
+                await axiosInstance.put(`${API_URL_ESTACIONES_REL}${estacionToEdit.IdEst}/`, data);
             } else {
                 // POST para crear
                 await axiosInstance.post(API_URL_ESTACIONES_REL, data);
@@ -125,8 +125,8 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                     fullWidth
                                     variant="outlined"
                                     disabled={isSaving || isEditMode} // ID no editable al modificar
-                                    error={!!errors.idest}
-                                    helperText={errors.idest?.message}
+                                    error={!!errors.IdEst}
+                                    helperText={errors.IdEst?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -151,8 +151,8 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                     fullWidth
                                     variant="outlined"
                                     disabled={isSaving}
-                                    error={!!errors.nombre}
-                                    helperText={errors.nombre?.message}
+                                    error={!!errors.Nombre}
+                                    helperText={errors.Nombre?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -179,8 +179,8 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                                     rows={3}
                                     variant="outlined"
                                     disabled={isSaving}
-                                    error={!!errors.obs}
-                                    helperText={errors.obs?.message}
+                                    error={!!errors.Obs}
+                                    helperText={errors.Obs?.message}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ // Alineado arriba

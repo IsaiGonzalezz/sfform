@@ -93,10 +93,10 @@ function EstacionesPage() {
     const handleDeleteStation = async () => {
         if (!stationToDelete) return;
         try {
-            await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${stationToDelete.idest}/`,{
+            await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${stationToDelete.IdEst}/`,{
                 activo : false
             });
-            console.log('Estación desactivada:', stationToDelete.idest);
+            console.log('Estación desactivada:', stationToDelete.IdEst);
             fetchEstaciones();
         } catch (error) {
             console.error('Error al desactivar la estación:', error);
@@ -107,9 +107,9 @@ function EstacionesPage() {
 
     // --- Columnas de la Tabla ---
     const columns = [
-        { field: 'idest', headerName: 'ID Estación', width: 150 },
-        { field: 'nombre', headerName: 'Nombre Estación', flex: 1, minWidth: 200 },
-        { field: 'obs', headerName: 'Observaciones', flex: 1, minWidth: 250 },
+        { field: 'IdEst', headerName: 'ID Estación', width: 150 },
+        { field: 'Nombre', headerName: 'Nombre Estación', flex: 1, minWidth: 200 },
+        { field: 'Obs', headerName: 'Observaciones', flex: 1, minWidth: 250 },
         {
             field: 'activo',
             headerName: 'Estatus',
@@ -231,7 +231,7 @@ function EstacionesPage() {
                     rows={estaciones}
                     columns={columns}
                     loading={loading}
-                    getRowId={(row) => row.idest}
+                    getRowId={(row) => row.IdEst}
                     slots={{ noRowsOverlay: CustomNoRowsOverlay }}
                     autoHeight={estaciones.length === 0}
                     sx={{
@@ -296,8 +296,8 @@ function EstacionesPage() {
                 <DialogContent>
                     <DialogContentText sx={{ color: 'var(--text-color)', opacity: 0.8 }}>
                         ¿Estás seguro de que deseas desactivar la estación
-                        <strong style={{ color: '#004F8C' }}> {stationToDelete?.nombre}</strong>
-                        (ID: {stationToDelete?.idest})?
+                        <strong style={{ color: '#004F8C' }}> {stationToDelete?.Nombre}</strong>
+                        (ID: {stationToDelete?.IdEst})?
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3 }}>
