@@ -3,23 +3,33 @@ const bcrypt = require('bcryptjs');
 
 // --- 1. OBTENER OPERADORES (GET) ---
 const getOperadores = async (req, res) => {
+    // Leemos el parámetro de la URL (ej: /operadores?verTodos=true)
+    const { verTodos } = req.query;
+
     try {
         const pool = await getConnection();
         
-        // Hacemos JOIN con Estaciones para traer el nombre de la estación, no solo el ID
-        // Filtramos por activo = 1
-        const result = await pool.request().query(`
+        // Query base: Trae la info y el nombre de la estación
+        let query = `
             SELECT 
                 o.rfid, 
                 o.nombre, 
                 o.idest, 
                 o.activo,
+                o.contraseña, 
                 e.nombre as nombre_estacion
             FROM Operadores o
             LEFT JOIN Estaciones e ON o.idest = e.idest
-            WHERE o.activo = 1
-        `);
-        
+        `;
+
+        // SI NO me piden "verTodos", filtro solo los activos (Comportamiento por defecto)
+        if (verTodos !== 'true') {
+            query += ' WHERE o.activo = 1';
+        }
+
+        // Si verTodos es 'true', no agrego el WHERE, así trae activos (1) e inactivos (0)
+
+        const result = await pool.request().query(query);
         res.json(result.recordset);
     } catch (error) {
         res.status(500).send(error.message);
@@ -125,9 +135,32 @@ const deleteOperador = async (req, res) => {
     }
 };
 
+const activarOperador = async (req, res) => {
+    const { id } = req.params; // El RFID
+
+    try {
+        const pool = await getConnection();
+        
+        // "Revivimos" el operador poniendo activo = 1
+        const result = await pool.request()
+            .input('id', sql.VarChar, id)
+            .query('UPDATE Operadores SET activo = 1 WHERE rfid = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ msg: 'Operador no encontrado' });
+        }
+
+        res.json({ msg: 'Operador restaurado exitosamente' });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
+
 module.exports = {
     getOperadores,
     createOperador,
     updateOperador,
-    deleteOperador
+    deleteOperador,
+    activarOperador,
 };

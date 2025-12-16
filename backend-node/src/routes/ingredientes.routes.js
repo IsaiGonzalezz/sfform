@@ -7,5 +7,6 @@ router.get('/:id', ingredientesController.getIngredienteById);
 router.post('/', ingredientesController.createIngrediente);
 router.put('/:id', ingredientesController.updateIngrediente);
 router.delete('/:id', ingredientesController.deleteIngrediente);
+router.put('/activar/:id', ingredientesController.activarIngrediente);
 
 module.exports = router;

@@ -3,10 +3,21 @@ const { getConnection, sql } = require('../../db');
 // --- 1. OBTENER TODAS (GET) ---
 // Equivalente a: EstacionListCreateView (GET)
 const getEstaciones = async (req, res) => {
+
+    const {verTodos} = req.query
+
     try {
         const pool = await getConnection();
-        // Filtramos por activo = 1 para respetar el borrado lógico
-        const result = await pool.request().query("SELECT * FROM Estaciones WHERE activo = 1");
+        
+        let query = `
+            SELECT * FROM Estaciones
+        `;
+
+        if(verTodos !== 'true'){
+            query += `WHERE activo = 1`;
+        }
+
+        const result = await pool.request().query(query);
         res.json(result.recordset);
     } catch (error) {
         res.status(500).send(error.message);
@@ -102,10 +113,33 @@ const deleteEstacion = async (req, res) => {
     }
 };
 
+
+//ActivarEstaciones;
+const activarEstacion = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const pool = await getConnection();
+        
+        const result = await pool.request()
+            .input('id', sql.VarChar, id)
+            .query('UPDATE Estaciones SET activo = 1 WHERE idest = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ msg: 'Estacion no encontrado' });
+        }
+
+        res.json({ msg: 'Estacion restaurado exitosamente' });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
 module.exports = {
     getEstaciones,
     getEstacionById,
     createEstacion,
     updateEstacion,
-    deleteEstacion
+    deleteEstacion,
+    activarEstacion,
 };

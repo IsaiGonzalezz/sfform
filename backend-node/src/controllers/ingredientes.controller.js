@@ -2,21 +2,30 @@ const { getConnection, sql } = require('../../db');
 
 // --- 1. GET: Solo traer los activos 
 exports.getIngredientes = async (req, res) => {
+    
+    const { verTodos } = req.query;
+
     try {
         const pool = await getConnection();
-        
-        // AGREGADO: WHERE activo = 1
-        const result = await pool.request().query(`
-            SELECT 
+
+        let query = `
+        SELECT 
                 iding,
                 nombre,
                 presentacion,
                 observaciones,
                 pesado,
                 activo
-            FROM Ingredientes
-            WHERE activo = 1  
-        `);
+            FROM Ingredientes 
+        `;
+
+
+        if (verTodos !== 'true') {
+            query += ' WHERE activo = 1';
+        }
+        
+        
+        const result = await pool.request().query(query);
         res.json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -119,5 +128,28 @@ exports.deleteIngrediente = async (req, res) => {
         res.json({ message: 'Ingrediente desactivado correctamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+
+//ActivarIngredientes;
+exports.activarIngrediente = async (req, res) => {
+    const { id } = req.params; // El RFID
+
+    try {
+        const pool = await getConnection();
+        
+        // "Revivimos" el operador poniendo activo = 1
+        const result = await pool.request()
+            .input('id', sql.VarChar, id)
+            .query('UPDATE Ingredientes SET activo = 1 WHERE iding = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ msg: 'Ingrediente no encontrado' });
+        }
+
+        res.json({ msg: 'Ingrediente restaurado exitosamente' });
+    } catch (error) {
+        res.status(500).send(error.message);
     }
 };

@@ -278,7 +278,7 @@ export default function FormulaPage() {
                             value={formulaData.nombre}
                             onChange={handleFormulaChange}
                             disabled={formulaDefinida || isSaving}
-                            placeholder="..."
+                            placeholder="Ej: Agua Destilada"
                             required
                         />
                     </div>

@@ -6,7 +6,8 @@ const {
     getEstacionById,
     createEstacion, 
     updateEstacion, 
-    deleteEstacion 
+    deleteEstacion,
+    activarEstacion 
 } = require('../controllers/estaciones.controller');
 
 // GET /api/estaciones/ -> Lista todas las activas
@@ -22,7 +23,12 @@ router.post('/', createEstacion);
 router.put('/:id', updateEstacion);
 
 // DELETE /api/estaciones/:id -> Borrado Lógico (Soft Delete)
-router.patch('/:id', deleteEstacion); 
+router.patch('/:id', deleteEstacion);
+
+//activar
+router.put('/activar/:id', activarEstacion);
+
+
 //router.delete('/:id', deleteEstacion); 
 
 module.exports = router;

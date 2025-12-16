@@ -3,10 +3,29 @@ const bcrypt = require('bcryptjs');
 
 // Obtener todos los usuarios (SIN devolver la contraseña)
 exports.getUsuarios = async (req, res) => {
+    // Leemos el parámetro de la URL (ej: /operadores?verTodos=true)
+    const { verTodos } = req.query;
+    
     try {
         const pool = await getConnection();
+
+        let query = `
+            SELECT id, 
+                    rfid, 
+                    nombre, 
+                    correo, 
+                    rol, 
+                    activo 
+            FROM Usuarios
+        `;
+
+        // SI NO me piden "verTodos", filtro solo los activos (Comportamiento por defecto)
+        if (verTodos !== 'true') {
+            query += ' WHERE activo = 1';
+        }
+
         // Seleccionamos campos específicos para no filtrar el hash del password
-        const result = await pool.request().query('SELECT id, rfid, nombre, correo, rol, activo FROM Usuarios WHERE activo = 1');
+        const result = await pool.request().query(query);
         res.json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -134,6 +153,29 @@ exports.patchUsuario = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
+exports.activarUsuario = async (req, res) => {
+    const { id } = req.params; // El RFID
+
+    try {
+        const pool = await getConnection();
+        
+        // "Revivimos" el operador poniendo activo = 1
+        const result = await pool.request()
+            .input('id', sql.VarChar, id)
+            .query('UPDATE Usuarios SET activo = 1 WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ msg: 'Usuario restaurado exitosamente' });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
 
 // Eliminar Usuario
 exports.deleteUsuario = async (req, res) => {
