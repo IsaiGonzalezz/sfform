@@ -1,8 +1,10 @@
 import React, { forwardRef } from 'react';
 import './styles/Reporte.css'; // Asegúrate de importar el nuevo CSS
 
-const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} }, ref) => {
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} }, ref) => {
     const fechaActual = new Date().toLocaleString('es-MX', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -22,113 +24,125 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
 
     return (
         <div ref={ref} className="reporte-carta">
-            
-            {/* --- 1. ENCABEZADO "TIPO CUADRO" --- */}
-            <header className="header-fijo">
-                <div className="header-grid">
-                    {/* Columna 1: Logo */}
-                    <div className="header-col logo-col">
-                        {empresa?.logotipo && (
-                            <img src={empresa.logotipo} alt="Logo" className="img-logo" onError={(e) => e.target.style.display='none'}/>
-                        )}
-                    </div>
 
-                    {/* Columna 2: Datos Empresa y Título */}
-                    <div className="header-col title-col">
-                        <h3 className="empresa-nombre">{empresa?.nombre || 'NOMBRE DE LA EMPRESA S.A. DE C.V.'}</h3>
-                        <h1 className="doc-titulo">REPORTE DE FÓRMULA</h1>
-                    </div>
+            {/* ================= HEADER SIMPLE ================= */}
+            <header className="header-simple">
+                <div className="header-left">
+                    {empresa?.Logotipo && (
+                        <img
+                            src={`${BASE_URL}/${empresa.Logotipo}`}
+                            alt="Logo"
+                            className="logo-simple"
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
+                    )}
 
-                    {/* Columna 3: Metadatos (Folio, Fecha) */}
-                    <div className="header-col meta-col">
-                        <div className="meta-row border-bottom">
-                            <span className="meta-label">ID FÓRMULA:</span>
-                            <span className="meta-value text-red">{formula?.id || 'N/A'}</span>
+                    <div className="empresa-info">
+                        <div className="empresa-nombre-simple">
+                            {empresa?.Nombre || 'NOMBRE DE LA EMPRESA S.A. DE C.V.'}
                         </div>
-                        <div className="meta-row border-bottom">
-                            <span className="meta-label">IMPRESIÓN:</span>
-                            <span className="meta-value">{fechaActual}</span>
+                        <div className="empresa-rfc">
+                            {empresa?.RFC || 'RFC000000XXX'}
                         </div>
                     </div>
                 </div>
 
-                {/* BARRA DE INFORMACIÓN (La tira gris debajo del header) */}
-                <div className="summary-strip">
-                    <div className="sum-item border-right">
-                        <span className="sum-label">NOMBRE DE FÓRMULA</span>
-                        <span className="sum-value">{formula?.nombre || 'Sin Nombre'}</span>
-                    </div>
-                    <div className="sum-item border-right">
-                        <span className="sum-label">PESO TOTAL</span>
-                        <span className="sum-value">{formatNumero(pesoTotal)} kg</span>
-                    </div>
-                    <div className="sum-item">
-                        <span className="sum-label">TOTAL ÍTEMS</span>
-                        <span className="sum-value">{totalItems}</span>
-                    </div>
+                <div className="header-right">
+                    {fechaActual}
                 </div>
             </header>
 
-            {/* --- 2. CONTENIDO (TABLA) --- */}
+            {/* ================= CONTENIDO ================= */}
             <main className="contenido-principal">
+
+                {/* ---- Detalle ---- */}
+                <div className="detalle-header">
+                    <div className="detalle-titulo">Detalle</div>
+                    <div className="detalle-id">
+                        ID: {formula?.id || 'N/A'}
+                    </div>
+                </div>
+
+                <div className="datos-formula">
+                    <div>
+                        <span className="dato-label">Nombre de Fórmula</span>
+                        <span className="dato-valor">{formula?.nombre || 'Sin nombre'}</span>
+                    </div>
+                    <div>
+                        <span className="dato-label">Peso Total Calculado</span>
+                        <span className="dato-valor" style={{textAlign:'center'}}>{formatNumero(pesoTotal)} kg</span>
+                    </div>
+                    <div>
+                        <span className="dato-label">Total de Ingredientes</span>
+                        <span className="dato-valor">{totalItems}</span>
+                    </div>
+                </div>
+
+                {/* ---- Título Tabla ---- */}
+                <div className="tabla-titulo">
+                    Composición de la Fórmula
+                </div>
+
+                {/* ---- Tabla ---- */}
                 <table className="tabla-industrial">
                     <thead>
                         <tr>
-                            <th style={{width: '15%'}}>CLAVE / ID</th>
-                            <th style={{width: '40%'}}>DESCRIPCIÓN / INGREDIENTE</th>
-                            <th style={{width: '15%'}}>CANT. META (KG)</th>
-                            <th style={{width: '10%'}}>TOL. (%)</th>
-                            <th style={{width: '20%'}}>RANGO (KG)</th>
+                            <th style={{ width: '15%' }}>Clave</th>
+                            <th style={{ width: '40%' }}>Descripción</th>
+                            <th style={{ width: '15%' }}>Cant. Obj. (kg)</th>
+                            <th style={{ width: '15%' }}>Tolerancia (%)</th>
+                            <th style={{ width: '15%' }}>Acumulado (kg)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {ingredientes.map((ing, index) => {
                             const peso = parseFloat(ing.peso || 0);
-                            const tol = parseFloat(ing.tolerancia || 0);
-                            const min = peso - (peso * (tol / 100));
-                            const max = peso + (peso * (tol / 100));
 
                             return (
                                 <tr key={index}>
-                                    <td className="text-center bold">{ing.clave || ing.id || '---'}</td>
+                                    <td className="text-center">{ing.clave || ing.id || '---'}</td>
                                     <td>{ing.nombre}</td>
-                                    <td className="text-right bold">{formatNumero(peso)}</td>
-                                    <td className="text-center">{tol}%</td>
-                                    <td className="text-right text-small">
-                                        {formatNumero(min)} - {formatNumero(max)}
-                                    </td>
+                                    <td className="text-right">{formatNumero(peso)}</td>
+                                    <td className="text-center">{ing.tolerancia || 0}%</td>
+                                    <td className="text-right">{formatNumero(peso)}</td>
                                 </tr>
                             );
                         })}
-                        {/* Fila de relleno si no hay datos */}
+
                         {ingredientes.length === 0 && (
                             <tr>
-                                <td colSpan="5" className="text-center padding-xl">No hay ingredientes cargados.</td>
+                                <td colSpan="5" className="text-center padding-xl">
+                                    No hay ingredientes registrados.
+                                </td>
                             </tr>
                         )}
                     </tbody>
                 </table>
+
+                {/* ---- Observaciones (DESCARTADO) ---- */}
+                {/*
                 <div className="observaciones-container">
-                    <div className="obs-header">OBSERVACIONES GENERALES:</div>
+                    <div className="obs-header">Observaciones</div>
                     <div className="obs-lines">
                         <div className="line"></div>
                         <div className="line"></div>
                         <div className="line"></div>
                     </div>
                 </div>
+                */}
+
             </main>
 
-            {/* --- 3. PIE DE PÁGINA (OBSERVACIONES) --- */}
+            {/* ================= FOOTER ================= */}
             <footer className="footer-fijo">
                 <div className="sistema-meta">
-                    
-                            {empresa?.calle} {empresa?.colonia}, {empresa?.ciudad} {empresa?.estado} C.P.: {empresa?.cp}
-                        
+                    {empresa?.Calle} {empresa?.Colonia}, {empresa?.Ciudad} {empresa?.Estado} C.P. {empresa?.CP}
                 </div>
             </footer>
 
         </div>
     );
+
 });
 
 export default ReporteFormula;

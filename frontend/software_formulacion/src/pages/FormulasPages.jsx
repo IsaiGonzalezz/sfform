@@ -45,23 +45,6 @@ export default function FormulaPage() {
     const [showConsultar, setShowConsultar] = useState(false);
     const [error, setError] = useState(null);
 
-    // Función auxiliar para convertir imágenes a base64
-    const convertToBase64 = async (url) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (err) {
-            console.error('convertToBase64 error:', err);
-            return null;
-        }
-    };
-
     // --- FORMATO DE NÚMEROS ---
     const formatearValor = (valor) => {
         const numero = parseFloat(valor);
@@ -96,20 +79,6 @@ export default function FormulaPage() {
 
                 if (empresaRes.data && empresaRes.data.length > 0) {
                     let empresaDatos = empresaRes.data[0];
-
-                    // Si existe logotipo como URL, intentar convertirlo a base64
-                    if (empresaDatos.logotipo) {
-                        // Nota: La función convertToBase64 usa fetch nativo, no axiosInstance,
-                        // por lo que no lleva el token. Solo funcionará si la imagen es pública o si Django
-                        // devuelve la URL como base64 en la petición inicial.
-                        const base64Logo = await convertToBase64(empresaDatos.logotipo);
-                        if (base64Logo) {
-                            empresaDatos.logotipo = base64Logo;
-                        } else {
-                            console.warn('No se pudo convertir el logotipo a base64, se dejará la URL original.');
-                        }
-                    }
-
                     setEmpresaInfo(empresaDatos);
                 } else {
                     console.warn('No se encontraron datos de la empresa para el reporte.');
@@ -253,8 +222,12 @@ export default function FormulaPage() {
                 margin: 10,
                 filename: pdfFileName,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true, // Importante
+                    logging: true
+                },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
             };
 
             html2pdf().from(element).set(opt).save();

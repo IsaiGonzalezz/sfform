@@ -291,7 +291,7 @@ function EstacionesPage() {
                 }}
             >
                 <DialogTitle sx={{ fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningAmberIcon /> Confirmar Desactivación
+                    <WarningAmberIcon /> Confirmar Eliminación
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ color: 'var(--text-color)', opacity: 0.8 }}>

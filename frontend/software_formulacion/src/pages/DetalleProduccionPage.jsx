@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, Edit3, Layers } from 'lucide-react'; // Agregué el icono Layers
+import { ArrowLeft, Save, X, Edit3, Layers, Trash2 } from 'lucide-react'; // Agregué el icono Layers
 import { useAuth } from '../context/useAuth';
 
 const API_URL_PRODUCCION_REL = '/produccion/';
@@ -135,6 +135,20 @@ const DetalleProduccionPage = () => {
         }
     };
 
+    // 3. DELETE: Eliminar Fórmula <DESCARTADO>
+    const handleDelete = async () => {
+        if (window.confirm(`¿Estás seguro de eliminar la orden de producción: ${formData.op}? Esta acción no se puede deshacer.`)) {
+            try {
+                await axiosInstance.delete(`${API_URL_PRODUCCION_REL}${formData.op}/`);
+                alert('Orden de Producción Eliminada.');
+                navigate('/produccion'); // Te regresa a la lista principal
+            } catch (err) {
+                console.error(err);
+                alert('Error al eliminar.');
+            }
+        }
+    };
+
     const handleCancel = () => {
         setFormData(produccionOriginal);
         setIsEditing(false);
@@ -167,11 +181,17 @@ const DetalleProduccionPage = () => {
                 </div>
 
                 <div style={styles.actions}>
+
                     {!isEditing ? (
-                        <button style={styles.btnEdit} onClick={() => setIsEditing(true)}>
-                            <Edit3 size={18}
-                            /> Editar
-                        </button>
+                        <>
+                            <button style={{ ...styles.btnDelete}} onClick={handleDelete}>
+                                <Trash2 size={18} /> Eliminar
+                            </button>
+                            <button style={styles.btnEdit} onClick={() => setIsEditing(true)}>
+                                <Edit3 size={18}
+                                /> Editar
+                            </button>
+                        </>
                     ) : (
                         <>
                             <button style={styles.btnCancel} onClick={handleCancel}>
@@ -186,39 +206,41 @@ const DetalleProduccionPage = () => {
             </div>
 
             {/* --- SECCIÓN DE PESTAÑAS --- */}
-            {pestañasOrdenadas.length > 1 && (
-                <div style={styles.tabsContainer}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', color: '#888' }}>
-                        <Layers size={16} /> <span style={{ fontSize: '0.9rem' }}>Fórmulas en esta Orden:</span>
-                    </div>
-                    <div style={styles.tabsRow}>
-                        {/* AGREGAMOS EL ÍNDICE 'i' AQUÍ ABAJO v */}
-                        {pestañasOrdenadas.map((item, i) => {
-                            const isActive = String(item.id) === String(folio) || String(item.folio) === String(folio);
+            {
+                pestañasOrdenadas.length > 1 && (
+                    <div style={styles.tabsContainer}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', color: '#888' }}>
+                            <Layers size={16} /> <span style={{ fontSize: '0.9rem' }}>Fórmulas en esta Orden:</span>
+                        </div>
+                        <div style={styles.tabsRow}>
+                            {/* AGREGAMOS EL ÍNDICE 'i' AQUÍ ABAJO v */}
+                            {pestañasOrdenadas.map((item, i) => {
+                                const isActive = String(item.id) === String(folio) || String(item.folio) === String(folio);
 
-                            // --- CORRECCIÓN DEL KEY ---
-                            // Usamos item.id. Si no existe, usamos item.folio. Si no, usamos el índice 'i'.
-                            // Esto elimina el error rojo para siempre.
-                            const uniqueKey = item.id || item.folio || i;
+                                // --- CORRECCIÓN DEL KEY ---
+                                // Usamos item.id. Si no existe, usamos item.folio. Si no, usamos el índice 'i'.
+                                // Esto elimina el error rojo para siempre.
+                                const uniqueKey = item.id || item.folio || i;
 
-                            return (
-                                <button
-                                    key={uniqueKey} // <--- AQUÍ ESTABA EL DETALLE
-                                    onClick={() => {
-                                        if (!isActive) {
-                                            setIsEditing(false);
-                                            navigate(`/detalle-produccion/${item.folio || item.id}`);
-                                        }
-                                    }}
-                                    style={isActive ? styles.tabActive : styles.tabInactive}
-                                >
-                                    {item.nombre_formula || `Fórmula ${item.id}`}
-                                </button>
-                            );
-                        })}
+                                return (
+                                    <button
+                                        key={uniqueKey} // <--- AQUÍ ESTABA EL DETALLE
+                                        onClick={() => {
+                                            if (!isActive) {
+                                                setIsEditing(false);
+                                                navigate(`/detalle-produccion/${item.folio || item.id}`);
+                                            }
+                                        }}
+                                        style={isActive ? styles.tabActive : styles.tabInactive}
+                                    >
+                                        {item.nombre_formula || `Fórmula ${item.id}`}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Formulario de Cabecera */}
             <div style={styles.card}>
@@ -323,7 +345,7 @@ const DetalleProduccionPage = () => {
                     </table>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
@@ -332,7 +354,7 @@ const styles = {
     container: {
         minHeight: '100vh',
         // Fondo dinámico
-        backgroundColor: 'var(--bg-color)', 
+        backgroundColor: 'var(--bg-color)',
         color: 'var(--text-color)',
         padding: '20px 40px 40px 40px',
         fontFamily: 'Arial, sans-serif',
@@ -340,13 +362,13 @@ const styles = {
     },
     centerMsg: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: 'var(--bg-color)', 
-        color: 'var(--text-color)', 
+        backgroundColor: 'var(--bg-color)',
+        color: 'var(--text-color)',
         fontSize: '1.2rem'
     },
     centerMsgError: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
-        backgroundColor: 'var(--bg-color)', 
+        backgroundColor: 'var(--bg-color)',
         color: '#ff6b6b', // Rojo de error (se ve bien en ambos)
         fontSize: '1.2rem'
     },
@@ -357,20 +379,20 @@ const styles = {
         paddingBottom: '15px'
     },
     backBtn: {
-        background: 'transparent', 
-        border: 'none', 
-        color: 'var(--text-color)', 
+        background: 'transparent',
+        border: 'none',
+        color: 'var(--text-color)',
         opacity: 0.6, // Un poco transparente para que no compita con el título
         cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: '5px', fontSize: '1rem',
         transition: 'opacity 0.2s'
     },
     titleContainer: { flex: 1, marginLeft: '20px' },
-    title: { 
-        margin: 0, 
-        fontSize: '1.8rem', 
+    title: {
+        margin: 0,
+        fontSize: '1.8rem',
         fontWeight: 'bold',
-        color: 'var(--text-color)' 
+        color: 'var(--text-color)'
     },
     actions: { display: 'flex', gap: '15px' },
 
@@ -398,7 +420,7 @@ const styles = {
     },
     tabInactive: {
         // Fondo neutro: transparente o ligeramente grisáceo
-        backgroundColor: 'transparent', 
+        backgroundColor: 'transparent',
         color: 'var(--text-color)',
         opacity: 0.6, // Texto más apagado
         border: '1px solid var(--border-color)', // Borde sutil
@@ -410,6 +432,10 @@ const styles = {
     },
 
     // --- BOTONES (Se quedan con texto blanco para contraste sobre el color fuerte) ---
+    btnDelete: {
+        backgroundColor: '#FF0000FF', color: 'white', border: 'none', padding: '10px 20px',
+        borderRadius: '6px', cursor: 'pointer', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+    },
     btnEdit: {
         display: 'none',
         backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
@@ -427,7 +453,7 @@ const styles = {
     // --- CARD Y FORMULARIO ---
     card: {
         backgroundColor: 'var(--card-bg)', // Blanco(día) / Gris(noche)
-        padding: '25px', 
+        padding: '25px',
         borderRadius: '12px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Sombra más suave
         marginBottom: '25px',
@@ -437,69 +463,69 @@ const styles = {
         display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px'
     },
     formGroup: { marginBottom: '10px' },
-    label: { 
-        display: 'block', 
-        color: 'var(--text-color)', 
-        opacity: 0.7, 
-        fontSize: '0.9rem', 
-        marginBottom: '8px' 
+    label: {
+        display: 'block',
+        color: 'var(--text-color)',
+        opacity: 0.7,
+        fontSize: '0.9rem',
+        marginBottom: '8px'
     },
-    textData: { 
-        fontSize: '1.5rem', 
+    textData: {
+        fontSize: '1.5rem',
         color: 'var(--text-color)', // Texto principal
-        margin: 0 
+        margin: 0
     },
     input: {
-        width: '100%', 
-        padding: '12px', 
+        width: '100%',
+        padding: '12px',
         backgroundColor: 'var(--bg-color)', // Contraste contra el fondo de la tarjeta
         border: '1px solid var(--border-color)',
-        borderRadius: '6px', 
-        color: 'var(--text-color)', 
-        fontSize: '1.1rem', 
+        borderRadius: '6px',
+        color: 'var(--text-color)',
+        fontSize: '1.1rem',
         outline: 'none',
         transition: 'border-color 0.2s'
     },
     subTitle: {
-        marginTop: 0, 
-        marginBottom: '20px', 
+        marginTop: 0,
+        marginBottom: '20px',
         borderLeft: '4px solid #4dabf7',
-        paddingLeft: '10px', 
-        color: 'var(--text-color)' 
+        paddingLeft: '10px',
+        color: 'var(--text-color)'
     },
 
     // --- TABLA ---
     tableContainer: { overflowX: 'auto' },
-    table: { 
-        width: '100%', 
-        borderCollapse: 'collapse', 
-        color: 'var(--text-color)' 
+    table: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        color: 'var(--text-color)'
     },
 
     thRight: {
         textAlign: 'right',
         padding: '12px',
-        borderBottom: '2px solid var(--border-color)', 
+        borderBottom: '2px solid var(--border-color)',
         color: 'var(--text-color)',
         opacity: 0.8,
         fontWeight: 'bold' // (Opcional) Para que resalte un poco más que el resto
     },
 
-    th: { 
-        textAlign: 'left', 
-        padding: '12px', 
-        borderBottom: '2px solid var(--border-color)', 
+    th: {
+        textAlign: 'left',
+        padding: '12px',
+        borderBottom: '2px solid var(--border-color)',
         color: 'var(--text-color)',
-        opacity: 0.8 
+        opacity: 0.8
     },
     td: { padding: '15px 12px' },
     inputTable: {
-        width: '100%', 
-        padding: '8px', 
-        backgroundColor: 'var(--bg-color)', 
+        width: '100%',
+        padding: '8px',
+        backgroundColor: 'var(--bg-color)',
         border: '1px solid var(--border-color)',
-        borderRadius: '4px', 
-        color: 'var(--text-color)', 
+        borderRadius: '4px',
+        color: 'var(--text-color)',
         textAlign: 'right'
     }
 };

@@ -10,23 +10,6 @@ import './styles/ConsultaProduccion.css'
 const API_URL_PRODUCCION_REL = '/produccion/';
 const API_URL_EMPRESA_REL = '/empresa/';
 
-// Helper para convertir imágenes a base64 (para que salgan en el PDF)
-const convertToBase64 = async (url) => {
-    if (!url) return null;
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (err) {
-        console.error('convertToBase64 error:', err);
-        return null;
-    }
-};
 
 const ConsultarProduccionModal = ({ isOpen, onClose }) => {
     const { axiosInstance } = useAuth();
@@ -72,7 +55,6 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                         };
                     }
 
-                    // *** CAMBIO CLAVE ***: Guardamos el 'folio' único de este registro específico
                     agrupadosMap[opKey].formulasContenidas.push({
                         folioReal: item.folio || item.id, // EL ID ÚNICO DEL REGISTRO
                         nombre: item.nombre_formula,
@@ -99,10 +81,6 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
             const response = await axiosInstance.get(API_URL_EMPRESA_REL);
             if (response.data && response.data.length > 0) {
                 let empresaDatos = response.data[0];
-                if (empresaDatos.logotipo) {
-                    const base64Logo = await convertToBase64(empresaDatos.logotipo);
-                    if (base64Logo) empresaDatos.logotipo = base64Logo;
-                }
                 setEmpresaInfo(empresaDatos);
             }
         } catch (error) {

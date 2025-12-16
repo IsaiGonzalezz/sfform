@@ -35,9 +35,9 @@ const collapsedWidth = 72;
 
 const mainItems = [
     { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-    { text: 'Fórmulas', path: '/formulas', icon: <ReceiptLongIcon /> },
+    { text: 'Inventario', path: '/inventario', icon: <Inventory2Icon /> },
     { text: 'Producción', path: '/produccion', icon: <FactoryIcon /> },
-    { text: 'Inventario', path: '/inventario', icon: <Inventory2Icon /> }
+    { text: 'Fórmulas', path: '/formulas', icon: <ReceiptLongIcon /> },
 ];
 
 const catalogosItems = [

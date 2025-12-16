@@ -1,18 +1,21 @@
 const { getConnection, sql } = require('../../db');
 
+// --- 1. GET: Solo traer los activos 
 exports.getIngredientes = async (req, res) => {
     try {
         const pool = await getConnection();
         
+        // AGREGADO: WHERE activo = 1
         const result = await pool.request().query(`
             SELECT 
-                iding AS iding,
-                nombre AS nombre,
-                presentacion AS presentacion,
-                observaciones AS observaciones,
-                pesado AS pesado,
-                activo AS activo
+                iding,
+                nombre,
+                presentacion,
+                observaciones,
+                pesado,
+                activo
             FROM Ingredientes
+            WHERE activo = 1  
         `);
         res.json(result.recordset);
     } catch (error) {
@@ -101,16 +104,19 @@ exports.updateIngrediente = async (req, res) => {
 };
 
 // Eliminar
+// --- 2. DELETE: Borrado Lógico (Soft Delete) ---
+// En lugar de borrar la fila, solo ponemos activo = 0
 exports.deleteIngrediente = async (req, res) => {
     try {
         const pool = await getConnection();
         const result = await pool.request()
             .input('iding', sql.VarChar, req.params.id)
-            .query('DELETE FROM Ingredientes WHERE iding = @iding');
+            // CAMBIO: UPDATE en vez de DELETE
+            .query('UPDATE Ingredientes SET activo = 0 WHERE iding = @iding');
 
         if (result.rowsAffected[0] === 0) return res.status(404).json({ message: 'Ingrediente no encontrado' });
 
-        res.json({ message: 'Ingrediente eliminado' });
+        res.json({ message: 'Ingrediente desactivado correctamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

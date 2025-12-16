@@ -1,209 +1,175 @@
-.reporte-industrial {
-    font-family: 'Arial', sans-serif;
-    color: #000;
-    background: white;
-    width: 100%;
-    max-width: 216mm; 
-    min-height: 255mm; 
-    
-    margin: 0 auto;
-    box-sizing: border-box;
-    background-color: #fff;
-    position: relative;
+/* ======================================================================
+    BASE
+   ====================================================================== */
 
-    /* Flexbox SOLO para pantalla */
+.reporte-industrial {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff;
+    width: 100%;
+    max-width: 216mm;
+    min-height: 255mm;
+    margin: 0 auto;
+    color: #000;
+
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
 
-/* --- HEADER --- */
-.seccion-encabezado {
-    background: white;
-    width: 100%;
-}
+/* ======================================================================
+    HEADER SIMPLE
+   ====================================================================== */
 
-.header-box {
+.header-simple {
     display: flex;
-    border: 2px solid #000;
-    height: 24mm; 
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6mm;
+    border-bottom: 1px solid #ddd;
 }
 
-.header-logo {
-    width: 20%;
-    border-right: 1px solid #000;
+.header-left {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2px;
+    gap: 10px;
 }
 
-.header-logo img {
-    max-width: 90%;
-    max-height: 90%;
+.logo-simple {
+    width: 47px;
+    height: auto;
     object-fit: contain;
 }
 
-.header-titles {
-    width: 55%;
-    border-right: 1px solid #000;
+.empresa-info {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    text-align: center;
 }
 
-.company-name {
+.empresa-nombre-simple {
     font-size: 11pt;
     font-weight: bold;
-    margin: 0;
-    text-transform: uppercase;
+    margin-bottom: 2px;
 }
 
-.doc-title {
-    font-size: 12pt;
-    font-weight: 900;
-    margin: 1px 0;
-    background-color: #ffffff;
-    border-top: 1px solid #ffffff;
-    border-bottom: 1px solid #ffffff;
+.empresa-rfc {
+    font-size: 8.5pt;
+    color: #666;
 }
 
-.company-address {
-    font-size: 7pt;
-    margin: 0;
-}
-
-.header-meta {
-    width: 25%;
-    display: flex;
-    flex-direction: column;
-}
-
-.meta-row {
-    flex: 1;
-    display: flex;
-    border-bottom: 1px solid #000;
+.header-right {
     font-size: 8pt;
+    color: #666;
+    text-align: right;
+    line-height: 1.4;
 }
 
-.meta-row:last-child {
-    border-bottom: none;
-}
+/* ======================================================================
+   CONTENIDO
+   ====================================================================== */
 
-.meta-label {
-    background-color: #ddd;
-    width: 35%;
-    display: flex;
-    align-items: center;
-    padding-left: 4px;
-    font-weight: bold;
-    font-size: 6.5pt;
-}
-
-.meta-value {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-.meta-value.highlight {
-    color: #c00;
-    font-size: 10pt;
-}
-
-/* Grid de información (Lote, Peso, etc.) */
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    border: 2px solid #000;
-    border-top: none;
-    margin-bottom: 0;
-}
-
-.info-cell {
-    border-right: 1px solid #000;
-    display: flex;
-    flex-direction: column;
-}
-
-.info-cell:last-child {
-    border-right: none;
-}
-
-.cell-label {
-    background-color: #ddd;
-    font-size: 7pt;
-    font-weight: bold;
-    text-align: center;
-    border-bottom: 1px solid #000;
-}
-
-.cell-value {
-    font-size: 9pt;
-    font-weight: bold;
-    padding: 3px;
-    text-align: center;
-}
-
-
-/* --- BODY (Contenido Central) --- */
 .seccion-cuerpo {
     flex-grow: 1;
-    padding: 5mm 0; 
+    padding: 6mm;
 }
+
+/* ---- Detalle ---- */
+
+.detalle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4mm;
+}
+
+.detalle-titulo {
+    font-size: 9pt;
+    font-weight: bold;
+}
+
+.detalle-id {
+    font-size: 7.5pt;
+    background: #f0f0f0;
+    padding: 2px 10px;
+    border-radius: 12px;
+    color: #555;
+}
+
+/* ---- Info grid ---- */
+
+.info-grid-simple {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6mm;
+    font-size: 8pt;
+    margin-bottom: 8mm;
+}
+
+.dato-label {
+    display: block;
+    font-size: 7pt;
+    color: #666;
+}
+
+.dato-valor {
+    font-size: 8.5pt;
+    font-weight: 600;
+}
+
+/* ======================================================================
+   TABLA
+   ====================================================================== */
 
 .tabla-industrial {
     width: 100%;
     border-collapse: collapse;
-    border: 2px solid #000;
-    font-size: 8.5pt;
+    font-size: 8pt;
+    border: 0.5px solid #ddd;
 }
 
 .tabla-industrial th {
-    background-color: #ddd;
-    border: 1px solid #000;
-    padding: 4px;
-    font-weight: bold;
-    text-align: center;
-    font-size: 8pt;
+    background-color: #f6f6f6;
+    border: 0.5px solid #ddd;
+    padding: 6px;
+    font-weight: 600;
+    font-size: 7.5pt;
 }
 
 .tabla-industrial td {
-    border: 1px solid #000;
-    padding: 3px 5px;
-}
-
-.num-cell {
-    text-align: right;
+    border: 0.5px solid #eee;
+    padding: 6px;
 }
 
 .row-separator td {
-    background-color: #333;
-    color: white;
+    background: #333;
+    color: #fff;
     font-weight: bold;
 }
 
-/* --- FOOTER (Parte Inferior) --- */
-.seccion-pie {
-    background: white;
-    width: 100%;
-    padding-top: 2px;
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.bold { font-weight: bold; }
+.text-small { font-size: 7.5pt; }
+.mono { font-family: monospace; }
+.padding-xl {
+    padding: 16px;
+    font-style: italic;
+    color: #666;
 }
 
+/* ======================================================================
+   OBSERVACIONES
+   ====================================================================== */
+
 .observaciones-box {
-    border: 1px solid #000;
-    padding: 2px;
-    min-height: 10mm;
-    background-color: #fafafa;
-    margin-bottom: 2mm;
+    margin-top: 8mm;
+    border: 0.5px solid #ddd;
+    padding: 4px;
+    min-height: 20mm;
 }
 
 .box-title {
-    font-weight: bold;
-    font-size: 7pt;
+    font-size: 7.5pt;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
 .box-content-lines .line {
@@ -211,94 +177,60 @@
     height: 5mm;
 }
 
-.firmas-grid {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 2mm;
-}
+/* ======================================================================
+   FOOTER
+   ====================================================================== */
 
-.firma-box {
-    flex: 1;
-    text-align: center;
-    margin-top: 2mm;
-}
-
-.firma-line {
-    border-top: 1px solid #000;
-    margin-bottom: 3px;
-}
-
-.firma-label {
-    font-size: 6.5pt;
-    font-weight: bold;
+.seccion-pie {
+    background: #fff;
 }
 
 .footer-meta {
     text-align: center;
-    font-size: 6pt;
-    color: #666;
-    border-top: 1px solid #ccc;
+    font-size: 6.5pt;
+    color: #888;
+    border-top: 1px solid #eee;
     padding-top: 2px;
 }
 
+/* ======================================================================
+   PRINT
+   ====================================================================== */
 
-/* ==========================================================================
-   MEDIA PRINT - SOLUCIÓN NUCLEAR (ADIÓS PÁGINA 2)
-   ========================================================================== */
 @media print {
     @page {
         size: letter;
-        margin: 5mm; 
+        margin: 5mm;
     }
 
     body {
         margin: 0;
         padding: 0;
-        background: white;
     }
 
-    .reporte-industrial {
-        display: block;
-        width: 100%;
-        height: auto;
-        
-        /* BLINDAJE ANTIDESBORDE */
-        min-height: 0;
-        overflow: hidden; /* Corta cualquier pixel sobrante */
-        
-        margin: 0;
-        padding: 0;
-        border: none;
-    }
-
-    /* 1. ENCABEZADO FIJO */
-    .seccion-encabezado {
+    .header-simple {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        height: 35mm; 
+        height: 26mm;
+        background: #fff;
         z-index: 100;
-        padding-bottom: 2px;
     }
 
-    /* 2. PIE DE PÁGINA FIJO */
     .seccion-pie {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        height: 30mm; 
+        height: 22mm;
+        background: #fff;
         z-index: 100;
     }
 
-    /* 3. EL CUERPO */
     .seccion-cuerpo {
-        margin-top: 36mm; 
-        
-        /* IMPORTANTE: Un margen más conservador */
-        margin-bottom: 32mm; 
+        margin-top: 28mm;
+        margin-bottom: 24mm;
     }
 
     .tabla-industrial thead {

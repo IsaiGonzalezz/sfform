@@ -6,7 +6,7 @@ exports.getUsuarios = async (req, res) => {
     try {
         const pool = await getConnection();
         // Seleccionamos campos específicos para no filtrar el hash del password
-        const result = await pool.request().query('SELECT id, rfid, nombre, correo, rol, activo FROM Usuarios');
+        const result = await pool.request().query('SELECT id, rfid, nombre, correo, rol, activo FROM Usuarios WHERE activo = 1');
         res.json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -41,6 +41,9 @@ app.use('/api/formulas', require('./src/routes/formulas.routes'));
 app.use('/api/produccion', require('./src/routes/produccion.routes'));
 
 
+//9. Ruta para inventario:
+app.use('/api/inventario', require('./src/routes/inventario.routes'));
+
 //RUTA PARA TOKEN Y LOGIN
 app.use('/api/token', require('./src/routes/auth.routes'));
 

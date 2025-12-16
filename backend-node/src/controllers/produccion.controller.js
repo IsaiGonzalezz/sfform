@@ -322,24 +322,46 @@ exports.patchProduccion = async (req, res) => {
     }
 };
 
-// DELETE: Eliminar Producción
+
+
+// DELETE: Eliminar por OP (Orden de Producción)
 exports.deleteProduccion = async (req, res) => {
+    // Ahora esperamos recibir 'op' en la URL, no 'folio'
+    const { op } = req.params;
+
+    const pool = await getConnection();
+    const transaction = new sql.Transaction(pool);
+
     try {
-        const pool = await getConnection();
-        // Al borrar la cabecera, si no hay Cascade en BD, tendrías que borrar detalles primero.
-        // Asumo que tienes Cascade o lo manejamos manual:
-        
-        // Manual (más seguro por si acaso):
-        await pool.request().input('folio', sql.Int, req.params.folio).query('DELETE FROM Detalle_Produccion WHERE FolioProduccion = @folio');
-        
-        const result = await pool.request()
-            .input('folio', sql.Int, req.params.folio)
-            .query('DELETE FROM Produccion WHERE folio = @folio');
+        await transaction.begin();
 
-        if (result.rowsAffected[0] === 0) return res.status(404).json({ message: 'Producción no encontrada' });
+        // PASO 1: Eliminar los DETALLES asociados a esa OP
+        // Usamos una SUBCONSULTA: "Borra de Detalle donde el FolioProduccion esté en la lista de Folios de esta OP"
+        await transaction.request()
+            .input('op', sql.VarChar, op)
+            .query(`
+                DELETE FROM Detalle_Produccion 
+                WHERE FolioProduccion IN (
+                    SELECT Folio FROM Produccion WHERE OP = @op
+                )
+            `);
 
-        res.json({ message: 'Producción eliminada' });
+        // PASO 2: Eliminar las CABECERAS (Producción) con esa OP
+        const result = await transaction.request()
+            .input('op', sql.VarChar, op)
+            .query('DELETE FROM Produccion WHERE OP = @op');
+
+        // Si no se borró ninguna fila en el paso 2, es que la OP no existía
+        if (result.rowsAffected[0] === 0) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'No se encontraron registros con esa OP' });
+        }
+
+        await transaction.commit();
+        res.json({ message: `Orden de Producción ${op} y sus detalles eliminados correctamente` });
+
     } catch (error) {
+        await transaction.rollback();
         res.status(500).json({ error: error.message });
     }
 };

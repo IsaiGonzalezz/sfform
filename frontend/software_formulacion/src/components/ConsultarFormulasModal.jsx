@@ -10,22 +10,8 @@ import './styles/ConsultaFormulas.css'
 
 const API_URL_FORMULAS = '/formulas/';
 const API_URL_EMPRESA = '/empresa/'
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-const convertToBase64 = async (url) => {
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (err) {
-        console.error('convertToBase64 error:', err);
-        return null;
-    }
-};
 
 const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     // Iniciamos como array vacío siempre
@@ -49,9 +35,6 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     const cargarFormulas = async () => {
         try {
             const response = await axiosInstance.get(`${API_URL_FORMULAS}`);
-
-            // Si Django devuelve paginación, los datos están en 'response.data.results'
-            // Si no, están en 'response.data'
             const datos = response.data.results || response.data;
 
             // Aseguramos que sea un array antes de guardarlo
@@ -72,18 +55,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
         try {
             const response = await axiosInstance.get(`${API_URL_EMPRESA}`);
             if (response.data && response.data.length > 0) {
-                let empresaDatos = response.data[0]; // Tomamos el primer objeto
-
-                // ¡Usamos la misma lógica de FormulaPage!
-                if (empresaDatos.logotipo) {
-                    const base64Logo = await convertToBase64(empresaDatos.logotipo);
-                    if (base64Logo) {
-                        empresaDatos.logotipo = base64Logo; // Reemplazamos la URL
-                    } else {
-                        console.warn('No se pudo convertir el logotipo a base64, se dejará la URL original.');
-                    }
-                }
-
+                let empresaDatos = response.data[0];
                 // Guardamos el OBJETO ya procesado
                 setEmpresaInfo(empresaDatos);
 
@@ -143,7 +115,11 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
                 margin: 10,
                 filename: pdfFileName,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: true
+                },
                 jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
             };
 

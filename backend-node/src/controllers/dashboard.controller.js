@@ -15,7 +15,7 @@ exports.getDashboardData = async (req, res) => {
         last7Days.setDate(today.getDate() - 7);
 
         // --- 2. Ejecutar Consultas en Paralelo ---
-        // Usamos Promise.all para velocidad. Si una falla, todo falla (puedes ajustar esto con try/catch individuales si prefieres)
+        // Usamos Promise.all para velocidad. Si una falla, todo falla
         
         const [kpiResult, lineChartResult, barChartResult, pieChartResult] = await Promise.all([
             
@@ -24,10 +24,10 @@ exports.getDashboardData = async (req, res) => {
                 .input('startOfMonth', sql.DateTime, startOfMonth)
                 .query(`
                     SELECT 
-                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 0) as pendientes,
-                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 1 AND fecha >= @startOfMonth) as completados,
+                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 1) as pendientes,
+                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 0 AND fecha >= @startOfMonth) as completados,
                         (SELECT COUNT(*) FROM Produccion) as total_ordenes,
-                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 1) as lotes_terminados
+                        (SELECT COUNT(*) FROM Produccion WHERE estatus = 0) as lotes_terminados
                 `),
 
             // Query 2: Gráfico Lineal (Producción últimos 7 días)
@@ -36,7 +36,7 @@ exports.getDashboardData = async (req, res) => {
                 .query(`
                     SELECT CAST(fecha AS DATE) as fecha_date, SUM(pesform) as total_kg 
                     FROM Produccion 
-                    WHERE estatus = 1 AND fecha >= @last7Days
+                    WHERE estatus = 0 AND fecha >= @last7Days
                     GROUP BY CAST(fecha AS DATE)
                     ORDER BY CAST(fecha AS DATE)
                 `),
@@ -48,7 +48,7 @@ exports.getDashboardData = async (req, res) => {
                     SELECT TOP 5 f.nombre, COUNT(p.folio) as total_lotes
                     FROM Produccion p
                     JOIN Formulas f ON p.idform = f.idform
-                    WHERE p.estatus = 1
+                    WHERE p.estatus = 0
                     GROUP BY f.nombre
                     ORDER BY total_lotes DESC
                 `),
@@ -60,7 +60,7 @@ exports.getDashboardData = async (req, res) => {
                     SELECT TOP 5 u.nombre, COUNT(p.folio) as total
                     FROM Produccion p
                     JOIN Usuarios u ON p.idusu = u.id
-                    WHERE p.estatus = 1
+                    WHERE p.estatus = 0
                     GROUP BY u.nombre
                     ORDER BY total DESC
                 `)

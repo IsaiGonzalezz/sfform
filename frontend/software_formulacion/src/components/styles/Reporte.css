@@ -1,243 +1,208 @@
-/* ==========================================================================
-   ESTILOS REPORTE FÓRMULA - FORMATO CARTA INDUSTRIAL
-   ========================================================================== */
+/* ======================================================================
+   BASE
+   ====================================================================== */
 
-/* --- CONFIGURACIÓN BASE (Pantalla) --- */
 .reporte-carta {
-    font-family: 'Arial', sans-serif;
-    background: white;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #fff;
     width: 100%;
-    max-width: 216mm; /* Ancho Carta */
-    min-height: 255mm; /* Alto Carta */
+    max-width: 216mm;
+    min-height: 255mm;
     margin: 0 auto;
-    background-color: #fff;
-    position: relative;
-    box-sizing: border-box;
     color: #000;
 
-    /* Flex para empujar footer en pantalla */
     display: flex;
     flex-direction: column;
 }
 
-/* ==========================================================================
-    1. HEADER (BLOQUE SUPERIOR)
-   ========================================================================== */
-.header-fijo {
-    width: 100%;
-    background: white;
-    border-bottom: 2px solid #000; /* Separación visual fuerte */
-}
+/* ======================================================================
+   HEADER
+   ====================================================================== */
 
-/* La Grid de 3 columnas (Logo | Títulos | Meta) */
-.header-grid {
+.header-simple {
     display: flex;
-    border: 2px solid #000;
-    height: 24mm; /* Altura fija para el bloque superior */
-    overflow: hidden; /* BLINDAJE: Si algo crece, se corta, no rompe el diseño */
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6mm;
+    border-bottom: 1px solid #ddd;
 }
 
-/* COLUMNA 1: LOGO */
-.header-col.logo-col {
-    width: 20%;
-    border-right: 1px solid #000;
+.header-left {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2px; /* Reduje el padding para darle espacio a la imagen */
-    overflow: hidden;
+    gap: 10px;
 }
-.img-logo {
-    max-height: 21mm !important; 
-    max-width: 90%;
-    width: auto;
+
+.logo-simple {
+    width: 47px;
     height: auto;
     object-fit: contain;
 }
 
-/* COLUMNA 2: TÍTULOS */
-.header-col.title-col {
-    width: 55%;
-    border-right: 1px solid #000;
+.empresa-info {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    padding: 0 10px;
-}
-.empresa-nombre {
-    font-size: 10pt;
-    font-weight: bold;
-    margin: 0 0 5px 0;
-    text-transform: uppercase;
-}
-.doc-titulo {
-    font-size: 14pt;
-    font-weight: 900;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.empresa-dir {
-    font-size: 6.5pt;
-    color: #444;
-    margin: 5px 0 0 0;
 }
 
-/* COLUMNA 3: METADATOS */
-.header-col.meta-col {
-    width: 25%;
-    display: flex;
-    flex-direction: column;
-}
-.meta-row {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    font-size: 7.5pt;
-}
-.border-bottom {
-    border-bottom: 1px solid #000;
-}
-.meta-label {
-    width: 35%;
-    background-color: #ddd; /* Fondo gris tipo formulario */
-    height: 100%;
-    display: flex;
-    align-items: center;
-    padding-left: 5px;
+.empresa-nombre-simple {
+    font-size: 11pt;
     font-weight: bold;
-}
-.meta-value {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-.text-red {
-    color: #c00; /* Rojo para el ID/Folio */
-    font-size: 10pt;
+    color: #222;
+    margin-bottom: 4px;  /* separación del RFC */
 }
 
-/* BARRA DE RESUMEN (SUB-HEADER) */
-.summary-strip {
-    display: flex;
-    border: 2px solid #000;
-    border-top: none; /* Pegado al de arriba */
-    background-color: #f2f2f2; /* Gris muy claro */
-    height: 10mm;
+.empresa-rfc {
+    font-size: 8.5pt;    /* un poco más grande */
+    color: #666;
 }
-.sum-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.sum-item.border-right {
-    border-right: 1px solid #000;
-}
-.sum-label {
-    font-size: 6pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-bottom: 1px;
-}
-.sum-value {
+
+.header-right {
     font-size: 9pt;
-    font-weight: bold;
-    color: #000;
+    color: #4a4a4a;
+    white-space: nowrap;
 }
 
-/* ==========================================================================
-   2. CONTENIDO (TABLA)
-   ========================================================================== */
+/* ======================================================================
+   CONTENIDO
+   ====================================================================== */
+
 .contenido-principal {
     flex-grow: 1;
-    padding: 5mm 0; /* Espacio visual en pantalla */
+    padding: 6mm;
+}
+
+/* ---- Detalle ---- */
+
+.detalle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4mm;
+}
+
+.detalle-titulo {
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+.detalle-id {
+    font-size: 7.5pt;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #555;
+}
+
+/* ---- Datos fórmula ---- */
+
+.datos-formula {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6mm;
+    font-size: 8pt;
+    margin-bottom: 8mm;
+}
+
+.dato-label {
+    display: block;
+    font-size: 7pt;
+    color: #4c4c4c;
+}
+
+.dato-valor {
+    font-size: 8.5pt;
+    font-weight: 600;
+}
+
+/* ======================================================================
+   TABLA
+   ====================================================================== */
+
+.tabla-titulo {
+    font-size: 9pt;
+    font-weight: bold;
+    margin-bottom: 3mm;
 }
 
 .tabla-industrial {
     width: 100%;
     border-collapse: collapse;
-    border: 2px solid #000;
-    font-size: 8.5pt;
+    font-size: 8pt;
+    border: 0.5px solid #ddd; /* MÁS DELGADO */
 }
 
 .tabla-industrial th {
-    background-color: #ccc; /* Gris oscuro para header tabla */
-    color: #000;
-    border: 1px solid #000;
-    padding: 6px 4px;
-    font-weight: bold;
-    text-transform: uppercase;
+    background-color: #f6f6f6;
+    border: 0.5px solid #ddd;
+    padding: 6px;
+    font-weight: 600;
     font-size: 7.5pt;
 }
 
 .tabla-industrial td {
-    border: 1px solid #000;
-    padding: 4px 6px;
-    vertical-align: middle;
+    border: 0.5px solid #eee;
+    padding: 6px;
 }
 
-/* Utilidades Tabla */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
-.bold { font-weight: bold; }
-.text-small { font-size: 7.5pt; }
-.padding-xl { padding: 20px; color: #666; font-style: italic; }
-
-/* ==========================================================================
-   3. FOOTER (OBSERVACIONES)
-   ========================================================================== */
-.footer-fijo {
-    width: 100%;
-    background: white;
+.padding-xl {
+    padding: 16px;
+    font-style: italic;
+    color: #666;
 }
 
+/* ======================================================================
+   OBSERVACIONES
+   ====================================================================== */
+
 .observaciones-container {
-    border: 2px solid #000;
-    min-height: 25mm;
-    padding: 2px;
-    margin-bottom: 2mm;
+    margin-top: 8mm;
+    border: 0.5px solid #ddd;
+    min-height: 22mm;
+    padding: 4px;
 }
 
 .obs-header {
-    font-size: 7pt;
-    font-weight: bold;
-    margin-bottom: 2px;
-    padding-left: 2px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
 .obs-lines {
     display: flex;
     flex-direction: column;
-    gap: 6mm; /* Espacio entre renglones */
-    padding: 0 5px;
+    gap: 6mm;
 }
 
 .line {
-    border-bottom: 1px solid #ccc; /* Línea de renglón */
-    width: 100%;
-    height: 1px;
+    border-bottom: 1px solid #ccc;
+}
+
+/* ======================================================================
+   FOOTER
+   ====================================================================== */
+
+.footer-fijo {
+    background: #fff;
 }
 
 .sistema-meta {
     text-align: center;
-    font-size: 6pt;
+    font-size: 6.5pt;
     color: #888;
+    padding: 4px 0;
     border-top: 1px solid #eee;
-    padding-top: 2px;
 }
 
-/* ==========================================================================
-   MEDIA PRINT - CARTA (LETTER) PERFECTA
-   ========================================================================== */
+/* ======================================================================
+   PRINT
+   ====================================================================== */
+
 @media print {
     @page {
         size: letter;
-        margin: 5mm; /* Margen físico impresora */
+        margin: 5mm;
     }
 
     body {
@@ -246,26 +211,14 @@
         background: white;
     }
 
-    .reporte-carta {
-        display: block;
-        width: 100%;
-        height: auto;
-        /* IMPORTANTE: Altura segura para evitar hoja extra */
-        min-height: 255mm; 
-        overflow: hidden;
-        margin: 0;
-        border: none;
-    }
-
-    /* POSICIONAMIENTO FIJO */
-    .header-fijo {
+    .header-simple {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        height: 45mm; /* Header Grid (32mm) + Summary (10mm) + Bordes */
+        height: 24mm;
+        background: white;
         z-index: 100;
-        background: white; /* Tapa el contenido al hacer scroll si fuera web */
     }
 
     .footer-fijo {
@@ -273,21 +226,16 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 30mm; /* Obs (25mm) + Meta (5mm) */
-        z-index: 100;
+        height: 20mm;
         background: white;
+        z-index: 100;
     }
 
-    /* MÁRGENES DE SEGURIDAD PARA CONTENIDO */
     .contenido-principal {
-        /* Deja espacio para el Header Fijo */
-        margin-top: 47mm; 
-        
-        /* Deja espacio para el Footer Fijo */
-        margin-bottom: 32mm;
+        margin-top: 26mm;
+        margin-bottom: 22mm;
     }
 
-    /* Repetir cabecera de tabla en cada hoja */
     .tabla-industrial thead {
         display: table-header-group;
     }

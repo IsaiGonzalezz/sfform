@@ -4,7 +4,6 @@ import html2pdf from 'html2pdf.js';
 import ConsultarProduccionModal from '../components/ConsultarProduccionesModal';
 import ReporteProduccion from '../components/ReporteProduccion';
 import './styles/Produccion.css';
-import '../components/styles/Reporte.css';
 
 // --- ICONOS DE MATERIAL UI ---
 import {
@@ -52,24 +51,6 @@ export default function ProduccionPage() {
     const [currentModalData, setCurrentModalData] = useState(null);
     const [pdfData, setPdfData] = useState(null); // Data específica para generar el PDF
 
-    // --- HELPER: Convertir Imagen a Base64 (Vital para el PDF) ---
-    const convertToBase64 = async (url) => {
-        if (!url) return null;
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (err) {
-            console.error('convertToBase64 error:', err);
-            return null;
-        }
-    };
-
     // --- 1. CARGA INICIAL (Fórmulas + Empresa) ---
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -87,10 +68,6 @@ export default function ProduccionPage() {
                 // Procesar logo de empresa
                 if (empresaRes.data && empresaRes.data.length > 0) {
                     let empresaDatos = empresaRes.data[0];
-                    if (empresaDatos.logotipo) {
-                        const base64Logo = await convertToBase64(empresaDatos.logotipo);
-                        if (base64Logo) empresaDatos.logotipo = base64Logo;
-                    }
                     setEmpresaInfo(empresaDatos);
                 }
             } catch (err) {
@@ -311,7 +288,7 @@ export default function ProduccionPage() {
                     margin: 10,
                     filename: pdfFileName,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
+                    html2canvas: { scale: 2, useCORS:true },
                     jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
                 };
                 html2pdf().from(element).set(opt).save();
@@ -568,14 +545,11 @@ export default function ProduccionPage() {
                 <div className="pdf-hidden-container">
                     <ReporteProduccion
                         ref={reportePdfRef}
-
                         empresa={pdfData.empresa}
                         ingredientes={pdfData.ingredientes}
-
-
                         extraData={{
-                            op: produccionData.orden || '001',
-                            lote: produccionData.lote || 'L-000',
+                            op: produccionData.orden || 'ERROR"$',
+                            lote: produccionData.lote || 'ERROR"$',
                             pesoObjetivo: pesoTotal || 0,
                             fecha: new Date(),
                             estatus: 1

@@ -55,7 +55,7 @@ function EstacionFormModal({ open, onClose, onSaveSuccess, estacionToEdit }) {
                     activo: Boolean(estacionToEdit.activo)
                 });
             } else {
-                reset({ idest: '', nombre: '', obs: '', activo: false });
+                reset({ idest: '', nombre: '', obs: '', activo: true });
             }
         }
     }, [estacionToEdit, open, reset, isEditMode]);

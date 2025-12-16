@@ -45,7 +45,7 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
     // --- React Hook Form (Tu código original) ---
     const { handleSubmit, control, reset, formState: { errors } } = useForm({
         resolver: yupResolver(validationSchema),
-        defaultValues: { iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : false }
+        defaultValues: { iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : true }
     });
 
     // --- Efecto para Cargar Datos/Resetear (Tu código original) ---
@@ -61,7 +61,7 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                     activo: Boolean(ingredienteToEdit.activo),
                 });
             } else {
-                reset({ iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : false});
+                reset({ iding: '', nombre: '', presentacion: null, observaciones: '', pesado: false, activo : true });
             }
         }
     }, [ingredienteToEdit, open, reset, isEditMode]);
@@ -235,7 +235,6 @@ function IngredienteFormModal({ open, onClose, onSaveSuccess, ingredienteToEdit 
                                 <TextField
                                     {...field}
                                     label="Observaciones"
-                                    required
                                     fullWidth
                                     variant="outlined"
                                     disabled={isSaving}
