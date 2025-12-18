@@ -41,10 +41,14 @@ const agruparProduccion = (recordset) => {
 
 // GET: Obtener todas las producciones (Con nombres de usuario, fórmula e ingredientes)
 exports.getProducciones = async (req, res) => {
+    // 1. Recibimos el parámetro del Switch
+    const { verTodos } = req.query;
+
     try {
         const pool = await getConnection();
-        // OJO: Checa si tu tabla de usuarios se llama 'Usuario' o 'Usuarios' (la ajusté a Usuarios como vimos antes)
-        const result = await pool.request().query(`
+
+        // 2. Definimos la consulta base (sin el WHERE ni el ORDER BY todavía)
+        let query = `
             SELECT 
                 p.folio AS folio,
                 p.op AS op,
@@ -67,11 +71,21 @@ exports.getProducciones = async (req, res) => {
 
             FROM Produccion p
             LEFT JOIN Formulas f ON p.IdForm = f.idform
-            LEFT JOIN Usuarios u ON p.IdUsu = u.id  -- Ajusta 'u.id' si tu PK es otra
+            LEFT JOIN Usuarios u ON p.IdUsu = u.id
             LEFT JOIN Detalle_Produccion dp ON p.folio = dp.FolioProduccion
             LEFT JOIN Ingredientes i ON dp.IdIng = i.iding
-            ORDER BY p.fecha DESC
-        `);
+        `;
+
+        // 3. LÓGICA DEL FILTRO:
+        // Si NO me piden "verTodos", agrego el WHERE para ver solo estatus = 1
+        if (verTodos !== 'true') {
+            query += ' WHERE p.estatus = 1';
+        }
+
+        // 4. Cerramos con el ordenamiento
+        query += ' ORDER BY p.fecha DESC';
+
+        const result = await pool.request().query(query);
 
         const response = agruparProduccion(result.recordset);
         res.json(response);
@@ -249,7 +263,7 @@ exports.updateProduccion = async (req, res) => {
     }
 };
 
-// PATCH: Actualización Parcial (Muy útil para cambiar solo ESTATUS)
+// PATCH: Actualización Parcial
 exports.patchProduccion = async (req, res) => {
     const { folio } = req.params;
     const updates = req.body; // Puede traer solo { estatus: 1 }
@@ -362,6 +376,31 @@ exports.deleteProduccion = async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+// DESACTIVAR TODOS LOS FOLIOS DE UNA OP
+exports.desactivarPorOP = async (req, res) => {
+    const { op } = req.params; // Leemos la OP (ej: "OP-2023-01")
+
+    try {
+        const pool = await getConnection();
+        
+        // UPDATE masivo: Cambia estatus a 0 donde la OP coincida
+        const result = await pool.request()
+            .input('op', sql.VarChar, op)
+            .query('UPDATE Produccion SET estatus = 0 WHERE OP = @op');
+
+        // Opcional: Validar si encontró algo
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'No se encontró esa OP' });
+        }
+
+        res.json({ message: `Se desactivaron ${result.rowsAffected[0]} registros asociados a la OP ${op}` });
+
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };

@@ -137,14 +137,20 @@ const DetalleProduccionPage = () => {
 
     // 3. DELETE: Eliminar Fórmula <DESCARTADO>
     const handleDelete = async () => {
-        if (window.confirm(`¿Estás seguro de eliminar la orden de producción: ${formData.op}? Esta acción no se puede deshacer.`)) {
+        // Confirmamos usando el nombre de la OP
+        if (window.confirm(`¿Estás seguro de desactivar TODA la orden de producción: ${formData.op}? Se cancelarán todos sus folios.`)) {
             try {
-                await axiosInstance.delete(`${API_URL_PRODUCCION_REL}${formData.op}/`);
-                alert('Orden de Producción Eliminada.');
-                navigate('/produccion'); // Te regresa a la lista principal
+                // CAMBIO CLAVE:
+                // 1. Usamos la nueva ruta '/desactivar-op/'
+                // 2. Le pegamos el formData.op (ej: "OP-555")
+                // 3. Ya no necesitamos enviar body { estatus: 0 } porque el backend ya sabe qué hacer
+                await axiosInstance.patch(`${API_URL_PRODUCCION_REL}desactivar-op/${formData.op}`);
+
+                alert(`Orden de Producción ${formData.op} y sus folios han sido desactivados.`);
+                navigate('/produccion'); 
             } catch (err) {
                 console.error(err);
-                alert('Error al eliminar.');
+                alert('Error al desactivar la OP.');
             }
         }
     };
