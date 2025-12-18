@@ -308,7 +308,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                             <Checkbox
                                                 {...field}
                                                 checked={field.value}
-                                                disabled={isSaving}
+                                                disabled={isSaving || isEditMode}
                                             />
                                         }
                                         label="Estatus"

@@ -84,7 +84,7 @@ function EstacionesPage() {
         if (!stationToDelete) return;
         try {
             // Usamos DELETE (soft-delete en backend)
-            await axiosInstance.delete(`${API_URL_ESTACIONES_REL}${stationToDelete.IdEst}`);
+            await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${stationToDelete.IdEst}`);
             console.log('Estación desactivada:', stationToDelete.IdEst);
             fetchEstaciones();
         } catch (error) {
@@ -137,12 +137,12 @@ function EstacionesPage() {
                             // ACCIONES NORMALES
                             <>
                                 <IconButton onClick={() => handleOpenModal(params.row)}
-                                    sx={{ backgroundColor: '#229D1B', color: 'var(--text-color)', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#1b8016' } }}>
-                                    <EditIcon sx={{ fontSize: '20px' }} />
+                                    sx={{ backgroundColor: '#229D1B', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#1b8016' } }}>
+                                    <EditIcon sx={{ fontSize: '20px',color: '#ffffff !important' }} />
                                 </IconButton>
                                 <IconButton onClick={() => handleOpenConfirm(params.row)}
                                     sx={{ backgroundColor: '#9D1B1B', color: 'var(--text-color)', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#7a1515' } }}>
-                                    <DeleteOutlineIcon sx={{ fontSize: '20px' }} />
+                                    <DeleteOutlineIcon sx={{ fontSize: '20px', color: '#ffffff !important' }} />
                                 </IconButton>
                             </>
                         ) : (
@@ -151,10 +151,14 @@ function EstacionesPage() {
                                 variant="contained" 
                                 size="small"
                                 onClick={() => handleRestoreStation(params.row.IdEst)}
-                                startIcon={<RestoreFromTrashIcon />}
+                                startIcon={<RestoreFromTrashIcon 
+                                    sx={{
+                                        color: '#fff !important',
+                                    }}
+                                />}
                                 sx={{ 
                                     backgroundColor: '#1976d2', 
-                                    color: '#fff', 
+                                    color: '#fff !important', 
                                     textTransform: 'none',
                                     fontSize: '0.75rem',
                                     padding: '4px 10px',

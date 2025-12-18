@@ -66,17 +66,23 @@ function UsersPage() {
     }, [fetchUsers]);
 
     // --- Función DELETE (Desactivar) ---
+    // --- Función DELETE (Desactivar / Soft Delete) ---
     const handleDeleteUser = async () => {
-        if (!userToDelete) return;
+        if (!userToDelete) return; 
+
         try {
-            // Usamos DELETE para coincidir con la lógica soft-delete del backend
-            await axiosInstance.delete(`${API_URL_REL}${userToDelete.id}`);
+            // CORRECCIÓN: patch(URL, DATOS)
+            // Enviamos activo: 0 (o false) para que el backend sepa qué cambiar
+            await axiosInstance.patch(`${API_URL_REL}${userToDelete.id}`, {
+                activo: 0 
+            });
+
             console.log('Usuario desactivado exitosamente:', userToDelete.id);
-            fetchUsers();
+            fetchUsers(); // Recargamos la tabla
         } catch (error) {
-            console.error('Hubo un error al borrar el usuario:', error.response?.data || error.message);
+            console.error('Hubo un error al desactivar el usuario:', error.response?.data || error.message);
         } finally {
-            handleCloseConfirm();
+            handleCloseConfirm(); 
         }
     };
 
