@@ -1,5 +1,5 @@
-const sql = require('mssql');
 require('dotenv').config();
+const sql = require('mssql');
 
 const config = {
     user: process.env.DB_USER,
@@ -7,7 +7,7 @@ const config = {
     server: process.env.DB_SERVER, 
     database: process.env.DB_NAME,
     options: {
-        encrypt: false,
+        encrypt: true,
         trustServerCertificate: true
     }
 };
