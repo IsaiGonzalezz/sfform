@@ -9,6 +9,8 @@ import {
     ReceiptLong, Science, PlaylistAddCheck,
     Save, Add, Edit, Delete, ClearAll, PictureAsPdf,
 } from '@mui/icons-material';
+// --- NUEVO IMPORT ---
+import { Check, AlertCircle } from 'lucide-react'; // Agregamos icono de alerta
 import CircularProgress from '@mui/material/CircularProgress';
 
 // --- URLs RELATIVAS
@@ -45,6 +47,17 @@ export default function FormulaPage() {
     const [showConsultar, setShowConsultar] = useState(false);
     const [error, setError] = useState(null);
 
+    // --- NUEVO: Estado para la notificación Toast (con TIPO) ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' }); // type: 'success' | 'error'
+
+    // --- NUEVO: Función para mostrar el Toast (Versátil) ---
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+        }, 3000);
+    };
+
     // --- FORMATO DE NÚMEROS ---
     const formatearValor = (valor) => {
         const numero = parseFloat(valor);
@@ -58,18 +71,15 @@ export default function FormulaPage() {
     // --- EFECTO DE CARGA (useEffect) ---
     useEffect(() => {
         const fetchInitialData = async () => {
-            // Se ejecuta solo si la instancia de Axios está lista
             if (!axiosInstance) return;
 
             setIsLoading(true);
             setError(null);
             try {
-                // === CAMBIO 3: Usar axiosInstance en Promise.all ===
                 const [ingredientesRes, empresaRes] = await Promise.all([
-                    axiosInstance.get(API_URL_INGREDIENTES_REL), // Petición 1 Protegida
-                    axiosInstance.get(API_URL_EMPRESA_REL)      // Petición 2 Protegida
+                    axiosInstance.get(API_URL_INGREDIENTES_REL),
+                    axiosInstance.get(API_URL_EMPRESA_REL)
                 ]);
-                // ====================================================
 
                 const dataMapeada = ingredientesRes.data.map(ing => ({
                     id: ing.iding,
@@ -82,21 +92,18 @@ export default function FormulaPage() {
                     setEmpresaInfo(empresaDatos);
                 } else {
                     console.warn('No se encontraron datos de la empresa para el reporte.');
-                    setError('No se pudieron cargar los datos de la empresa.');
+                    // No mostramos error UI aquí para no bloquear el uso, solo log
                 }
-
 
             } catch (err) {
                 console.error("Error cargando ingredientes o empresa:", err);
-                // El Interceptor maneja el 401. Si hay un error aquí, es un fallo de BD o 404/403.
-                setError('No se pudieron cargar los datos iniciales.');
+                showToast('Error al cargar datos del servidor', 'error');
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchInitialData();
-        // Añadimos axiosInstance a las dependencias.
     }, [axiosInstance]);
 
     // --- CÁLCULOS DERIVADOS ---
@@ -105,14 +112,12 @@ export default function FormulaPage() {
     }, [ingredientes]);
 
     // --- MANEJADORES DE EVENTOS ---
-
-    // (Lógica de Ingredientes/Fórmula sin cambios)
     const handleDefinirFormula = (e) => {
         e.preventDefault();
         if (formulaData.id && formulaData.nombre) {
             setFormulaDefinida(true);
         } else {
-            alert('Por favor, ingresa un ID y Nombre para la fórmula.');
+            showToast('Por favor, ingresa un ID y Nombre para la fórmula.', 'error');
         }
     };
 
@@ -123,8 +128,6 @@ export default function FormulaPage() {
 
     const handleIngredienteSearchChange = (e) => {
         const selectedId = e.target.value;
-        
-        // Buscamos el objeto completo para obtener también el nombre
         const ingredienteEncontrado = listaIngredientes.find(ing => String(ing.id) === String(selectedId));
 
         setCurrentIngrediente(prev => ({
@@ -137,30 +140,25 @@ export default function FormulaPage() {
     const handleAddIngrediente = (e) => {
         e.preventDefault();
         if (!currentIngrediente.id || !currentIngrediente.peso || !currentIngrediente.tolerancia) {
-            alert('Selecciona un ingrediente VÁLIDO de la lista y define su peso y tolerancia.');
+            // REEMPLAZO DE ALERT POR TOAST DE ERROR
+            showToast('Selecciona un ingrediente válido y define peso/tolerancia.', 'error');
             return;
         }
         setIngredientes([...ingredientes, { ...currentIngrediente }]);
         setCurrentIngrediente({ id: '', nombre: '', peso: '', tolerancia: '' });
     };
 
-    //Función para remover el ingrediente
     const handleRemoveIngrediente = (idToRemove) => {
         setIngredientes(ingredientes.filter(ing => ing.id.toString() !== idToRemove.toString()));
     };
 
-    //Función para editar el ingrediente
     const handleEditIngrediente = (ingredienteAEditar) => {
-        // 1. Llenamos los inputs con los datos del ingrediente seleccionado
         setCurrentIngrediente({
             id: ingredienteAEditar.id,
             nombre: ingredienteAEditar.nombre,
             peso: ingredienteAEditar.peso,
             tolerancia: ingredienteAEditar.tolerancia
         });
-
-        // 2. Lo eliminamos de la lista temporalmente
-        // Así el usuario puede modificarlo y volver a darle "Agregar" sin duplicarlo.
         handleRemoveIngrediente(ingredienteAEditar.id);
     };
 
@@ -183,16 +181,18 @@ export default function FormulaPage() {
         };
 
         try {
-            // === CAMBIO 4: Usar axiosInstance.post ===
             const response = await axiosInstance.post(API_URL_FORMULAS_REL, payload);
-            // ==========================================
             console.log('Respuesta de la API:', response.data);
-            alert('¡Fórmula registrada exitosamente!');
+            
+            // TOAST DE ÉXITO
+            showToast('¡Fórmula registrada exitosamente!');
+            
             handleLimpiarFormulario();
         } catch (err) {
             console.error("Error al registrar la fórmula:", err.response ? err.response.data : err.message);
-            setError('No se pudo registrar la fórmula. Revisa la consola para más detalles.');
-            alert(`Error: ${err.response ? JSON.stringify(err.response.data) : err.message}`);
+            // TOAST DE ERROR
+            const msg = err.response ? JSON.stringify(err.response.data) : "Error desconocido al guardar";
+            showToast(`Error: ${msg}`, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -212,7 +212,6 @@ export default function FormulaPage() {
         setFormulaData(prev => ({ ...prev, [name]: value }));
     };
 
-    // --- MANEJADOR DE DESCARGA DE PDF (sin cambios) ---
     const handleDownloadPdf = () => {
         if (reportePdfRef.current) {
             const element = reportePdfRef.current;
@@ -224,7 +223,7 @@ export default function FormulaPage() {
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
                     scale: 2,
-                    useCORS: true, // Importante
+                    useCORS: true, 
                     logging: true
                 },
                 jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
@@ -233,13 +232,31 @@ export default function FormulaPage() {
             html2pdf().from(element).set(opt).save();
         } else {
             console.error('No se pudo encontrar el elemento para generar el PDF.');
-            alert('Error: No se pudo generar el PDF. Inténtalo de nuevo.');
+            showToast('Error: No se pudo generar el PDF.', 'error');
         }
     };
 
 
     return (
-        <div className="formula-page">
+        <div className="formula-page" style={{ position: 'relative' }}> 
+
+            {/* --- RENDERIZADO DEL TOAST (DINÁMICO) --- */}
+            {toast.show && (
+                <div style={{
+                    ...toastStyles.toast,
+                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4', // Rojo claro o Verde claro
+                    color: toast.type === 'error' ? '#991b1b' : '#15803d', // Rojo oscuro o Verde oscuro
+                    borderColor: toast.type === 'error' ? '#fecaca' : '#bbf7d0',
+                }}>
+                    <div style={{
+                        ...toastStyles.toastIconContainer,
+                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e', // Rojo o Verde brillante
+                    }}>
+                        {toast.type === 'error' ? <AlertCircle size={16} color="#fff" /> : <Check size={16} color="#fff" strokeWidth={3} />}
+                    </div>
+                    {toast.message}
+                </div>
+            )}
 
             {/* --- 0. Barra de Acciones Globales --- */}
             <div className="action-bar">
@@ -274,7 +291,6 @@ export default function FormulaPage() {
                             type="text"
                             id="nombreFormula"
                             name="nombre"
-                            
                             value={formulaData.nombre}
                             onChange={handleFormulaChange}
                             disabled={formulaDefinida || isSaving}
@@ -298,9 +314,9 @@ export default function FormulaPage() {
                         <label htmlFor="nombreIngrediente">Nombre del Ingrediente</label>
                         <select
                             id="nombreIngrediente"
-                            className="form-select" // Clase para estilo bonito
-                            value={currentIngrediente.id} // Vinculamos al ID, no al nombre
-                            onChange={handleIngredienteSearchChange} // Usamos la nueva función
+                            className="form-select"
+                            value={currentIngrediente.id}
+                            onChange={handleIngredienteSearchChange}
                             disabled={isLoading || isSaving}
                         >
                             <option value="">
@@ -376,11 +392,11 @@ export default function FormulaPage() {
                                             <button className="btn-icon btn-icon-edit" disabled={isSaving} onClick={() => handleEditIngrediente(ing)}>
                                                 <Edit 
                                                     style={{
-                                                        backgroundColor: '#1B609DFF',   // fondo
-                                                        borderRadius: '8px',          // esquinas redondeadas
-                                                        padding: '6px',               // espacio interno alrededor del ícono
-                                                        color: '#FFFFFF',                // color del ícono
-                                                        fontSize: '32px'              // tamaño del ícono
+                                                        backgroundColor: '#1B609DFF',
+                                                        borderRadius: '8px',
+                                                        padding: '6px',
+                                                        color: '#FFFFFF',
+                                                        fontSize: '32px'
                                                     }}
                                                 />
                                             </button>
@@ -391,11 +407,11 @@ export default function FormulaPage() {
                                             >
                                                 <Delete 
                                                     style={{
-                                                        backgroundColor: '#9D1B1BFF',   // fondo
-                                                        borderRadius: '8px',          // esquinas redondeadas
-                                                        padding: '6px',               // espacio interno alrededor del ícono
-                                                        color: '#FFFFFF',                // color del ícono
-                                                        fontSize: '32px'              // tamaño del ícono
+                                                        backgroundColor: '#9D1B1BFF',
+                                                        borderRadius: '8px',
+                                                        padding: '6px',
+                                                        color: '#FFFFFF',
+                                                        fontSize: '32px'
                                                     }}
                                                 />
                                             </button>
@@ -461,3 +477,34 @@ export default function FormulaPage() {
         </div>
     );
 }
+
+// --- ESTILOS DE TOAST (NUEVO) ---
+const toastStyles = {
+    toast: {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        // Fondo y color base por defecto (será sobreescrito dinámicamente)
+        backgroundColor: '#fff', 
+        color: '#333', 
+        padding: '12px 24px',
+        borderRadius: '50px', 
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        zIndex: 9999,
+        border: '1px solid #ddd',
+        animation: 'slideIn 0.3s ease-out'
+    },
+    toastIconContainer: {
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    }
+};

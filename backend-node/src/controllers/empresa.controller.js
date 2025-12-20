@@ -58,11 +58,16 @@ exports.createEmpresa = async (req, res) => {
     }
 };
 
-// Actualizar Empresa (PUT - Todo el recurso)
+// Actualizar Empresa (PUT - MODIFICADO PARA EDITAR RFC)
 exports.updateEmpresa = async (req, res) => {
-    const { rfc } = req.params;
-    const { nombre, calle, colonia, ciudad, estado, cp, contacto, correo, telefono } = req.body;
+    // 1. rfcOriginal viene de la URL (para encontrar el registro viejo)
+    const { rfc: rfcOriginal } = req.params;
     
+    // 2. nuevoRfc viene del Body (lo que escribió el usuario)
+    //    Si no mandan rfc nuevo, usamos el original para no dejarlo null
+    const { rfc, nombre, calle, colonia, ciudad, estado, cp, contacto, correo, telefono } = req.body;
+    const nuevoRfc = rfc || rfcOriginal;
+
     try {
         const pool = await getConnection();
         
@@ -73,7 +78,11 @@ exports.updateEmpresa = async (req, res) => {
         }
 
         const request = pool.request()
-            .input('rfc', sql.VarChar, rfc)
+            // INPUTS CRÍTICOS
+            .input('rfcOriginal', sql.VarChar, rfcOriginal) // Para el WHERE
+            .input('nuevoRfc', sql.VarChar, nuevoRfc)       // Para el SET
+
+            // RESTO DE INPUTS
             .input('nombre', sql.VarChar, nombre)
             .input('calle', sql.VarChar, calle)
             .input('colonia', sql.VarChar, colonia)
@@ -88,13 +97,15 @@ exports.updateEmpresa = async (req, res) => {
             request.input('logotipo', sql.VarChar, `logos_empresa/${req.file.filename}`);
         }
 
+        // QUERY ACTUALIZADA: SET rfc = @nuevoRfc ... WHERE rfc = @rfcOriginal
         await request.query(`UPDATE Empresa SET 
+            rfc=@nuevoRfc, 
             nombre=@nombre, calle=@calle, colonia=@colonia, ciudad=@ciudad, 
             estado=@estado, cp=@cp, contacto=@contacto, correo=@correo, telefono=@telefono 
             ${queryLogotipo} 
-            WHERE rfc = @rfc`);
+            WHERE rfc = @rfcOriginal`);
 
-        res.json({ message: 'Empresa actualizada (PUT)' });
+        res.json({ message: 'Empresa actualizada correctamente (incluyendo RFC)' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -102,20 +113,25 @@ exports.updateEmpresa = async (req, res) => {
 
 // Actualizar Parcial (PATCH)
 exports.patchEmpresa = async (req, res) => {
-    const { rfc } = req.params;
-    const updates = req.body; // Campos que vienen en el body
+    const { rfc: rfcOriginal } = req.params; // Usamos rfcOriginal para buscar
+    const updates = req.body; 
     
     try {
         const pool = await getConnection();
-        const request = pool.request().input('rfc', sql.VarChar, rfc);
+        const request = pool.request().input('rfcOriginal', sql.VarChar, rfcOriginal);
         
         let setClauses = [];
 
-        // Agregamos dinámicamente los campos que vienen en el body
         for (const key in updates) {
             if (Object.prototype.hasOwnProperty.call(updates, key)) {
-                request.input(key, sql.VarChar, updates[key]); // Asumimos VarChar para simplificar, ajusta si hay int
-                setClauses.push(`${key} = @${key}`);
+                // Si el campo a actualizar es 'rfc', usamos otro nombre de parámetro
+                if (key === 'rfc') {
+                    request.input('nuevoRfc', sql.VarChar, updates[key]);
+                    setClauses.push(`rfc = @nuevoRfc`);
+                } else {
+                    request.input(key, sql.VarChar, updates[key]);
+                    setClauses.push(`${key} = @${key}`);
+                }
             }
         }
 
@@ -130,7 +146,7 @@ exports.patchEmpresa = async (req, res) => {
             return res.status(400).json({ message: 'No se enviaron campos para actualizar' });
         }
 
-        const query = `UPDATE Empresa SET ${setClauses.join(', ')} WHERE rfc = @rfc`;
+        const query = `UPDATE Empresa SET ${setClauses.join(', ')} WHERE rfc = @rfcOriginal`;
         await request.query(query);
 
         res.json({ message: 'Empresa actualizada parcialmente (PATCH)' });

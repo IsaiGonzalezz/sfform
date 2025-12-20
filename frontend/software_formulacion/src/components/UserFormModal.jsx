@@ -58,7 +58,7 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
         resolver: yupResolver(validationSchema),
         context: { isEditMode }, // Pasamos el contexto para la validación condicional
         defaultValues: { // Valores por defecto
-            rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: false
+            rfid: '', nombre: '', correo: '', password: '', rol: '', activo: false
         }
     });
 
@@ -72,11 +72,11 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                     correo: userToEdit.correo || '',
                     rol: userToEdit.rol || '',
                     activo: userToEdit.activo,
-                    contraseña: '',
+                    password: '',
                 });
             } else {
                 reset({ // Limpiar para crear
-                    rfid: '', nombre: '', correo: '', contraseña: '', rol: '', activo: true
+                    rfid: '', nombre: '', correo: '', password: '', rol: '', activo: true
                 });
             }
         }
@@ -90,8 +90,8 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
             if (isEditMode) {
                 const dataToUpdate = { ...data };
                 // Si no se proporcionó nueva contraseña (es null por la transformación de Yup), la eliminamos
-                if (!dataToUpdate.contraseña) {
-                    delete dataToUpdate.contraseña;
+                if (!dataToUpdate.password) {
+                    delete dataToUpdate.password;
                 }
                 await axiosInstance.patch(`${API_URL_USUARIO_REL}${userToEdit.id}/`, dataToUpdate);
             } else {
@@ -233,8 +233,8 @@ function UserFormModal({ open, onClose, onSaveSuccess, userToEdit }) {
                                         fullWidth
                                         variant="outlined"
                                         disabled={isSaving}
-                                        error={!!errors.contraseña}
-                                        helperText={errors.contraseña?.message}
+                                        error={!!errors.password}
+                                        helperText={errors.password?.message}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">

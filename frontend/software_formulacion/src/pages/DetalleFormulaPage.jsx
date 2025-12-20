@@ -1,25 +1,29 @@
-import React, { useState, useMemo ,useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, Trash2, Edit3, Check, Plus } from 'lucide-react';
+import { ArrowLeft, Save, X, Trash2, Edit3, Check, Loader } from 'lucide-react'; // Agregué Loader
 import { useAuth } from '../context/useAuth';
 
-
-//INSTANCIA A LA API
-const API_URL_FORMULAS_REL = '/formulas/'
-
-
+// INSTANCIA A LA API
+const API_URL_FORMULAS_REL = '/formulas/';
 
 const DetalleFormulaPage = () => {
 
     const { axiosInstance } = useAuth();
-
-    const { id } = useParams(); // Obtiene el ID de la URL (ej: FRM-001)
+    const { id } = useParams();
     const navigate = useNavigate();
 
-    // Estados
+    // Estados de Carga Inicial
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Estado de Edición
     const [isEditing, setIsEditing] = useState(false);
+    
+    // --- NUEVO: Estado para bloquear botón de guardar ---
+    const [isSaving, setIsSaving] = useState(false);
+
+    // --- NUEVO: Estado para la notificación tipo iPhone ---
+    const [toast, setToast] = useState({ show: false, message: '' });
 
     // Estado para almacenar la data original
     const [formula, setFormula] = useState(null);
@@ -27,17 +31,16 @@ const DetalleFormulaPage = () => {
     // Estado para manejar los cambios del formulario (Edición)
     const [formData, setFormData] = useState({
         nombre: '',
-        detalles: [] // Aquí viven los ingredientes cargados
+        detalles: []
     });
 
     // 1. GET: Cargar la fórmula al iniciar
     useEffect(() => {
         const fetchFormula = async () => {
             try {
-                // Ajusta la URL base a tu configuración local
                 const response = await axiosInstance.get(`${API_URL_FORMULAS_REL}${id}/`);
                 setFormula(response.data);
-                setFormData(response.data); // Inicializamos el form con los datos traídos
+                setFormData(response.data);
                 setLoading(false);
             } catch (err) {
                 console.error(err);
@@ -46,11 +49,19 @@ const DetalleFormulaPage = () => {
             }
         };
         fetchFormula();
-    }, [id]);
+    }, [id, axiosInstance]);
+
+    // Función para mostrar la notificación temporal
+    const showSuccessToast = () => {
+        setToast({ show: true, message: 'Datos Modificados Correctamente' });
+        // Se oculta sola después de 3 segundos
+        setTimeout(() => {
+            setToast({ show: false, message: '' });
+        }, 3000);
+    };
 
     const formatNumero = (num) => {
         const numeroLimpo = parseFloat(num || 0);
-        // 'en-US' usa coma (,) para miles y punto (.) para decimal
         return numeroLimpo.toLocaleString('en-US', {
             maximumFractionDigits: 3 
         });
@@ -58,39 +69,35 @@ const DetalleFormulaPage = () => {
 
     const [pesoTotal, totalIngredientes] = useMemo(() => {
         const detalles = formData.detalles || [];
-        
-        // 1. Calcula el total
         const total = detalles.reduce((sum, d) => sum + parseFloat(d.cantidad || 0), 0);
-        // 2. Cuenta los ingredientes
         const count = detalles.length;
-
-        // Devuelve los valores (el peso ya formateado)
         return [formatNumero(total), count];
-
     }, [formData.detalles]);
 
-    // Manejadores de Inputs (Nombre)
+    // Manejadores de Inputs
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    // Manejadores de Inputs (Ingredientes en la tabla)
     const handleDetalleChange = (index, field, value) => {
         const nuevosDetalles = [...formData.detalles];
         nuevosDetalles[index][field] = value;
         setFormData({ ...formData, detalles: nuevosDetalles });
     };
 
-    // 2. PATCH: Guardar Cambios
+    // 2. PATCH: Guardar Cambios (MODIFICADO)
     const handleSave = async () => {
+        // Prevención: Si ya está guardando, no hace nada
+        if (isSaving) return;
+
+        setIsSaving(true); // Bloqueamos el botón
+
         try {
-            
             const payload = {
                 nombre: formData.nombre,
-                // Mapeamos solo lo que el serializer necesita para escribir
                 ingredientes: formData.detalles.map(d => ({
-                    iding: d.iding, // ID del ingrediente
+                    iding: d.iding,
                     cantidad: parseFloat(d.cantidad),
                     tolerancia: parseInt(d.tolerancia)
                 }))
@@ -98,24 +105,27 @@ const DetalleFormulaPage = () => {
 
             await axiosInstance.patch(`${API_URL_FORMULAS_REL}${id}/`, payload);
 
-            alert('Fórmula actualizada correctamente');
+            // --- CAMBIO: En vez de alert, usamos el Toast ---
+            showSuccessToast();
+            
             setIsEditing(false);
-            // Recargamos los datos "oficiales"
-            setFormula(formData);
+            setFormula(formData); // Actualizamos la data oficial
 
         } catch (err) {
             console.error(err);
             alert('Error al actualizar. Revisa la consola.');
+        } finally {
+            // Liberamos el botón (sea éxito o error)
+            setIsSaving(false);
         }
     };
 
-    // 3. DELETE: Eliminar Fórmula <DESCARTADO>
     const handleDelete = async () => {
         if (window.confirm(`¿Estás seguro de eliminar la fórmula ${id}? Esta acción no se puede deshacer.`)) {
             try {
                 await axiosInstance.delete(`${API_URL_FORMULAS_REL}${id}/`);
                 alert('Fórmula eliminada.');
-                navigate('/formulas'); // Te regresa a la lista principal
+                navigate('/formulas');
             } catch (err) {
                 console.error(err);
                 alert('Error al eliminar.');
@@ -123,9 +133,8 @@ const DetalleFormulaPage = () => {
         }
     };
 
-    // Cancelar edición (revertir cambios) DESCARTADO
     const handleCancel = () => {
-        setFormData(formula); // Regresamos a los datos originales
+        setFormData(formula);
         setIsEditing(false);
     };
 
@@ -137,6 +146,17 @@ const DetalleFormulaPage = () => {
 
     return (
         <div style={styles.container}>
+            
+            {/* --- NOTIFICACIÓN TOAST (FLOTANTE) --- */}
+            {toast.show && (
+                <div style={styles.toast}>
+                    <div style={styles.toastIconContainer}>
+                        <Check size={16} color="#fff" strokeWidth={3} />
+                    </div>
+                    {toast.message}
+                </div>
+            )}
+
             {/* Encabezado */}
             <div style={styles.header}>
                 <button style={styles.backBtn} onClick={() => navigate(-1)}>
@@ -153,7 +173,7 @@ const DetalleFormulaPage = () => {
                 <div style={styles.actions}>
                     {!isEditing ? (
                         <>
-                            {/* BOTON DE ELIMINACION DESCARTADO  * */}
+                            {/* BOTON DE ELIMINACION DESCARTADO */}
                             <button style={{ ...styles.btnDelete, display: 'none' }} onClick={handleDelete} hidden={true}>
                                 <Trash2 size={18} /> Eliminar
                             </button>
@@ -164,11 +184,34 @@ const DetalleFormulaPage = () => {
                         </>
                     ) : (
                         <>
-                            <button style={styles.btnCancel} onClick={handleCancel}>
+                            <button 
+                                style={{...styles.btnCancel, opacity: isSaving ? 0.5 : 1}} 
+                                onClick={handleCancel}
+                                disabled={isSaving} // También bloqueamos cancelar si está guardando
+                            >
                                 <X size={18} /> Cancelar
                             </button>
-                            <button style={styles.btnSave} onClick={handleSave}>
-                                <Save size={18} /> Guardar
+                            
+                            {/* --- BOTÓN GUARDAR MODIFICADO --- */}
+                            <button 
+                                style={{
+                                    ...styles.btnSave, 
+                                    opacity: isSaving ? 0.7 : 1, 
+                                    cursor: isSaving ? 'not-allowed' : 'pointer'
+                                }} 
+                                onClick={handleSave}
+                                disabled={isSaving} // Deshabilita click nativo
+                            >
+                                {isSaving ? (
+                                    <>
+                                        {/* Icono giratorio simple */}
+                                        <Loader size={18} className="spin-animation" /> Guardando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={18} /> Guardar
+                                    </>
+                                )}
                             </button>
                         </>
                     )}
@@ -185,12 +228,12 @@ const DetalleFormulaPage = () => {
                             name="nombre"
                             value={formData.nombre}
                             onChange={handleInputChange}
+                            disabled={isSaving} // Bloqueamos input al guardar
                         />
                     ) : (
                         <p style={styles.textData}>{formula.nombre}</p>
                     )}
-                    <div style={{padding: '10px'}}>
-                    </div>
+                    <div style={{padding: '10px'}}></div>
                     <div className="summary-grid">
                         <div className="summary-card">
                             <span className="summary-label">Peso Total Calculado</span>
@@ -220,8 +263,6 @@ const DetalleFormulaPage = () => {
                             {formData.detalles.map((item, index) => (
                                 <tr key={index} style={{ borderBottom: '1px solid #444' }}>
                                     <td style={styles.td}>
-                                        {/* El nombre del ingrediente suele ser read-only incluso al editar la formula, 
-                                            a menos que quieras cambiar el ingrediente en sí, lo cual es más complejo */}
                                         {item.nombre_ingrediente || `Ingrediente ID: ${item.iding}`}
                                     </td>
                                     <td style={styles.td}>
@@ -231,6 +272,7 @@ const DetalleFormulaPage = () => {
                                                 style={styles.inputTable}
                                                 value={item.cantidad}
                                                 onChange={(e) => handleDetalleChange(index, 'cantidad', e.target.value)}
+                                                disabled={isSaving} // Bloqueamos input al guardar
                                             />
                                         ) : (
                                             <span>{item.cantidad}</span>
@@ -243,6 +285,7 @@ const DetalleFormulaPage = () => {
                                                 style={styles.inputTable}
                                                 value={item.tolerancia}
                                                 onChange={(e) => handleDetalleChange(index, 'tolerancia', e.target.value)}
+                                                disabled={isSaving} // Bloqueamos input al guardar
                                             />
                                         ) : (
                                             <span>{item.tolerancia} %</span>
@@ -261,14 +304,54 @@ const DetalleFormulaPage = () => {
                     </table>
                 </div>
             </div>
+            
+            {/* Estilo para la animación del loader */}
+            <style>{`
+                .spin-animation {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 };
 
 const styles = {
+    // --- ESTILOS DE TOAST (NUEVO) ---
+    toast: {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        backgroundColor: '#f0fdf4', // Fondo muy claro verdoso (tipo Apple light mode success)
+        color: '#15803d', // Texto verde oscuro elegante
+        padding: '12px 24px',
+        borderRadius: '50px', // Bordes redondos tipo píldora
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // Sombra suave
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        zIndex: 9999,
+        border: '1px solid #bbf7d0', // Borde sutil
+        animation: 'slideIn 0.3s ease-out'
+    },
+    toastIconContainer: {
+        backgroundColor: '#22c55e', // Verde brillante Apple
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    // -------------------------------
+    
     container: {
         minHeight: '100vh',
-        // Fondo dinámico (Gris claro en día / Negro en noche)
         backgroundColor: 'var(--bg-color)', 
         color: 'var(--text-color)',
         padding: '40px',
@@ -284,7 +367,7 @@ const styles = {
     centerMsgError: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
         backgroundColor: 'var(--bg-color)', 
-        color: '#ff6b6b', // El rojo de error se ve bien en ambos
+        color: '#ff6b6b', 
         fontSize: '1.2rem'
     },
     header: {
@@ -292,14 +375,14 @@ const styles = {
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '30px',
-        borderBottom: '1px solid var(--border-color)', // Borde dinámico
+        borderBottom: '1px solid var(--border-color)', 
         paddingBottom: '20px'
     },
     backBtn: {
         background: 'transparent',
         border: 'none',
-        color: 'var(--text-color)', // El icono de volver se adapta
-        opacity: 0.6, // Le damos opacidad para que parezca secundario
+        color: 'var(--text-color)', 
+        opacity: 0.6, 
         cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: '5px',
         fontSize: '1rem',
@@ -319,9 +402,6 @@ const styles = {
         display: 'flex',
         gap: '15px'
     },
-    // --- BOTONES ---
-    // (Los colores de fondo se mantienen fijos porque son indicadores de estado,
-    // y el texto 'white' se mantiene porque esos colores son oscuros/fuertes)
     btnEdit: {
         backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
         borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
@@ -332,19 +412,21 @@ const styles = {
     },
     btnSave: {
         backgroundColor: '#40c057', color: 'white', border: 'none', padding: '10px 20px',
-        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+        borderRadius: '6px', 
+        // El cursor se maneja dinámicamente arriba, pero dejamos este por defecto
+        display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold',
+        transition: 'opacity 0.2s'
     },
     btnCancel: {
         backgroundColor: '#495057', color: 'white', border: 'none', padding: '10px 20px',
-        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+        borderRadius: '6px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold',
+        transition: 'opacity 0.2s'
     },
-    // --- TARJETAS Y FORMULARIO ---
     card: {
-        // Fondo de tarjeta (Blanco en día / Gris oscuro en noche)
         backgroundColor: 'var(--card-bg)', 
         padding: '25px',
         borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Sombra más suave
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', 
         marginBottom: '25px',
         transition: 'background-color 0.3s ease'
     },
@@ -354,19 +436,18 @@ const styles = {
     label: {
         display: 'block',
         color: 'var(--text-color)',
-        opacity: 0.7, // Grisáceo visualmente
+        opacity: 0.7, 
         fontSize: '0.9rem',
         marginBottom: '8px'
     },
     textData: {
         fontSize: '1.5rem',
-        color: 'var(--text-color)', // Texto principal
+        color: 'var(--text-color)', 
         margin: 0
     },
     input: {
         width: '100%',
         padding: '12px',
-        // Truco: Usamos el color de fondo general para el input dentro de la tarjeta
         backgroundColor: 'var(--bg-color)', 
         border: '1px solid var(--border-color)',
         borderRadius: '6px',
@@ -375,7 +456,6 @@ const styles = {
         outline: 'none',
         transition: 'border-color 0.2s'
     },
-    // --- TABLA ---
     subTitle: {
         marginTop: 0,
         marginBottom: '20px',
@@ -400,12 +480,12 @@ const styles = {
     },
     td: {
         padding: '15px 12px',
-        borderBottom: '1px solid var(--border-color)' // Agregué borde a las filas para mejor lectura
+        borderBottom: '1px solid var(--border-color)' 
     },
     inputTable: {
         width: '100px',
         padding: '8px',
-        backgroundColor: 'var(--bg-color)', // Mismo truco que arriba
+        backgroundColor: 'var(--bg-color)', 
         border: '1px solid var(--border-color)',
         borderRadius: '4px',
         color: 'var(--text-color)',

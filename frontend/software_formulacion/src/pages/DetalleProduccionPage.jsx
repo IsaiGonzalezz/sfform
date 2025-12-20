@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, Edit3, Layers, Trash2 } from 'lucide-react'; // Agregué el icono Layers
+import { ArrowLeft, Save, X, Edit3, Layers, Trash2, Check, AlertCircle, Loader } from 'lucide-react'; 
 import { useAuth } from '../context/useAuth';
 
 const API_URL_PRODUCCION_REL = '/produccion/';
@@ -8,55 +8,60 @@ const API_URL_PRODUCCION_REL = '/produccion/';
 const DetalleProduccionPage = () => {
 
     const { axiosInstance } = useAuth();
-    const { folio } = useParams(); // Este es el ID de la fórmula actual que estamos viendo
+    const { folio } = useParams(); 
     const navigate = useNavigate();
 
     // Estados
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    
+    // --- NUEVO: Estado de carga para acciones (Guardar/Eliminar) ---
+    const [isSaving, setIsSaving] = useState(false);
 
     // Estado para almacenar la data original
     const [produccionOriginal, setProduccionOriginal] = useState(null);
 
-    // --- NUEVO: Estado para las pestañas (hermanos de la misma OP) ---
+    // Estado para las pestañas
     const [formulasHermanas, setFormulasHermanas] = useState([]);
 
-    // Estado para manejar los cambios del formulario
+    // Estado del formulario
     const [formData, setFormData] = useState({
-        id: '', // Importante guardar el ID
+        id: '', 
         op: '',
         lote: '',
         pesform: 0,
         detalles: []
     });
 
-    // 1. GET: Cargar la Producción Actual y buscar Hermanos
+    // --- NUEVO: Estados para UI (Toast y Modal) ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+    // --- HELPER: Mostrar Toast ---
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+        }, 3000);
+    };
+
+    // 1. GET: Cargar la Producción
     useEffect(() => {
         const fetchProduccion = async () => {
-            setLoading(true); // Reiniciar loading al cambiar de folio
+            setLoading(true); 
             try {
-                // A) Cargar la fórmula principal solicitada por URL
                 const response = await axiosInstance.get(`${API_URL_PRODUCCION_REL}${folio}/`);
                 const dataActual = response.data;
 
                 setProduccionOriginal(dataActual);
                 setFormData(dataActual);
 
-                // B) --- MAGIA AQUÍ --- 
-                // Usamos el campo 'op' para buscar otras fórmulas de esta misma orden.
-                // Asumimos que tu backend permite filtrar ?search= o ?op=. 
-                // Si no, tendrás que ajustar este endpoint.
+                // Buscar hermanos
                 if (dataActual.op) {
                     try {
-                        // Intentamos buscar por el nombre de la OP
                         const searchRes = await axiosInstance.get(`${API_URL_PRODUCCION_REL}?search=${dataActual.op}`);
-
-                        // Filtramos para asegurarnos que son EXACTAMENTE de esta OP
-                        // (Por si el search trae cosas parecidas)
                         const hermanos = searchRes.data.filter(f => f.op === dataActual.op);
-
-                        // Si encontramos hermanos, los guardamos para las pestañas
                         if (hermanos.length > 0) {
                             setFormulasHermanas(hermanos);
                         }
@@ -64,7 +69,6 @@ const DetalleProduccionPage = () => {
                         console.warn("No se pudieron cargar fórmulas relacionadas", errorHermanos);
                     }
                 }
-
                 setLoading(false);
             } catch (err) {
                 console.error(err);
@@ -73,9 +77,8 @@ const DetalleProduccionPage = () => {
             }
         };
         fetchProduccion();
-    }, [folio, axiosInstance]); // Se ejecuta cada vez que cambia el 'folio' en la URL
+    }, [folio, axiosInstance]);
 
-    // --- FORMATEO DE NÚMEROS ---
     const formatNumero = (num) => {
         const numeroLimpo = parseFloat(num || 0);
         return numeroLimpo.toLocaleString('en-US', {
@@ -84,7 +87,6 @@ const DetalleProduccionPage = () => {
         });
     };
 
-    // Cálculos de Resumen
     const [sumaIngredientes, totalItems] = useMemo(() => {
         const detalles = formData.detalles || [];
         const total = detalles.reduce((sum, d) => sum + parseFloat(d.pesing || 0), 0);
@@ -92,7 +94,6 @@ const DetalleProduccionPage = () => {
         return [formatNumero(total), count];
     }, [formData.detalles]);
 
-    // Manejadores de Inputs
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
@@ -104,8 +105,9 @@ const DetalleProduccionPage = () => {
         setFormData({ ...formData, detalles: nuevosDetalles });
     };
 
-    // 2. PATCH: Guardar Cambios
+    // 2. PATCH: Guardar Cambios (Actualizado con Toast/Loader)
     const handleSave = async () => {
+        setIsSaving(true); // Bloqueo botón
         try {
             const payload = {
                 op: formData.op,
@@ -122,36 +124,42 @@ const DetalleProduccionPage = () => {
 
             await axiosInstance.patch(`${API_URL_PRODUCCION_REL}${folio}/`, payload);
 
-            alert('Producción actualizada correctamente');
+            showToast('Producción actualizada correctamente'); // Toast éxito
             setIsEditing(false);
             setProduccionOriginal(formData);
 
-            // Actualizamos la lista de hermanos por si cambió algún dato clave
-            // (Opcional, pero recomendado)
-
         } catch (err) {
             console.error(err);
-            alert('Error al actualizar. Revisa la consola.');
+            showToast('Error al actualizar. Revisa la consola.', 'error'); // Toast error
+        } finally {
+            setIsSaving(false); // Desbloqueo botón
         }
     };
 
-    // 3. DELETE: Eliminar Fórmula <DESCARTADO>
-    const handleDelete = async () => {
-        // Confirmamos usando el nombre de la OP
-        if (window.confirm(`¿Estás seguro de desactivar TODA la orden de producción: ${formData.op}? Se cancelarán todos sus folios.`)) {
-            try {
-                // CAMBIO CLAVE:
-                // 1. Usamos la nueva ruta '/desactivar-op/'
-                // 2. Le pegamos el formData.op (ej: "OP-555")
-                // 3. Ya no necesitamos enviar body { estatus: 0 } porque el backend ya sabe qué hacer
-                await axiosInstance.patch(`${API_URL_PRODUCCION_REL}desactivar-op/${formData.op}`);
+    // 3. DELETE: Solicitar eliminación (Abre Modal)
+    const handleDeleteRequest = () => {
+        setShowConfirmModal(true);
+    };
 
-                alert(`Orden de Producción ${formData.op} y sus folios han sido desactivados.`);
-                navigate('/produccion'); 
-            } catch (err) {
-                console.error(err);
-                alert('Error al desactivar la OP.');
-            }
+    // 4. DELETE: Ejecutar eliminación (Tras confirmar)
+    const executeDelete = async () => {
+        setShowConfirmModal(false); // Cerramos modal
+        setIsSaving(true); // Bloqueamos UI y mostramos spinner en botón
+        
+        try {
+            await axiosInstance.patch(`${API_URL_PRODUCCION_REL}desactivar-op/${formData.op}`);
+            
+            showToast(`Orden ${formData.op} desactivada exitosamente.`);
+            
+            // Esperamos un poco para que el usuario vea el toast antes de irnos
+            setTimeout(() => {
+                navigate('/produccion');
+            }, 1500);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Error al desactivar la OP.', 'error');
+            setIsSaving(false); // Solo desbloqueamos si hubo error
         }
     };
 
@@ -166,11 +174,58 @@ const DetalleProduccionPage = () => {
     if (error) return <div style={styles.centerMsgError}>{error}</div>;
     if (!produccionOriginal) return null;
 
-    // Ordenar hermanos para que salgan en orden (por ejemplo por ID o folio)
     const pestañasOrdenadas = [...formulasHermanas].sort((a, b) => a.id - b.id);
 
     return (
         <div style={styles.container}>
+            
+            {/* --- TOAST --- */}
+            {toast.show && (
+                <div style={{
+                    ...customStyles.toast,
+                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                    color: toast.type === 'error' ? '#991b1b' : '#15803d',
+                    borderColor: toast.type === 'error' ? '#fecaca' : '#bbf7d0',
+                }}>
+                    <div style={{
+                        ...customStyles.toastIconContainer,
+                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e',
+                    }}>
+                        {toast.type === 'error' ? <AlertCircle size={16} color="#fff" /> : <Check size={16} color="#fff" strokeWidth={3} />}
+                    </div>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* --- MODAL CONFIRMACIÓN --- */}
+            {showConfirmModal && (
+                <div style={customStyles.modalOverlay}>
+                    <div style={customStyles.iosModal}>
+                        <div style={customStyles.iosModalContent}>
+                            <h3 style={customStyles.iosTitle}>Confirmar Eliminación</h3>
+                            <p style={customStyles.iosMessage}>
+                                ¿Estás seguro de desactivar TODA la orden <strong>{formData.op}</strong>? 
+                                <br/>Se cancelarán todos sus folios asociados.
+                            </p>
+                        </div>
+                        <div style={customStyles.iosActionGroup}>
+                            <button
+                                style={customStyles.iosButtonCancel}
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                style={{ ...customStyles.iosButtonConfirm, color: '#ef4444' }} // Rojo para acción destructiva
+                                onClick={executeDelete}
+                            >
+                                Desactivar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Encabezado */}
             <div style={styles.header}>
                 <button style={styles.backBtn} onClick={() => navigate(-1)}>
@@ -187,24 +242,43 @@ const DetalleProduccionPage = () => {
                 </div>
 
                 <div style={styles.actions}>
-
                     {!isEditing ? (
                         <>
-                            <button style={{ ...styles.btnDelete}} onClick={handleDelete}>
-                                <Trash2 size={18} /> Eliminar
+                            {/* BOTÓN ELIMINAR ACTUALIZADO */}
+                            <button 
+                                style={{ 
+                                    ...styles.btnDelete, 
+                                    opacity: isSaving ? 0.7 : 1, 
+                                    cursor: isSaving ? 'not-allowed' : 'pointer' 
+                                }} 
+                                onClick={handleDeleteRequest}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? <Loader size={18} className="spin-animation" /> : <Trash2 size={18} />}
+                                {isSaving ? ' Eliminando...' : ' Eliminar'}
                             </button>
-                            <button style={styles.btnEdit} onClick={() => setIsEditing(true)}>
-                                <Edit3 size={18}
-                                /> Editar
+
+                            <button style={styles.btnEdit} onClick={() => setIsEditing(true)} disabled={isSaving}>
+                                <Edit3 size={18} /> Editar
                             </button>
                         </>
                     ) : (
                         <>
-                            <button style={styles.btnCancel} onClick={handleCancel}>
+                            <button style={styles.btnCancel} onClick={handleCancel} disabled={isSaving}>
                                 <X size={18} /> Cancelar
                             </button>
-                            <button style={styles.btnSave} onClick={handleSave}>
-                                <Save size={18} /> Guardar
+                            {/* BOTÓN GUARDAR ACTUALIZADO */}
+                            <button 
+                                style={{ 
+                                    ...styles.btnSave,
+                                    opacity: isSaving ? 0.7 : 1, 
+                                    cursor: isSaving ? 'not-allowed' : 'pointer'
+                                }} 
+                                onClick={handleSave} 
+                                disabled={isSaving}
+                            >
+                                {isSaving ? <Loader size={18} className="spin-animation" /> : <Save size={18} />}
+                                {isSaving ? ' Guardando...' : ' Guardar'}
                             </button>
                         </>
                     )}
@@ -212,41 +286,35 @@ const DetalleProduccionPage = () => {
             </div>
 
             {/* --- SECCIÓN DE PESTAÑAS --- */}
-            {
-                pestañasOrdenadas.length > 1 && (
-                    <div style={styles.tabsContainer}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', color: '#888' }}>
-                            <Layers size={16} /> <span style={{ fontSize: '0.9rem' }}>Fórmulas en esta Orden:</span>
-                        </div>
-                        <div style={styles.tabsRow}>
-                            {/* AGREGAMOS EL ÍNDICE 'i' AQUÍ ABAJO v */}
-                            {pestañasOrdenadas.map((item, i) => {
-                                const isActive = String(item.id) === String(folio) || String(item.folio) === String(folio);
-
-                                // --- CORRECCIÓN DEL KEY ---
-                                // Usamos item.id. Si no existe, usamos item.folio. Si no, usamos el índice 'i'.
-                                // Esto elimina el error rojo para siempre.
-                                const uniqueKey = item.id || item.folio || i;
-
-                                return (
-                                    <button
-                                        key={uniqueKey} // <--- AQUÍ ESTABA EL DETALLE
-                                        onClick={() => {
-                                            if (!isActive) {
-                                                setIsEditing(false);
-                                                navigate(`/detalle-produccion/${item.folio || item.id}`);
-                                            }
-                                        }}
-                                        style={isActive ? styles.tabActive : styles.tabInactive}
-                                    >
-                                        {item.nombre_formula || `Fórmula ${item.id}`}
-                                    </button>
-                                );
-                            })}
-                        </div>
+            {pestañasOrdenadas.length > 1 && (
+                <div style={styles.tabsContainer}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', color: '#888' }}>
+                        <Layers size={16} /> <span style={{ fontSize: '0.9rem' }}>Fórmulas en esta Orden:</span>
                     </div>
-                )
-            }
+                    <div style={styles.tabsRow}>
+                        {pestañasOrdenadas.map((item, i) => {
+                            const isActive = String(item.id) === String(folio) || String(item.folio) === String(folio);
+                            const uniqueKey = item.id || item.folio || i;
+
+                            return (
+                                <button
+                                    key={uniqueKey}
+                                    onClick={() => {
+                                        if (!isActive) {
+                                            setIsEditing(false);
+                                            navigate(`/detalle-produccion/${item.folio || item.id}`);
+                                        }
+                                    }}
+                                    disabled={isSaving} // Bloqueamos navegación si está guardando/eliminando
+                                    style={isActive ? styles.tabActive : styles.tabInactive}
+                                >
+                                    {item.nombre_formula || `Fórmula ${item.id}`}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Formulario de Cabecera */}
             <div style={styles.card}>
@@ -259,7 +327,7 @@ const DetalleProduccionPage = () => {
                     <div style={styles.formGroup}>
                         <label style={styles.label}>Lote (Fórmula)</label>
                         {isEditing ? (
-                            <input style={styles.input} name="lote" value={formData.lote} onChange={handleInputChange} />
+                            <input style={styles.input} name="lote" value={formData.lote} onChange={handleInputChange} disabled={isSaving} />
                         ) : (
                             <p style={styles.textData}>{produccionOriginal.lote}</p>
                         )}
@@ -268,14 +336,14 @@ const DetalleProduccionPage = () => {
                     <div style={styles.formGroup}>
                         <label style={styles.label}>Peso Objetivo</label>
                         {isEditing ? (
-                            <input type="number" style={styles.input} name="pesform" value={formData.pesform} onChange={handleInputChange} />
+                            <input type="number" style={styles.input} name="pesform" value={formData.pesform} onChange={handleInputChange} disabled={isSaving} />
                         ) : (
                             <p style={styles.textData}>{formatNumero(produccionOriginal.pesform)} Kg</p>
                         )}
                     </div>
                 </div>
 
-                {/* Resumen (Sin cambios) */}
+                {/* Resumen */}
                 <div style={{ marginTop: '20px' }} className="summary-grid">
                     <div className="summary-card">
                         <span className="summary-label">Suma de Ingredientes</span>
@@ -292,7 +360,7 @@ const DetalleProduccionPage = () => {
                 </div>
             </div>
 
-            {/* Tabla de Detalles (Sin cambios en lógica, solo renderiza formData) */}
+            {/* Tabla de Detalles */}
             <div style={styles.card}>
                 <h3 style={styles.subTitle}>Ingredientes / Pesaje</h3>
                 <div style={styles.tableContainer}>
@@ -313,7 +381,7 @@ const DetalleProduccionPage = () => {
                                     </td>
                                     <td style={styles.td}>
                                         {isEditing ? (
-                                            <input type="number" style={styles.inputTable} value={item.pesing} onChange={(e) => handleDetalleChange(index, 'pesing', e.target.value)} />
+                                            <input type="number" style={styles.inputTable} value={item.pesing} onChange={(e) => handleDetalleChange(index, 'pesing', e.target.value)} disabled={isSaving} />
                                         ) : (
                                             <div style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--text-color)' }}>
                                                 {formatNumero(item.pesing)}
@@ -322,7 +390,7 @@ const DetalleProduccionPage = () => {
                                     </td>
                                     <td style={styles.td}>
                                         {isEditing ? (
-                                            <input type="number" style={{ ...styles.inputTable, color: '#ff8787' }} value={item.pmin} onChange={(e) => handleDetalleChange(index, 'pmin', e.target.value)} />
+                                            <input type="number" style={{ ...styles.inputTable, color: '#ff8787' }} value={item.pmin} onChange={(e) => handleDetalleChange(index, 'pmin', e.target.value)} disabled={isSaving} />
                                         ) : (
                                             <div style={{ textAlign: 'right', color: '#ff6b6b' }}>
                                                 {formatNumero(item.pmin)}
@@ -331,7 +399,7 @@ const DetalleProduccionPage = () => {
                                     </td>
                                     <td style={styles.td}>
                                         {isEditing ? (
-                                            <input type="number" style={{ ...styles.inputTable, color: '#69db7c' }} value={item.pmax} onChange={(e) => handleDetalleChange(index, 'pmax', e.target.value)} />
+                                            <input type="number" style={{ ...styles.inputTable, color: '#69db7c' }} value={item.pmax} onChange={(e) => handleDetalleChange(index, 'pmax', e.target.value)} disabled={isSaving} />
                                         ) : (
                                             <div style={{ textAlign: 'right', color: '#51cf66' }}>
                                                 {formatNumero(item.pmax)}
@@ -351,20 +419,118 @@ const DetalleProduccionPage = () => {
                     </table>
                 </div>
             </div>
-        </div >
+            
+            {/* Animación del Loader */}
+            <style>{`
+                .spin-animation { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
     );
 };
 
-// --- ESTILOS ACTUALIZADOS ---
+// --- ESTILOS PERSONALIZADOS (TOAST & MODAL) ---
+const customStyles = {
+    toast: {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '12px 24px',
+        borderRadius: '50px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        zIndex: 9999,
+        border: '1px solid',
+        animation: 'slideIn 0.3s ease-out'
+    },
+    toastIconContainer: {
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    modalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10000,
+        animation: 'fadeIn 0.2s ease-out'
+    },
+    iosModal: {
+        backgroundColor: 'var(--card-bg)',
+        color: 'var(--text-color)',
+        width: '85%',
+        maxWidth: '320px',
+        borderRadius: '20px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden',
+        textAlign: 'center',
+        animation: 'scaleUp 0.2s ease-out'
+    },
+    iosModalContent: {
+        padding: '24px 20px 20px 20px',
+    },
+    iosTitle: {
+        margin: '0 0 10px 0',
+        fontSize: '1.2rem',
+        fontWeight: '700',
+    },
+    iosMessage: {
+        margin: 0,
+        fontSize: '0.95rem',
+        opacity: 0.8,
+        lineHeight: 1.4
+    },
+    iosActionGroup: {
+        display: 'flex',
+        borderTop: '1px solid var(--border-color)',
+    },
+    iosButtonCancel: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        borderRight: '1px solid var(--border-color)',
+        color: 'var(--text-color)', // Adaptable
+        opacity: 0.7,
+        fontWeight: '600',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    },
+    iosButtonConfirm: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        fontWeight: '700',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    }
+};
+
+// --- ESTILOS PRINCIPALES ---
 const styles = {
     container: {
         minHeight: '100vh',
-        // Fondo dinámico
         backgroundColor: 'var(--bg-color)',
         color: 'var(--text-color)',
         padding: '20px 40px 40px 40px',
         fontFamily: 'Arial, sans-serif',
-        transition: 'background-color 0.3s ease, color 0.3s ease'
+        transition: 'background-color 0.3s ease, color 0.3s ease',
+        position: 'relative' // Necesario para el overlay
     },
     centerMsg: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
@@ -375,20 +541,20 @@ const styles = {
     centerMsgError: {
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh',
         backgroundColor: 'var(--bg-color)',
-        color: '#ff6b6b', // Rojo de error (se ve bien en ambos)
+        color: '#ff6b6b',
         fontSize: '1.2rem'
     },
     header: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: '20px',
-        borderBottom: '1px solid var(--border-color)', // Borde dinámico
+        borderBottom: '1px solid var(--border-color)',
         paddingBottom: '15px'
     },
     backBtn: {
         background: 'transparent',
         border: 'none',
         color: 'var(--text-color)',
-        opacity: 0.6, // Un poco transparente para que no compita con el título
+        opacity: 0.6,
         cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: '5px', fontSize: '1rem',
         transition: 'opacity 0.2s'
@@ -402,10 +568,8 @@ const styles = {
     },
     actions: { display: 'flex', gap: '15px' },
 
-    // --- TABS (Adaptados) ---
-    tabsContainer: {
-        marginBottom: '20px',
-    },
+    // --- TABS ---
+    tabsContainer: { marginBottom: '20px' },
     tabsRow: {
         display: 'flex',
         gap: '10px',
@@ -413,7 +577,6 @@ const styles = {
         paddingBottom: '5px'
     },
     tabActive: {
-        // El azul se queda fijo, funciona bien como "Highlight" en ambos temas
         backgroundColor: '#4dabf7',
         color: '#fff',
         border: 'none',
@@ -425,11 +588,10 @@ const styles = {
         boxShadow: '0 2px 4px rgba(77, 171, 247, 0.4)'
     },
     tabInactive: {
-        // Fondo neutro: transparente o ligeramente grisáceo
         backgroundColor: 'transparent',
         color: 'var(--text-color)',
-        opacity: 0.6, // Texto más apagado
-        border: '1px solid var(--border-color)', // Borde sutil
+        opacity: 0.6,
+        border: '1px solid var(--border-color)',
         padding: '8px 20px',
         borderRadius: '20px',
         cursor: 'pointer',
@@ -437,15 +599,14 @@ const styles = {
         transition: 'all 0.2s'
     },
 
-    // --- BOTONES (Se quedan con texto blanco para contraste sobre el color fuerte) ---
+    // --- BOTONES ---
     btnDelete: {
         backgroundColor: '#FF0000FF', color: 'white', border: 'none', padding: '10px 20px',
-        borderRadius: '6px', cursor: 'pointer', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+        borderRadius: '6px', cursor: 'pointer', display:'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'
     },
     btnEdit: {
-        display: 'none',
         backgroundColor: '#E66722FF', color: 'white', border: 'none', padding: '10px 20px',
-        borderRadius: '6px', cursor: 'pointer', gap: '8px', alignItems: 'center', fontWeight: 'bold'
+        borderRadius: '6px', cursor: 'pointer', display:'none', gap: '8px', alignItems: 'center', fontWeight: 'bold'
     },
     btnSave: {
         backgroundColor: '#40c057', color: 'white', border: 'none', padding: '10px 20px',
@@ -458,10 +619,10 @@ const styles = {
 
     // --- CARD Y FORMULARIO ---
     card: {
-        backgroundColor: 'var(--card-bg)', // Blanco(día) / Gris(noche)
+        backgroundColor: 'var(--card-bg)',
         padding: '25px',
         borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', // Sombra más suave
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
         marginBottom: '25px',
         transition: 'background-color 0.3s ease'
     },
@@ -478,13 +639,13 @@ const styles = {
     },
     textData: {
         fontSize: '1.5rem',
-        color: 'var(--text-color)', // Texto principal
+        color: 'var(--text-color)',
         margin: 0
     },
     input: {
         width: '100%',
         padding: '12px',
-        backgroundColor: 'var(--bg-color)', // Contraste contra el fondo de la tarjeta
+        backgroundColor: 'var(--bg-color)',
         border: '1px solid var(--border-color)',
         borderRadius: '6px',
         color: 'var(--text-color)',
@@ -507,16 +668,14 @@ const styles = {
         borderCollapse: 'collapse',
         color: 'var(--text-color)'
     },
-
     thRight: {
         textAlign: 'right',
         padding: '12px',
         borderBottom: '2px solid var(--border-color)',
         color: 'var(--text-color)',
         opacity: 0.8,
-        fontWeight: 'bold' // (Opcional) Para que resalte un poco más que el resto
+        fontWeight: 'bold'
     },
-
     th: {
         textAlign: 'left',
         padding: '12px',

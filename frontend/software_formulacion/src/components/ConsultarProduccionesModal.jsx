@@ -5,11 +5,11 @@ import html2pdf from 'html2pdf.js';
 import { useAuth } from '../context/useAuth';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReporteProduccion from './ReporteProduccion';
-import './styles/ConsultaProduccion.css'
+import './styles/ConsultaProduccion.css';
+import CircularProgress from '@mui/material/CircularProgress'; // Importamos loader de MUI
 
 const API_URL_PRODUCCION_REL = '/produccion/';
 const API_URL_EMPRESA_REL = '/empresa/';
-
 
 const ConsultarProduccionModal = ({ isOpen, onClose }) => {
     const { axiosInstance } = useAuth();
@@ -19,6 +19,9 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
     const [produccionList, setProduccionList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [empresaInfo, setEmpresaInfo] = useState(null);
+    
+    // --- NUEVO: Estado de Carga ---
+    const [isLoading, setIsLoading] = useState(true);
 
     // Estados para PDF
     const [pdfData, setPdfData] = useState(null);
@@ -36,6 +39,7 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
 
     // --- 1. LÓGICA DE AGRUPACIÓN (MODIFICADA) ---
     const cargarProducciones = async () => {
+        setIsLoading(true); // Iniciamos carga
         try {
             const response = await axiosInstance.get(API_URL_PRODUCCION_REL);
             const datosCrudos = response.data.results || response.data;
@@ -73,6 +77,8 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error("Error cargando producciones:", error);
             setProduccionList([]);
+        } finally {
+            setIsLoading(false); // Terminamos carga (siempre se ejecuta)
         }
     };
 
@@ -265,7 +271,17 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredProduccion.length > 0 ? (
+                            {/* --- LÓGICA DE RENDERIZADO CON LOADING --- */}
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                            <CircularProgress size={30} />
+                                            <span style={{ color: '#666' }}>Cargando historial de producción...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredProduccion.length > 0 ? (
                                 filteredProduccion.map((p) => (
                                     <tr key={p.op || Math.random()}>
                                         <td style={{ fontWeight: 'bold' }}>{p.op}</td>
@@ -314,10 +330,7 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     className="btn-details"
                                                     onClick={() => {
-                                                        // Obtenemos el primero para usarlo como "puerta de entrada"
                                                         const folioEntrada = p.formulasContenidas?.[0]?.folioReal || p.folio || p.id;
-
-                                                        // NAVEGAMOS AL PRIMERO
                                                         navigate(`/detalle-produccion/${folioEntrada}`);
                                                         onClose();
                                                     }}

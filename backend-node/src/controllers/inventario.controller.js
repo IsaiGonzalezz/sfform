@@ -5,33 +5,37 @@ const agruparInventario = (recordset) => {
     const inventarioMap = new Map();
 
     recordset.forEach(row => {
-        // CORRECCIÓN AQUÍ: Usamos 'folio_produccion' porque 'folio_inventario' ya no existe en la query
-        if (!inventarioMap.has(row.folio_produccion)) {
-            inventarioMap.set(row.folio_produccion, {
-                // Usamos el folio de producción como ID único
-                folio_inventario: row.folio_produccion, 
+        // Usamos el folio_inventario como clave única
+        if (!inventarioMap.has(row.folio_inventario)) {
+            inventarioMap.set(row.folio_inventario, {
+                folio_inventario: row.folio_inventario,
                 folio_produccion: row.folio_produccion,
                 op: row.op,
-                lote: row.lote,
-                estatus: row.estatus,
+                
+                // CORRECCIÓN: Usamos LForm que es lo que viene en tu tabla Inventario
+                lote: row.lote, 
+                
+                // CORRECCIÓN: Estatus viene de PRODUCCIÓN, Inventario no tiene.
+                estatus: row.estatus, 
                 
                 id_form: row.id_form,
                 nombre_formula: row.nombre_formula,
                 nombre_usuario: row.nombre_usuario,
 
-                p_obj: row.p_obj,
-                p_real: row.p_real,
-                p_dif: row.p_dif,
-                fecha: row.fecha,
+                // CORRECCIÓN: Mapeo exacto a tus columnas de Inventario
+                p_obj: row.p_obj,   
+                p_real: row.p_real, 
+                p_dif: row.p_dif,   
+                
+                fecha: row.fecha, 
 
                 ingredientes: [] 
             });
         }
 
-        // Llenado de Ingredientes
+        // Llenado de Ingredientes (Si existen en el detalle de producción)
         if (row.iding) {
-            // CORRECCIÓN AQUÍ TAMBIÉN:
-            inventarioMap.get(row.folio_produccion).ingredientes.push({
+            inventarioMap.get(row.folio_inventario).ingredientes.push({
                 iding: row.iding,
                 nombre_ingrediente: row.nombre_ingrediente,
                 pesing: row.pesing,
@@ -43,21 +47,19 @@ const agruparInventario = (recordset) => {
     return Array.from(inventarioMap.values());
 };
 
-// GET: Obtener Inventario FILTRADO (Server-Side)
+// GET: Obtener Inventario (Ajustado a tu Schema REAL)
 exports.getInventario = async (req, res) => {
     try {
         const pool = await getConnection();
         
         const { desde, hasta, estatus } = req.query;
 
-        // Lógica de Fechas por defecto (Ultimos 7 días)
+        // --- FILTROS DE FECHA ---
         let fechaInicio = new Date();
         fechaInicio.setDate(fechaInicio.getDate() - 7); 
-        
         let fechaFin = new Date(); 
 
         if (desde) fechaInicio = new Date(desde);
-        
         if (hasta) {
             fechaFin = new Date(hasta);
             fechaFin.setHours(23, 59, 59, 999); 
@@ -69,54 +71,59 @@ exports.getInventario = async (req, res) => {
             .input('fechaInicio', sql.DateTime, fechaInicio)
             .input('fechaFin', sql.DateTime, fechaFin);
 
+        // --- QUERY CORREGIDA BASADA EN TU SCRIPT ---
         let sqlQuery = `
             SELECT 
+                -- Tabla INVENTARIO (Según tu CREATE TABLE)
+                i.Folio AS folio_inventario,
+                i.LForm AS lote,        -- En tu script es LForm, no Lote
+                i.PReal AS p_real,      -- En tu script es PReal, no Peso
+                i.PObj AS p_obj,
+                i.PDif AS p_dif,
+                i.Fecha AS fecha,
+                
+                -- Tabla PRODUCCION (Para obtener OP y Estatus)
                 p.Folio AS folio_produccion,
                 p.OP AS op,
-                p.Lote AS lote,
-                p.Estatus AS estatus,
-                p.Fecha AS fecha,
-                p.PesForm AS p_obj,
-                p.IdForm AS id_form,
-                f.nombre AS nombre_formula,
-                u.Nombre AS nombre_usuario,
-                -- Subconsulta para sumar lo pesado
-                (SELECT SUM(dp_sum.PesIng) FROM Detalle_Produccion dp_sum WHERE dp_sum.FolioProduccion = p.Folio) AS peso_real_acumulado,
+                p.Estatus AS estatus,   -- El estatus está en Produccion, no en Inventario
                 
+                -- Tabla FORMULAS
+                f.IdForm AS id_form,
+                f.Nombre AS nombre_formula,
+                
+                -- Tabla USUARIOS
+                u.Nombre AS nombre_usuario,
+
+                -- Detalle de Ingredientes (Via Producción)
                 dp.IdIng AS iding,
-                i.nombre AS nombre_ingrediente,
+                ing.Nombre AS nombre_ingrediente,
                 dp.PesIng AS pesing,
                 dp.Pesado AS pesado
-            FROM Produccion p
-            LEFT JOIN Formulas f ON p.IdForm = f.idform
-            LEFT JOIN Usuarios u ON p.IdUsu = u.id
-            LEFT JOIN Detalle_Produccion dp ON p.Folio = dp.FolioProduccion
-            LEFT JOIN Ingredientes i ON dp.IdIng = i.iding
+
+            FROM Inventario i
+            -- Joins necesarios
+            LEFT JOIN Produccion p ON i.FolioProduccion = p.Folio
+            LEFT JOIN Formulas f ON i.IdForm = f.IdForm
+            LEFT JOIN Usuarios u ON i.IdUsu = u.id
             
-            WHERE p.Fecha >= @fechaInicio AND p.Fecha <= @fechaFin
+            -- Join para sacar ingredientes (opcional, visualización)
+            LEFT JOIN Detalle_Produccion dp ON p.Folio = dp.FolioProduccion
+            LEFT JOIN Ingredientes ing ON dp.IdIng = ing.IdIng
+            
+            WHERE i.Fecha >= @fechaInicio AND i.Fecha <= @fechaFin
         `;
 
+        // Filtro por Estatus (OJO: Filtrará por el estatus de la PRODUCCIÓN, porque Inventario no tiene)
         if (estatus !== undefined && estatus !== 'todos') {
             request.input('estatusVal', sql.Int, estatus);
             sqlQuery += ` AND p.Estatus = @estatusVal`;
         }
 
-        sqlQuery += ` ORDER BY p.Fecha DESC`;
+        sqlQuery += ` ORDER BY i.Fecha DESC`;
 
         const result = await request.query(sqlQuery);
         
-        // Calculamos Diferencia en JS antes de agrupar o dentro del helper
-        // Para simplificar, lo haremos mapeando el recordset antes o ajustando el helper.
-        // Ajuste rápido: El helper lo recibe plano, calculamos ahí.
-        
-        // Pequeño ajuste al recordset para calcular p_dif y p_real si vienen nulos
-        const dataCalculada = result.recordset.map(row => ({
-            ...row,
-            p_real: row.peso_real_acumulado || 0,
-            p_dif: (row.peso_real_acumulado || 0) - (row.p_obj || 0)
-        }));
-
-        const response = agruparInventario(dataCalculada);
+        const response = agruparInventario(result.recordset);
         
         res.json(response);
 

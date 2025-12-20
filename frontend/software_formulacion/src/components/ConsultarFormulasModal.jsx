@@ -1,4 +1,4 @@
-// ConsultarFormulasModal.jsx (Versión Corregida)
+// ConsultarFormulasModal.jsx (Versión con Loading State)
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, FileText, X, Loader } from 'lucide-react';
@@ -6,17 +6,20 @@ import html2pdf from 'html2pdf.js';
 import ReporteFormula from './ReporteFormula';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useAuth } from '../context/useAuth';
-import './styles/ConsultaFormulas.css'
+import './styles/ConsultaFormulas.css';
+import CircularProgress from '@mui/material/CircularProgress'; // Importamos loader de MUI
 
 const API_URL_FORMULAS = '/formulas/';
-const API_URL_EMPRESA = '/empresa/'
-const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-
+const API_URL_EMPRESA = '/empresa/';
 
 const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     // Iniciamos como array vacío siempre
     const [formulasList, setFormulasList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // --- NUEVO: Estado de carga ---
+    const [isLoading, setIsLoading] = useState(true);
+
     const navigate = useNavigate();
     const { axiosInstance } = useAuth();
 
@@ -33,6 +36,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     }, [isOpen]);
 
     const cargarFormulas = async () => {
+        setIsLoading(true); // Iniciamos carga
         try {
             const response = await axiosInstance.get(`${API_URL_FORMULAS}`);
             const datos = response.data.results || response.data;
@@ -48,6 +52,8 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error("Error cargando formulas", error);
             setFormulasList([]); // En caso de error, lista vacía
+        } finally {
+            setIsLoading(false); // Terminamos carga (sea éxito o error)
         }
     };
 
@@ -56,21 +62,17 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
             const response = await axiosInstance.get(`${API_URL_EMPRESA}`);
             if (response.data && response.data.length > 0) {
                 let empresaDatos = response.data[0];
-                // Guardamos el OBJETO ya procesado
                 setEmpresaInfo(empresaDatos);
-
             } else {
                 console.warn("No se encontraron datos de la empresa");
             }
-
         } catch (error) {
             console.error("Error cargando info de la empresa", error);
         }
     };
 
     const handleGenerarPdf = async (formula) => {
-
-        if (isGeneratingPdf === formula.idform) return; // Ya se está generando
+        if (isGeneratingPdf === formula.idform) return; 
         setIsGeneratingPdf(formula.idform);
 
         try {
@@ -79,15 +81,13 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
             const ingredientesOriginales = formulaData.detalles || [];
             const ingredientesTransformados = ingredientesOriginales.map(ing => ({
                 id: ing.iding,
-                nombre: ing.nombre_ingrediente, // Convertimos 'nombre_ingrediente' a 'nombre'
-                peso: ing.cantidad,           // Convertimos 'cantidad' a 'peso'
-                tolerancia: ing.tolerancia    // 'tolerancia' se queda igual
+                nombre: ing.nombre_ingrediente, 
+                peso: ing.cantidad,           
+                tolerancia: ing.tolerancia    
             }));
 
-            // 3. Guardamos todos los datos necesarios en el state 'pdfData'
             const empresaPdf = empresaInfo;
             setPdfData({
-                // Transformamos también el objeto 'formula' principal
                 formula: {
                     id: formulaData.idform,
                     nombre: formulaData.nombre
@@ -96,18 +96,15 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
                 empresa: empresaPdf
             });
 
-            // ¡NO llamamos a html2pdf aquí! Dejamos que el useEffect se encargue.
-
         } catch (error) {
             console.error("Error preparando los datos del PDF", error);
             alert("Error: No se pudieron cargar los detalles para el PDF.");
-            setIsGeneratingPdf(null); // Resetear en caso de error
+            setIsGeneratingPdf(null); 
         }
     };
 
     useEffect(() => {
         if (pdfData && reportePdfRef.current) {
-            // ¡Esta es tu lógica original!
             const element = reportePdfRef.current;
             const pdfFileName = `Formula-${pdfData.formula.id || 'sin-id'}-${pdfData.formula.nombre || 'reporte'}.pdf`;
 
@@ -123,13 +120,10 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
                 jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
             };
 
-            // Inicia la descarga
             html2pdf().from(element).set(opt).save().then(() => {
-                // Limpieza: Reseteamos los states cuando termina
                 setPdfData(null);
                 setIsGeneratingPdf(null);
             }).catch(err => {
-                // Manejar error en la generación
                 console.error("Error al guardar PDF", err);
                 setPdfData(null);
                 setIsGeneratingPdf(null);
@@ -137,8 +131,6 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
         }
     }, [pdfData]);
 
-    // Filtrado SEGURO
-    // Añadimos 'Array.isArray(formulasList) && ...' para proteger el filter
     const filteredFormulas = Array.isArray(formulasList)
         ? formulasList.filter((formula) =>
             formula.nombre && formula.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -150,7 +142,6 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
     return (
         <div className="modal-overlay">
             <div className="modal-content-large">
-                {/* Se renderiza solo cuando 'pdfData' tiene información */}
                 {pdfData && (
                     <div className="pdf-hidden-container">
                         <ReporteFormula
@@ -191,8 +182,17 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* Si no hay datos, mostramos un mensaje amigable */}
-                            {filteredFormulas.length > 0 ? (
+                            {/* --- LÓGICA DE RENDERIZADO CON LOADING --- */}
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                            <CircularProgress size={30} />
+                                            <span style={{ color: '#666' }}>Cargando fórmulas...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredFormulas.length > 0 ? (
                                 filteredFormulas.map((f) => (
                                     <tr key={f.idform}>
                                         <td>{f.idform}</td>
@@ -202,7 +202,7 @@ const ConsultarFormulasModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     className="btn-pdf"
                                                     onClick={() => handleGenerarPdf(f)}
-                                                    disabled={isGeneratingPdf === f.idform} // Deshabilita solo este botón
+                                                    disabled={isGeneratingPdf === f.idform}
                                                 >
                                                     {isGeneratingPdf === f.idform ? (
                                                         <Loader size={16} className="spinning-loader" />

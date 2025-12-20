@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react';
-import './styles/Reporte.css'; // Asegúrate de importar el nuevo CSS
-
+import './styles/Reporte.css'; 
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -21,6 +20,9 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
             maximumFractionDigits: 3
         });
     };
+
+    // --- CORRECCIÓN: Inicializamos el acumulador aquí ---
+    let acumulado = 0;
 
     return (
         <div ref={ref} className="reporte-carta">
@@ -97,6 +99,9 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
                     <tbody>
                         {ingredientes.map((ing, index) => {
                             const peso = parseFloat(ing.peso || 0);
+                            
+                            // --- CORRECCIÓN: Sumamos al acumulado en cada vuelta ---
+                            acumulado += peso;
 
                             return (
                                 <tr key={index}>
@@ -104,7 +109,8 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
                                     <td>{ing.nombre}</td>
                                     <td className="text-right">{formatNumero(peso)}</td>
                                     <td className="text-center">{ing.tolerancia || 0}%</td>
-                                    <td className="text-right">{formatNumero(peso)}</td>
+                                    {/* --- CORRECCIÓN: Mostramos el acumulado --- */}
+                                    <td className="text-right">{formatNumero(acumulado)}</td>
                                 </tr>
                             );
                         })}
@@ -118,19 +124,6 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
                         )}
                     </tbody>
                 </table>
-
-                {/* ---- Observaciones (DESCARTADO) ---- */}
-                {/*
-                <div className="observaciones-container">
-                    <div className="obs-header">Observaciones</div>
-                    <div className="obs-lines">
-                        <div className="line"></div>
-                        <div className="line"></div>
-                        <div className="line"></div>
-                    </div>
-                </div>
-                */}
-
             </main>
 
             {/* ================= FOOTER ================= */}
@@ -142,7 +135,6 @@ const ReporteFormula = forwardRef(({ formula, ingredientes = [], empresa = {} },
 
         </div>
     );
-
 });
 
 export default ReporteFormula;

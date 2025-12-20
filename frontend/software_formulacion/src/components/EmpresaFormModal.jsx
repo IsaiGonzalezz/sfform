@@ -11,24 +11,34 @@ import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import BusinessIcon from '@mui/icons-material/Business';
 
-const API_URL_EMPRESA_REL = '/empresa/'; 
+const API_URL_EMPRESA_REL = '/empresa/';
 
 // --- CONFIGURACIÓN DE URLS PARA IMÁGENES ---
 const API_URL = import.meta.env.VITE_API_URL;
-const BASE_IMAGE_URL = import.meta.env.VITE_BACKEND_URL; 
+const BASE_IMAGE_URL = import.meta.env.VITE_BACKEND_URL;
 
 // --- Esquema de Validación ---
 const validationSchema = yup.object().shape({
-    rfc: yup.string().required('El RFC es obligatorio'),
+    // MODIFICADO: RFC limitado a 16 caracteres
+    rfc: yup.string()
+        .required('El RFC es obligatorio')
+        .max(16, 'El RFC no puede tener más de 16 caracteres'),
     nombre: yup.string().required('El nombre es obligatorio'),
     calle: yup.string().required('La calle es obligatoria'),
     colonia: yup.string().required('La colonia es obligatoria'),
     ciudad: yup.string().required('La ciudad es obligatoria'),
     estado: yup.string().required('El estado es obligatorio'),
-    cp: yup.string().required('El Código Postal es obligatorio'),
+    // MODIFICADO: CP limitado a 5 dígitos numéricos
+    cp: yup.string()
+        .required('El Código Postal es obligatorio')
+        .matches(/^[0-9]+$/, "Solo se permiten números")
+        .length(5, "El C.P. debe tener exactamente 5 dígitos"),
     contacto: yup.string().required('El nombre de contacto es obligatorio'),
     correo: yup.string().email('Correo inválido').required('El correo es obligatorio'),
-    telefono: yup.string().required('El teléfono es obligatorio'),
+    telefono: yup.string()
+        .required('El teléfono es obligatorio')
+        .matches(/^[0-9]+$/, "Solo se permiten números")
+        .length(10, "El Número de telefono debe tener 10 digitos"),
     logotipo: yup.mixed()
         .nullable()
         .test('fileSize', 'El archivo es muy grande (máx 2MB)', value => {
@@ -69,16 +79,14 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
         }
     });
 
-    const logoFile = watch('logotipo'); // Ojo: debe coincidir con el nombre del campo en validationSchema ('logotipo')
+    const logoFile = watch('logotipo');
 
     // --- EFECTO: CARGAR DATOS AL ABRIR ---
     useEffect(() => {
         if (open) {
             if (isEditMode && empresaToEdit) {
-                // AQUÍ MAPEMOS: Base de Datos (Mayúscula) -> Formulario (Minúscula)
-                // Usamos || para prevenir errores si viene undefined
                 reset({
-                    rfc: empresaToEdit.RFC || empresaToEdit.rfc || '', 
+                    rfc: empresaToEdit.RFC || empresaToEdit.rfc || '',
                     nombre: empresaToEdit.Nombre || empresaToEdit.nombre || '',
                     calle: empresaToEdit.Calle || empresaToEdit.calle || '',
                     colonia: empresaToEdit.Colonia || empresaToEdit.colonia || '',
@@ -88,15 +96,12 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                     contacto: empresaToEdit.Contacto || empresaToEdit.contacto || '',
                     correo: empresaToEdit.Correo || empresaToEdit.correo || '',
                     telefono: empresaToEdit.Telefono || empresaToEdit.telefono || '',
-                    logotipo: null, // El input file siempre inicia limpio
+                    logotipo: null,
                 });
 
-                // Previsualización de Imagen existente
-                // Verificamos ambas opciones (Mayuscula o minuscula)
                 const rutaLogo = empresaToEdit.Logotipo || empresaToEdit.logotipo;
-                
+
                 if (rutaLogo) {
-                    // Concatenamos http://localhost:3000 + /logos_empresa/foto.jpg
                     setLogoPreview(`${BASE_IMAGE_URL}/${rutaLogo}`);
                 } else {
                     setLogoPreview(null);
@@ -122,7 +127,6 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
             };
             reader.readAsDataURL(file);
         } else if (isEditMode && !logoFile) {
-            // Si cancelan la selección, intentamos restaurar el logo original de la BD
             const rutaLogo = empresaToEdit?.Logotipo || empresaToEdit?.logotipo;
             if (rutaLogo) {
                 setLogoPreview(`${BASE_IMAGE_URL}/${rutaLogo}`);
@@ -157,13 +161,12 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
             };
 
             if (isEditMode) {
-                // CORRECCIÓN CRÍTICA: Aseguramos obtener el RFC correcto aunque venga en mayúsculas
+                // Usamos el RFC original guardado en empresaToEdit para la URL, 
+                // permitiendo que data.rfc (el nuevo) vaya en el cuerpo de la petición.
                 const idParaEditar = empresaToEdit.RFC || empresaToEdit.rfc;
-                
-                // PUT: /empresas/GOGI...
+
                 response = await axiosInstance.put(`${API_URL_EMPRESA_REL}${idParaEditar}`, formDataToSend, config);
             } else {
-                // POST: /empresas/
                 response = await axiosInstance.post(API_URL_EMPRESA_REL, formDataToSend, config);
             }
 
@@ -217,8 +220,16 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="rfc"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="RFC" fullWidth disabled={isSaving || isEditMode} 
-                                            error={!!errors.rfc} helperText={errors.rfc?.message} />
+                                        // MODIFICADO: Se habilitó la edición y se puso límite de 16 chars
+                                        <TextField
+                                            {...field}
+                                            label="RFC"
+                                            fullWidth
+                                            disabled={isSaving} // Ya es editable
+                                            inputProps={{ maxLength: 16 }}
+                                            error={!!errors.rfc}
+                                            helperText={errors.rfc?.message}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -227,7 +238,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="nombre"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Razón Social / Nombre" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Razón Social / Nombre" fullWidth disabled={isSaving}
                                             error={!!errors.nombre} helperText={errors.nombre?.message} />
                                     )}
                                 />
@@ -246,7 +257,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="calle"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Calle y Número" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Calle y Número" fullWidth disabled={isSaving}
                                             error={!!errors.calle} helperText={errors.calle?.message} />
                                     )}
                                 />
@@ -256,7 +267,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="colonia"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Colonia" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Colonia" fullWidth disabled={isSaving}
                                             error={!!errors.colonia} helperText={errors.colonia?.message} />
                                     )}
                                 />
@@ -266,7 +277,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="ciudad"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Ciudad" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Ciudad" fullWidth disabled={isSaving}
                                             error={!!errors.ciudad} helperText={errors.ciudad?.message} />
                                     )}
                                 />
@@ -276,7 +287,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="estado"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Estado" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Estado" fullWidth disabled={isSaving}
                                             error={!!errors.estado} helperText={errors.estado?.message} />
                                     )}
                                 />
@@ -286,8 +297,21 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="cp"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="C.P." fullWidth disabled={isSaving} 
-                                            error={!!errors.cp} helperText={errors.cp?.message} />
+                                        // MODIFICADO: Filtro para solo números y max 5 dígitos
+                                        <TextField
+                                            {...field}
+                                            label="C.P."
+                                            fullWidth
+                                            disabled={isSaving}
+                                            inputProps={{ maxLength: 5 }}
+                                            onChange={(e) => {
+                                                // Reemplaza cualquier caracter que no sea número
+                                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                                field.onChange(value);
+                                            }}
+                                            error={!!errors.cp}
+                                            helperText={errors.cp?.message}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -305,7 +329,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="contacto"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Nombre Completo del Responsable" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Nombre Completo del Responsable" fullWidth disabled={isSaving}
                                             error={!!errors.contacto} helperText={errors.contacto?.message} />
                                     )}
                                 />
@@ -315,7 +339,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="correo"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Correo Electrónico" type="email" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Correo Electrónico" type="email" fullWidth disabled={isSaving}
                                             error={!!errors.correo} helperText={errors.correo?.message} />
                                     )}
                                 />
@@ -325,7 +349,11 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                                     name="telefono"
                                     control={control}
                                     render={({ field }) => (
-                                        <TextField {...field} label="Teléfono" fullWidth disabled={isSaving} 
+                                        <TextField {...field} label="Teléfono" fullWidth disabled={isSaving} inputProps={{ maxLength: 10 }}
+                                            onChange={(e) => {
+                                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                                field.onChange(value);
+                                            }}
                                             error={!!errors.telefono} helperText={errors.telefono?.message} />
                                     )}
                                 />
@@ -339,7 +367,7 @@ function EmpresaFormModal({ open, onClose, onSaveSuccess, empresaToEdit }) {
                             Branding
                         </Typography>
                         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 4, p: 3, border: '1px dashed', borderColor: 'divider', borderRadius: '12px' }}>
-                            
+
                             {/* Previsualización del Logo */}
                             <Avatar
                                 src={logoPreview || undefined}
