@@ -144,22 +144,29 @@ const DetalleProduccionPage = () => {
     // 4. DELETE: Ejecutar eliminación (Tras confirmar)
     const executeDelete = async () => {
         setShowConfirmModal(false); // Cerramos modal
-        setIsSaving(true); // Bloqueamos UI y mostramos spinner en botón
+        setIsSaving(true); // Bloqueamos UI
         
         try {
-            await axiosInstance.patch(`${API_URL_PRODUCCION_REL}desactivar-op/${formData.op}`);
+            // Asumiendo que API_URL_PRODUCCION_REL termina en '/' (ej: '/api/produccion/')
+            await axiosInstance.delete(`${API_URL_PRODUCCION_REL}${formData.op}`);
             
-            showToast(`Orden ${formData.op} desactivada exitosamente.`);
+            showToast(`Orden ${formData.op} eliminada exitosamente.`);
             
-            // Esperamos un poco para que el usuario vea el toast antes de irnos
             setTimeout(() => {
                 navigate('/produccion');
             }, 1500);
 
         } catch (err) {
             console.error(err);
-            showToast('Error al desactivar la OP.', 'error');
-            setIsSaving(false); // Solo desbloqueamos si hubo error
+            setIsSaving(false); // Desbloqueamos
+            // Si el backend nos responde (ej. 403 Prohibido o 404 No Encontrado)
+            if (err.response && err.response.data && err.response.data.message) {
+                // Mostramos EL MENSAJE DEL BACKEND (Ej: "No se puede eliminar: La orden está activa...")
+                showToast(err.response.data.message, 'error');
+            } else {
+                // Error genérico de conexión
+                showToast('Error al intentar eliminar la OP.', 'error');
+            }
         }
     };
 
@@ -204,8 +211,8 @@ const DetalleProduccionPage = () => {
                         <div style={customStyles.iosModalContent}>
                             <h3 style={customStyles.iosTitle}>Confirmar Eliminación</h3>
                             <p style={customStyles.iosMessage}>
-                                ¿Estás seguro de desactivar TODA la orden <strong>{formData.op}</strong>? 
-                                <br/>Se cancelarán todos sus folios asociados.
+                                ¿Estás seguro de borrar TODA la orden <strong>{formData.op}</strong>? 
+                                <br/>Esta acción <strong>NO</strong> se puede deshacer.
                             </p>
                         </div>
                         <div style={customStyles.iosActionGroup}>
@@ -219,7 +226,7 @@ const DetalleProduccionPage = () => {
                                 style={{ ...customStyles.iosButtonConfirm, color: '#ef4444' }} // Rojo para acción destructiva
                                 onClick={executeDelete}
                             >
-                                Desactivar
+                                Eliminar
                             </button>
                         </div>
                     </div>

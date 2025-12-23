@@ -18,9 +18,10 @@ const axiosInstance = axios.create({
 export const AuthProvider = ({ children }) => {
     const navigate = useNavigate();
 
+    // CAMBIO 1: Usamos sessionStorage en lugar de localStorage
     const [authTokens, setAuthTokens] = useState(() => 
-        localStorage.getItem('authTokens') 
-            ? JSON.parse(localStorage.getItem('authTokens')) 
+        sessionStorage.getItem('authTokens') 
+            ? JSON.parse(sessionStorage.getItem('authTokens')) 
             : null
     );
     
@@ -43,7 +44,9 @@ export const AuthProvider = ({ children }) => {
                 
                 setAuthTokens(data);
                 setUser(jwtDecode(data.access));
-                localStorage.setItem('authTokens', JSON.stringify(data));
+                
+                // CAMBIO 2: Guardamos en sessionStorage
+                sessionStorage.setItem('authTokens', JSON.stringify(data));
                 
                 navigate('/dashboard'); 
                 return { success: true };
@@ -61,13 +64,15 @@ export const AuthProvider = ({ children }) => {
     const logoutUser = useCallback(() => {
         setAuthTokens(null);
         setUser(null);
-        localStorage.removeItem('authTokens');
+        // CAMBIO 3: Limpiamos sessionStorage
+        sessionStorage.removeItem('authTokens');
         navigate('/'); 
     }, [navigate]);
 
     //FUNCION DE REFRESCO DE TOKEN ----------------------------------
     const updateToken = useCallback(async () =>{
-        const tokens = JSON.parse(localStorage.getItem('authTokens'));
+        // CAMBIO 4: Leemos de sessionStorage
+        const tokens = JSON.parse(sessionStorage.getItem('authTokens'));
         if (!tokens || !tokens.refresh){
             logoutUser();
             return null;
@@ -80,7 +85,8 @@ export const AuthProvider = ({ children }) => {
                 const data = response.data;
                 setAuthTokens(data);
                 setUser(jwtDecode(data.access));
-                localStorage.setItem('authTokens', JSON.stringify(data));
+                // CAMBIO 5: Actualizamos sessionStorage
+                sessionStorage.setItem('authTokens', JSON.stringify(data));
                 return data.access;
             }
         } catch(error){
@@ -118,7 +124,8 @@ export const AuthProvider = ({ children }) => {
 
         // 3a. Interceptor de Request: Adjunta el Access Token
         const requestInterceptor = axiosInstance.interceptors.request.use(async req => {
-            const tokens = JSON.parse(localStorage.getItem('authTokens'));
+            // CAMBIO 6: Leemos de sessionStorage
+            const tokens = JSON.parse(sessionStorage.getItem('authTokens'));
             
             if (tokens) {
                 req.headers.Authorization = `Bearer ${tokens.access}`;

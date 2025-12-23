@@ -337,45 +337,48 @@ exports.patchProduccion = async (req, res) => {
 };
 
 
-
-// DELETE: Eliminar por OP (Orden de Producción)
+// borrado de ordenes de produccion
 exports.deleteProduccion = async (req, res) => {
-    // Ahora esperamos recibir 'op' en la URL, no 'folio'
     const { op } = req.params;
 
-    const pool = await getConnection();
-    const transaction = new sql.Transaction(pool);
-
     try {
-        await transaction.begin();
+        const pool = await getConnection();
 
-        // PASO 1: Eliminar los DETALLES asociados a esa OP
-        // Usamos una SUBCONSULTA: "Borra de Detalle donde el FolioProduccion esté en la lista de Folios de esta OP"
-        await transaction.request()
+        // --- PASO 1: VALIDACIÓN  ---
+        // Buscamos si existe AL MENOS UN registro con esa OP que viole la regla.
+        // Regla de Bloqueo: Estatus 1 (Activo) Y Operador Asignado (No nulo y no vacío).
+        const verifyResult = await pool.request()
             .input('op', sql.VarChar, op)
             .query(`
-                DELETE FROM Detalle_Produccion 
-                WHERE FolioProduccion IN (
-                    SELECT Folio FROM Produccion WHERE OP = @op
-                )
+                SELECT TOP 1 Folio 
+                FROM Produccion 
+                WHERE OP = @op 
+                  AND Estatus = 1 
+                  AND (IdOperador IS NOT NULL AND IdOperador <> '')
             `);
 
-        // PASO 2: Eliminar las CABECERAS (Producción) con esa OP
-        const result = await transaction.request()
+        // Si encontramos un registro así, BLOQUEAMOS TODO.
+        if (verifyResult.recordset.length > 0) {
+            return res.status(403).json({ 
+                message: 'No se puede eliminar: La orden está EN PROCESO (Activa) y ya tiene un operador asignado.' 
+            });
+        }
+
+        // --- PASO 2: BORRADO (Si pasa la validación, borramos todo) ---
+        // Esto borrará las que tengan Estatus 0 
+        // Y TAMBIÉN las que tengan Estatus 1 pero sin operador (IdOperador NULL)
+        const deleteResult = await pool.request()
             .input('op', sql.VarChar, op)
             .query('DELETE FROM Produccion WHERE OP = @op');
 
-        // Si no se borró ninguna fila en el paso 2, es que la OP no existía
-        if (result.rowsAffected[0] === 0) {
-            await transaction.rollback();
-            return res.status(404).json({ message: 'No se encontraron registros con esa OP' });
+        if (deleteResult.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'No se encontró la Orden de Producción.' });
         }
 
-        await transaction.commit();
-        res.json({ message: `Orden de Producción ${op} y sus detalles eliminados correctamente` });
+        res.json({ message: `Orden ${op} eliminada correctamente.` });
 
     } catch (error) {
-        await transaction.rollback();
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 };

@@ -16,7 +16,7 @@ exports.getIngredientes = async (req, res) => {
                 observaciones,
                 pesado,
                 activo
-            FROM Ingredientes 
+            FROM Ingredientes
         `;
 
 

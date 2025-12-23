@@ -1,0 +1,93 @@
+/* src/components/styles/ThemeSwitch.css */
+
+/* Contenedor principal */
+.switch-label {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ocultar el checkbox real */
+.switch-input {
+  display: none;
+}
+
+/* El fondo (la pastilla) */
+.switch-slider {
+  position: relative;
+  width: 90px; /* Reduje un poco de 110px para que no sea tan gigante */
+  height: 40px; /* Reduje de 50px */
+  background-color: white; /* Fondo blanco en modo día */
+  border-radius: 9999px;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Fondo oscuro cuando está activo (Modo Noche) */
+.switch-input:checked + .switch-slider {
+  background-color: #52525b; /* Gris oscuro */
+}
+
+/* El círculo que se mueve */
+.switch-slider::after {
+  content: '';
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  top: 4px;
+  left: 4px;
+  /* Degradado Naranja/Amarillo (SOL) */
+  background: linear-gradient(to right, #f97316, #facc15); 
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Mover el círculo a la derecha cuando está activo (LUNA) */
+.switch-input:checked + .switch-slider::after {
+  left: calc(100% - 4px);
+  transform: translateX(-100%);
+  /* Degradado Oscuro (LUNA) */
+  background: linear-gradient(to right, #18181b, #27272a); 
+}
+
+/* Efecto de estiramiento al hacer click (Active) */
+.switch-label:active .switch-slider::after {
+  width: 40px;
+}
+
+/* --- ICONOS SVG --- */
+.switch-icon {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  transition: opacity 0.3s ease, fill 0.3s ease;
+  pointer-events: none; /* Para que el click pase al label */
+}
+
+/* Icono Sol (Izquierda) */
+.icon-sun {
+  left: 10px;
+  fill: white; /* Blanco sobre el círculo naranja */
+}
+/* Cuando es noche, el sol se apaga un poco */
+.switch-input:checked ~ .icon-sun {
+  opacity: 0.5;
+}
+
+/* Icono Luna (Derecha) */
+.icon-moon {
+  right: 10px;
+  fill: black;
+  opacity: 0.5;
+}
+/* Cuando es noche, la luna brilla blanca */
+.switch-input:checked ~ .icon-moon {
+  opacity: 1;
+  fill: white;
+}

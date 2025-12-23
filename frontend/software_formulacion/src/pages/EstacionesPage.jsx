@@ -2,19 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/useAuth';
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox,
-    FormControlLabel, Switch // <--- 1. Switch
+    Checkbox, FormControlLabel, Switch
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash'; // <--- 2. Icono Restaurar
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import EvStationIcon from '@mui/icons-material/EvStation';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { AlertCircle, Check } from 'lucide-react'; // Iconos para el Toast
 
-// Importamos el Modal de Estaciones
 import EstacionFormModal from '../components/EstacionFormModal';
 
 const API_URL_ESTACIONES_REL = '/estaciones/';
@@ -22,11 +20,7 @@ const API_URL_ESTACIONES_REL = '/estaciones/';
 // --- Componente para tabla vacía ---
 function CustomNoRowsOverlay() {
     return (
-        <Box
-            sx={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-color)', opacity: 0.6
-            }}
-        >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-color)', opacity: 0.6 }}>
             <InfoOutlinedIcon sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
             <Typography variant="h6">No hay estaciones registradas</Typography>
             <Typography variant="body2">Agrega una nueva para comenzar</Typography>
@@ -40,19 +34,39 @@ function EstacionesPage() {
     // --- Estados ---
     const [estaciones, setEstaciones] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setModalOpen] = useState(false);
-    const [currentEstacion, setCurrentEstacion] = useState(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [stationToDelete, setStationToDelete] = useState(null);
     
-    // NUEVO: Estado Switch
+    // Modales de Edición/Creación
+    const [isFormModalOpen, setFormModalOpen] = useState(false);
+    const [currentEstacion, setCurrentEstacion] = useState(null);
+
+    // Estado Switch Filtro
     const [showDeleted, setShowDeleted] = useState(false);
+
+    // --- ESTADO TOAST ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    // --- HELPER: Mostrar Toast ---
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+        }, 3000);
+    };
+
+    // --- ESTADOS PARA CONFIRM MODAL (MANUAL) ---
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({
+        title: '',
+        message: '',
+        color: '#ef4444', // Rojo por defecto
+        confirmText: '',
+        onConfirm: () => {}
+    });
 
     // --- Fetch Estaciones ---
     const fetchEstaciones = useCallback(async () => {
         setLoading(true);
         try {
-            // Lógica del filtro
             const url = showDeleted 
                 ? `${API_URL_ESTACIONES_REL}?verTodos=true` 
                 : API_URL_ESTACIONES_REL;
@@ -61,51 +75,76 @@ function EstacionesPage() {
             setEstaciones(response.data || []);
         } catch (error) {
             console.error("Error al obtener las estaciones:", error);
+            showToast("Error al cargar estaciones", "error");
             setEstaciones([]);
         } finally {
             setLoading(false);
         }
-    }, [axiosInstance, showDeleted]); // <--- Dependencia showDeleted
+    }, [axiosInstance, showDeleted]);
 
     useEffect(() => {
         fetchEstaciones();
     }, [fetchEstaciones]);
 
-    // --- Manejadores de Modal ---
-    const handleOpenModal = (estacion = null) => { setCurrentEstacion(estacion); setModalOpen(true); };
-    const handleCloseModal = () => { setModalOpen(false); setCurrentEstacion(null); };
+    // --- Manejadores de Modal Formulario ---
+    const handleOpenFormModal = (estacion = null) => { setCurrentEstacion(estacion); setFormModalOpen(true); };
+    const handleCloseFormModal = () => { setFormModalOpen(false); setCurrentEstacion(null); };
 
-    // --- Manejadores de Confirmación ---
-    const handleOpenConfirm = (station) => { setStationToDelete(station); setConfirmOpen(true); };
-    const handleCloseConfirm = () => { setConfirmOpen(false); setStationToDelete(null); };
+    // --- LÓGICA DE ACCIONES (Desactivar / Restaurar) ---
 
-    // --- Borrar (Desactivar) Estación ---
-    const handleDeleteStation = async () => {
-        if (!stationToDelete) return;
-        try {
-            // Usamos DELETE (soft-delete en backend)
-            await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${stationToDelete.IdEst}`);
-            console.log('Estación desactivada:', stationToDelete.IdEst);
-            fetchEstaciones();
-        } catch (error) {
-            console.error('Error al desactivar la estación:', error);
-        } finally {
-            handleCloseConfirm();
-        }
+    // 1. DESACTIVAR (Borrar)
+    const handleDeleteClick = (station) => {
+        setModalConfig({
+            title: 'Confirmar Desactivación',
+            message: (
+                <>
+                    ¿Estás seguro de que deseas desactivar la estación <strong>{station.Nombre}</strong>?
+                    <br />Esta acción la ocultará de la lista principal.
+                </>
+            ),
+            color: '#ef4444', // Rojo
+            confirmText: 'Desactivar',
+            onConfirm: async () => {
+                try {
+                    await axiosInstance.patch(`${API_URL_ESTACIONES_REL}${station.IdEst}`);
+                    showToast(`Estación ${station.Nombre} desactivada`, 'success');
+                    fetchEstaciones();
+                } catch (error) {
+                    console.error('Error al desactivar:', error);
+                    showToast('Error al desactivar', 'error');
+                }
+            }
+        });
+        setShowConfirmModal(true);
     };
 
-    // --- NUEVO: Restaurar (Activar) Estación ---
-    const handleRestoreStation = async (id) => {
-        if (!window.confirm("¿Deseas restaurar esta estación?")) return;
-        try {
-            // Ajusta la ruta si es diferente en tu backend
-            await axiosInstance.put(`${API_URL_ESTACIONES_REL}activar/${id}`);
-            fetchEstaciones();
-        } catch (error) {
-            console.error("Error al restaurar:", error);
-            alert("No se pudo restaurar la estación.");
-        }
+    // 2. RESTAURAR (Activar)
+    const handleRestoreClick = (stationId) => {
+        setModalConfig({
+            title: 'Confirmar Restauración',
+            message: '¿Deseas restaurar esta estación para que vuelva a estar activa?',
+            color: '#3b82f6', // Azul
+            confirmText: 'Restaurar',
+            onConfirm: async () => {
+                try {
+                    await axiosInstance.put(`${API_URL_ESTACIONES_REL}activar/${stationId}`);
+                    showToast('Estación restaurada exitosamente', 'success');
+                    fetchEstaciones();
+                } catch (error) {
+                    console.error("Error al restaurar:", error);
+                    showToast("No se pudo restaurar la estación", "error");
+                }
+            }
+        });
+        setShowConfirmModal(true);
     };
+
+    // Función para ejecutar la acción confirmada
+    const handleConfirmAction = () => {
+        modalConfig.onConfirm();
+        setShowConfirmModal(false);
+    };
+
 
     // --- Columnas de la Tabla ---
     const columns = [
@@ -136,11 +175,11 @@ function EstacionesPage() {
                         {isActive ? (
                             // ACCIONES NORMALES
                             <>
-                                <IconButton onClick={() => handleOpenModal(params.row)}
+                                <IconButton onClick={() => handleOpenFormModal(params.row)}
                                     sx={{ backgroundColor: '#229D1B', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#1b8016' } }}>
                                     <EditIcon sx={{ fontSize: '20px',color: '#ffffff !important' }} />
                                 </IconButton>
-                                <IconButton onClick={() => handleOpenConfirm(params.row)}
+                                <IconButton onClick={() => handleDeleteClick(params.row)}
                                     sx={{ backgroundColor: '#9D1B1B', color: 'var(--text-color)', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#7a1515' } }}>
                                     <DeleteOutlineIcon sx={{ fontSize: '20px', color: '#ffffff !important' }} />
                                 </IconButton>
@@ -150,12 +189,8 @@ function EstacionesPage() {
                             <Button 
                                 variant="contained" 
                                 size="small"
-                                onClick={() => handleRestoreStation(params.row.IdEst)}
-                                startIcon={<RestoreFromTrashIcon 
-                                    sx={{
-                                        color: '#fff !important',
-                                    }}
-                                />}
+                                onClick={() => handleRestoreClick(params.row.IdEst)}
+                                startIcon={<RestoreFromTrashIcon sx={{ color: '#fff !important' }} />}
                                 sx={{ 
                                     backgroundColor: '#1976d2', 
                                     color: '#fff !important', 
@@ -175,7 +210,53 @@ function EstacionesPage() {
     ];
 
     return (
-        <Box sx={{ width: '100%', pb: 4 }}>
+        <Box sx={{ width: '100%', pb: 4, position: 'relative' }}>
+
+            {/* --- TOAST COMPONENT --- */}
+            {toast.show && (
+                <div style={{
+                    ...customStyles.toast,
+                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                    color: toast.type === 'error' ? '#991b1b' : '#15803d',
+                    borderColor: toast.type === 'error' ? '#fecaca' : '#bbf7d0',
+                }}>
+                    <div style={{
+                        ...customStyles.toastIconContainer,
+                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e',
+                    }}>
+                        {toast.type === 'error' ? <AlertCircle size={16} color="#fff" /> : <Check size={16} color="#fff" strokeWidth={3} />}
+                    </div>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* --- MODAL CONFIRMACIÓN (DISEÑO IOS MANUAL) --- */}
+            {showConfirmModal && (
+                <div style={customStyles.modalOverlay}>
+                    <div style={customStyles.iosModal}>
+                        <div style={customStyles.iosModalContent}>
+                            <h3 style={customStyles.iosTitle}>{modalConfig.title}</h3>
+                            <div style={customStyles.iosMessage}>
+                                {modalConfig.message}
+                            </div>
+                        </div>
+                        <div style={customStyles.iosActionGroup}>
+                            <button
+                                style={customStyles.iosButtonCancel}
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                style={{ ...customStyles.iosButtonConfirm, color: modalConfig.color }}
+                                onClick={handleConfirmAction}
+                            >
+                                {modalConfig.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 1. Encabezado */}
             <Box
@@ -198,7 +279,6 @@ function EstacionesPage() {
                 </Box>
 
                 <Box display="flex" alignItems="center" gap={2}>
-                    {/* Switch Mostrar Eliminados */}
                     <FormControlLabel
                         control={
                             <Switch
@@ -218,7 +298,7 @@ function EstacionesPage() {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => handleOpenModal()}
+                        onClick={() => handleOpenFormModal()}
                         sx={{
                             fontWeight: 'bold', borderRadius: '10px', px: 3, py: 1,
                             backgroundColor: '#004F8C', color: '#fff',
@@ -246,7 +326,6 @@ function EstacionesPage() {
                     getRowId={(row) => row.IdEst}
                     slots={{ noRowsOverlay: CustomNoRowsOverlay }}
                     autoHeight={estaciones.length === 0}
-                    // Estilo condicional
                     getRowClassName={(params) => 
                         params.row.activo === false || params.row.activo === 0 ? 'fila-inactiva' : ''
                     }
@@ -257,7 +336,6 @@ function EstacionesPage() {
                         '& .MuiDataGrid-footerContainer': { backgroundColor: 'var(--card-bg)', borderTop: '1px solid var(--border-color)' },
                         '& .MuiTablePagination-root': { color: 'var(--text-color)' },
                         '& .MuiSvgIcon-root': { color: 'var(--text-color)' },
-                        // Estilo visual para distinguir eliminados
                         '& .fila-inactiva': {
                             backgroundColor: 'rgba(255, 0, 0, 0.05)',
                             color: '#999',
@@ -268,24 +346,111 @@ function EstacionesPage() {
             </Paper>
 
             {/* 3. Modales */}
-            <EstacionFormModal open={isModalOpen} onClose={handleCloseModal} onSaveSuccess={fetchEstaciones} estacionToEdit={currentEstacion} />
+            <EstacionFormModal 
+                open={isFormModalOpen} 
+                onClose={handleCloseFormModal} 
+                onSaveSuccess={() => {
+                    fetchEstaciones();
+                    showToast(currentEstacion ? 'Estación editada correctamente' : 'Estación creada correctamente');
+                }} 
+                estacionToEdit={currentEstacion} 
+            />
 
-            <Dialog open={confirmOpen} onClose={handleCloseConfirm} PaperProps={{ sx: { backgroundColor: 'var(--card-bg)', color: 'var(--text-color)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' } }}>
-                <DialogTitle sx={{ fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningAmberIcon /> Confirmar Eliminación
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ color: 'var(--text-color)', opacity: 0.8 }}>
-                        ¿Estás seguro de que deseas desactivar la estación <strong style={{ color: '#004F8C' }}>{stationToDelete?.Nombre}</strong> (ID: {stationToDelete?.IdEst})?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button onClick={handleCloseConfirm} sx={{ color: 'var(--text-color)', opacity: 0.7, textTransform: 'none', mr: 1, '&:hover': { opacity: 1, backgroundColor: 'transparent' } }}>Cancelar</Button>
-                    <Button onClick={handleDeleteStation} variant="contained" sx={{ backgroundColor: '#EF4444', color: '#fff', fontWeight: 'bold', borderRadius: '8px', textTransform: 'none', boxShadow: '0 4px 10px rgba(239,68,68,0.4)', '&:hover': { backgroundColor: '#DC2626' } }} autoFocus>Desactivar</Button>
-                </DialogActions>
-            </Dialog>
         </Box>
     );
 }
+
+// --- ESTILOS PERSONALIZADOS (TOAST & MODAL IOS) ---
+const customStyles = {
+    toast: {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '12px 24px',
+        borderRadius: '50px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        zIndex: 9999,
+        border: '1px solid',
+        animation: 'slideIn 0.3s ease-out'
+    },
+    toastIconContainer: {
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    modalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10000,
+        animation: 'fadeIn 0.2s ease-out'
+    },
+    iosModal: {
+        backgroundColor: 'var(--card-bg)',
+        color: 'var(--text-color)',
+        width: '85%',
+        maxWidth: '320px',
+        borderRadius: '20px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden',
+        textAlign: 'center',
+        animation: 'scaleUp 0.2s ease-out',
+        border: '1px solid var(--border-color)'
+    },
+    iosModalContent: {
+        padding: '24px 20px 20px 20px',
+    },
+    iosTitle: {
+        margin: '0 0 10px 0',
+        fontSize: '1.2rem',
+        fontWeight: '700',
+    },
+    iosMessage: {
+        margin: 0,
+        fontSize: '0.95rem',
+        opacity: 0.8,
+        lineHeight: 1.4
+    },
+    iosActionGroup: {
+        display: 'flex',
+        borderTop: '1px solid var(--border-color)',
+    },
+    iosButtonCancel: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        borderRight: '1px solid var(--border-color)',
+        color: 'var(--text-color)', 
+        opacity: 0.7,
+        fontWeight: '600',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    },
+    iosButtonConfirm: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        fontWeight: '700',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    }
+};
 
 export default EstacionesPage;

@@ -141,7 +141,7 @@ function Row({ row }) {
 
                                             <Grid item xs={4}>
                                                 <Typography variant="caption" sx={{ opacity: .6 }}>
-                                                    OPERADOR
+                                                    USUARIO
                                                 </Typography>
                                                 <Box display="flex" alignItems="center" gap={1}>
                                                     <Avatar sx={{ width: 22, height: 22, bgcolor: '#3CA7FF' }}>

@@ -6,7 +6,7 @@ import { useAuth } from '../context/useAuth';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReporteProduccion from './ReporteProduccion';
 import './styles/ConsultaProduccion.css';
-import CircularProgress from '@mui/material/CircularProgress'; // Importamos loader de MUI
+import CircularProgress from '@mui/material/CircularProgress';
 
 const API_URL_PRODUCCION_REL = '/produccion/';
 const API_URL_EMPRESA_REL = '/empresa/';
@@ -19,17 +19,14 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
     const [produccionList, setProduccionList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [empresaInfo, setEmpresaInfo] = useState(null);
-    
-    // --- NUEVO: Estado de Carga ---
     const [isLoading, setIsLoading] = useState(true);
 
     // Estados para PDF
     const [pdfData, setPdfData] = useState(null);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(null); // Guardará el ID de la OP que se está procesando
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(null);
 
     const reportePdfRef = useRef(null);
 
-    // Cargar datos iniciales
     useEffect(() => {
         if (isOpen && axiosInstance) {
             cargarProducciones();
@@ -37,9 +34,9 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen, axiosInstance]);
 
-    // --- 1. LÓGICA DE AGRUPACIÓN (MODIFICADA) ---
+    // --- CARGA DE DATOS ---
     const cargarProducciones = async () => {
-        setIsLoading(true); // Iniciamos carga
+        setIsLoading(true);
         try {
             const response = await axiosInstance.get(API_URL_PRODUCCION_REL);
             const datosCrudos = response.data.results || response.data;
@@ -48,28 +45,23 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                 const agrupadosMap = {};
 
                 datosCrudos.forEach(item => {
-                    // Usamos la OP como clave agrupadora
                     const opKey = item.op;
-
                     if (!agrupadosMap[opKey]) {
-                        // Si es la primera vez que vemos esta OP, inicializamos
                         agrupadosMap[opKey] = {
-                            ...item, // Heredamos datos generales (fecha, estatus, cliente...)
+                            ...item,
                             formulasContenidas: []
                         };
                     }
-
                     agrupadosMap[opKey].formulasContenidas.push({
-                        folioReal: item.folio || item.id, // EL ID ÚNICO DEL REGISTRO
+                        folioReal: item.folio || item.id,
                         nombre: item.nombre_formula,
                         peso: item.pesform
                     });
                 });
 
-                // Convertir mapa a array y ordenar por fecha descendente
                 const listaAgrupada = Object.values(agrupadosMap);
+                // Ordenamos usando new Date solo para el sort, eso no afecta lo visual
                 const ordenados = listaAgrupada.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
-
                 setProduccionList(ordenados);
             } else {
                 setProduccionList([]);
@@ -78,7 +70,7 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
             console.error("Error cargando producciones:", error);
             setProduccionList([]);
         } finally {
-            setIsLoading(false); // Terminamos carga (siempre se ejecuta)
+            setIsLoading(false);
         }
     };
 
@@ -86,53 +78,39 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         try {
             const response = await axiosInstance.get(API_URL_EMPRESA_REL);
             if (response.data && response.data.length > 0) {
-                let empresaDatos = response.data[0];
-                setEmpresaInfo(empresaDatos);
+                setEmpresaInfo(response.data[0]);
             }
         } catch (error) {
             console.error("Error cargando empresa:", error);
         }
     };
 
-    // --- 2. LÓGICA DE GENERACIÓN PDF (RECOLECCIÓN Y FUSIÓN) ---
+    // --- GENERACIÓN PDF ---
     const handleGenerarPdf = async (produccionAgrupada) => {
-        // Usamos la OP como identificador de carga (para el spinner)
         const idCarga = produccionAgrupada.op;
-
         if (isGeneratingPdf === idCarga) return;
         setIsGeneratingPdf(idCarga);
 
         try {
-            // A. Identificar todos los folios individuales que pertenecen a esta OP
             const listaFolios = produccionAgrupada.formulasContenidas.map(f => f.folioReal);
-
-            // B. Lanzar todas las peticiones en paralelo (Promise.all)
             const promesas = listaFolios.map(folioId =>
                 axiosInstance.get(`${API_URL_PRODUCCION_REL}${folioId}/`)
             );
-
             const respuestas = await Promise.all(promesas);
 
-            // C. Procesar y fusionar los datos
             let listaIngredientesUnificada = [];
             let pesoTotalAcumulado = 0;
 
             respuestas.forEach((res) => {
                 const data = res.data;
                 const detalles = data.detalles || [];
-                const pesoFormula = parseFloat(data.pesform || 0);
+                pesoTotalAcumulado += parseFloat(data.pesform || 0);
 
-                // 1. Sumar al total global
-                pesoTotalAcumulado += pesoFormula;
-
-                // 2. Agregar SEPARADOR visual (título de la fórmula)
-                // Tu componente ReporteProduccion renderiza una fila especial si id es '---'
                 listaIngredientesUnificada.push({
                     id: '---',
                     nombre: `--- FÓRMULA: ${data.nombre_formula} (${parseFloat(data.pesform).toFixed(2)}kg) ---`
                 });
 
-                // 3. Mapear y agregar los ingredientes de esta fórmula
                 detalles.forEach(det => {
                     listaIngredientesUnificada.push({
                         id: det.iding,
@@ -145,14 +123,12 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                 });
             });
 
-            // D. Preparar datos extra (Cabecera Global)
-            // Tomamos datos comunes de la OP agrupada
             const datosExtra = {
                 op: produccionAgrupada.op,
                 lote: produccionAgrupada.lote,
                 fecha: produccionAgrupada.fecha,
                 estatus: produccionAgrupada.estatus,
-                pesoObjetivo: pesoTotalAcumulado, // ENVIAMOS LA SUMA TOTAL
+                pesoObjetivo: pesoTotalAcumulado,
                 uuid: produccionAgrupada.uuid || null
             };
 
@@ -163,13 +139,12 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
             });
 
         } catch (error) {
-            console.error("Error generando PDF multi-folio", error);
-            alert("Error al recopilar los datos de las fórmulas.");
+            console.error("Error generando PDF", error);
+            alert("Error al recopilar los datos.");
             setIsGeneratingPdf(null);
         }
     };
 
-    // --- EFECTO: DESCARGAR PDF CUANDO pdfData ESTÁ LISTO ---
     useEffect(() => {
         if (pdfData && reportePdfRef.current) {
             const element = reportePdfRef.current;
@@ -191,7 +166,7 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                         setIsGeneratingPdf(null);
                     })
                     .catch(err => {
-                        console.error("Error librería PDF", err);
+                        console.error("Error PDF", err);
                         setPdfData(null);
                         setIsGeneratingPdf(null);
                     });
@@ -199,7 +174,6 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         }
     }, [pdfData]);
 
-    // Filtros
     const filteredProduccion = Array.isArray(produccionList)
         ? produccionList.filter((p) => {
             const term = searchTerm.toLowerCase();
@@ -212,12 +186,31 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         })
         : [];
 
+    // --- CORRECCIÓN DE FECHA (REGEX MANUAL) ---
+    // Esto evita que el navegador convierta la hora a UTC o Zona Horaria local.
+    // Si la BD dice "22:23", aquí saldrá "10:23 p.m." SIEMPRE.
     const formatearFecha = (fechaISO) => {
         if (!fechaISO) return '-';
-        return new Date(fechaISO).toLocaleDateString('es-MX', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+        
+        const str = String(fechaISO);
+        // Expresión regular para capturar YYYY-MM-DD y HH:MM
+        // Funciona con "2025-12-22T22:23:43" y con "2025-12-22 22:23:43"
+        const match = str.match(/(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+
+        if (match) {
+            const [_, year, month, day, hour, minute] = match;
+            
+            // Convertir hora a formato 12h
+            let h = parseInt(hour, 10);
+            const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+            h = h % 12;
+            h = h ? h : 12; // el '0' es '12'
+
+            return `${day}/${month}/${year}, ${h}:${minute} ${ampm}`;
+        }
+
+        // Si falla el regex, devolvemos el string original o fallback
+        return str;
     };
 
     if (!isOpen) return null;
@@ -226,7 +219,6 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
         <div className="modal-overlay">
             <div className="modal-content-large">
 
-                {/* PDF OCULTO */}
                 {pdfData && (
                     <div className="pdf-hidden-container">
                         <ReporteProduccion
@@ -271,7 +263,6 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* --- LÓGICA DE RENDERIZADO CON LOADING --- */}
                             {isLoading ? (
                                 <tr>
                                     <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
@@ -306,6 +297,7 @@ const ConsultarProduccionModal = ({ isOpen, onClose }) => {
                                                 )}
                                             </div>
                                         </td>
+                                        {/* AQUI USAMOS LA NUEVA FECHA MANUAL */}
                                         <td>{formatearFecha(p.fecha)}</td>
                                         <td>
                                             <span className={`status-badge ${p.estatus === 1 ? 'active' : 'inactive'}`}>

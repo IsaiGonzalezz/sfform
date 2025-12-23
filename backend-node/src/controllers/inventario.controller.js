@@ -76,8 +76,8 @@ exports.getInventario = async (req, res) => {
             SELECT 
                 -- Tabla INVENTARIO (Según tu CREATE TABLE)
                 i.Folio AS folio_inventario,
-                i.LForm AS lote,        -- En tu script es LForm, no Lote
-                i.PReal AS p_real,      -- En tu script es PReal, no Peso
+                i.LForm AS lote,        
+                i.PReal AS p_real,      
                 i.PObj AS p_obj,
                 i.PDif AS p_dif,
                 i.Fecha AS fecha,

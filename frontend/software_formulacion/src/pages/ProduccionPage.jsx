@@ -16,6 +16,9 @@ import {
 import { Check, AlertCircle } from 'lucide-react';
 import CircularProgress from '@mui/material/CircularProgress';
 
+// --- NUEVOS IMPORTS PARA EL SELECT MEJORADO (AUTOCOMPLETE) ---
+import { Autocomplete, TextField } from '@mui/material';
+
 // --- URLs RELATIVAS ---
 const API_URL_FORMULAS_REL = '/formulas/';
 const API_URL_PRODUCCION_REL = '/produccion/';
@@ -53,13 +56,13 @@ export default function ProduccionPage() {
     const [currentModalData, setCurrentModalData] = useState(null);
     const [pdfData, setPdfData] = useState(null);
 
-    // --- NUEVO: Estado para Toast (Notificaciones) ---
-    const [toast, setToast] = useState({ show: false, message: '', type: 'success' }); // type: 'success' | 'error'
+    // --- ESTADO NOTIFICACIÓN TOAST ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    // --- NUEVO: Estado para Modal de Confirmación (iOS Style) ---
+    // --- ESTADO MODAL CONFIRMACIÓN IOS ---
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    // --- HELPERS PARA UI ---
+    // --- HELPER TOAST ---
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => {
@@ -78,7 +81,11 @@ export default function ProduccionPage() {
                     axiosInstance.get(API_URL_EMPRESA_REL)
                 ]);
 
-                setListaFormulasBase(formulasRes.data);
+                // ORDENAR ALFABÉTICAMENTE LAS FÓRMULAS
+                const formulasOrdenadas = formulasRes.data.sort((a, b) => 
+                    a.nombre.localeCompare(b.nombre)
+                );
+                setListaFormulasBase(formulasOrdenadas);
 
                 if (empresaRes.data && empresaRes.data.length > 0) {
                     let empresaDatos = empresaRes.data[0];
@@ -129,6 +136,26 @@ export default function ProduccionPage() {
         } else {
             showToast('Completa la Orden y el Lote', 'error');
         }
+    };
+
+    // --- NUEVO: MANEJADOR DEL SELECT MEJORADO (Autocomplete) ---
+    const handleFormulaSelect = (event, newValue) => {
+        if (!newValue) {
+            setFormulaSeleccionadaId('');
+            return;
+        }
+
+        // VALIDACIÓN DE DUPLICADOS: Verificar si la fórmula ya está agregada en este lote
+        // Nota: A veces es válido agregar la misma fórmula dos veces (ej. dos baches iguales),
+        // pero si tu lógica de negocio lo prohíbe, aquí está la validación:
+        const yaExiste = formulasAgregadas.some(f => String(f.idform) === String(newValue.idform));
+
+        if (yaExiste) {
+            showToast(`La fórmula "${newValue.nombre}" ya está agregada a esta orden.`, 'error');
+            return;
+        }
+
+        setFormulaSeleccionadaId(newValue.idform);
     };
 
     // --- LÓGICA DE ESCALADO Y CÁLCULO (AÑADIR FÓRMULA) ---
@@ -185,6 +212,8 @@ export default function ProduccionPage() {
             };
 
             setFormulasAgregadas([...formulasAgregadas, nuevaFormulaProduccion]);
+            
+            // Limpiamos selección para permitir agregar otra
             setFormulaSeleccionadaId('');
             setPesoObjetivo('');
 
@@ -214,7 +243,6 @@ export default function ProduccionPage() {
 
     // --- EJECUTAR REGISTRO (AL CONFIRMAR EN EL MODAL) ---
     const executeRegistration = async () => {
-        // Cerramos el modal inmediatamente
         setShowConfirmModal(false);
         setIsSaving(true);
 
@@ -243,7 +271,6 @@ export default function ProduccionPage() {
 
             await Promise.all(promesasDeGuardado);
 
-            // Toast Exitoso
             showToast('¡Producción registrada exitosamente!');
             handleLimpiarFormulario();
 
@@ -412,18 +439,41 @@ export default function ProduccionPage() {
                 <form onSubmit={handleAddFormula} className="form-grid">
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label htmlFor="nombreFormula">Fórmula Base</label>
-                        <select
+                        
+                        {/* 1. AUTOCOMPLETE MEJORADO */}
+                        <Autocomplete
                             id="nombreFormula"
-                            className="form-select"
-                            value={formulaSeleccionadaId}
-                            onChange={(e) => setFormulaSeleccionadaId(e.target.value)}
+                            options={listaFormulasBase}
+                            getOptionLabel={(option) => option.nombre || ''}
+                            // Encontramos el objeto seleccionado
+                            value={listaFormulasBase.find(f => String(f.idform) === String(formulaSeleccionadaId)) || null}
+                            onChange={handleFormulaSelect}
                             disabled={!paso1Completo || isLoading}
-                        >
-                            <option value="">{isLoading ? "Cargando..." : "Seleccionar fórmula..."}</option>
-                            {listaFormulasBase.map(f => (
-                                <option key={f.idform} value={f.idform}>{f.nombre}</option>
-                            ))}
-                        </select>
+                            noOptionsText="No se encontró la fórmula"
+                            // Importante para comparar objetos
+                            isOptionEqualToValue={(option, value) => String(option.idform) === String(value.idform)}
+                            renderInput={(params) => (
+                                <TextField 
+                                    {...params} 
+                                    placeholder={isLoading ? "Cargando..." : "Buscar fórmula..."}
+                                    variant="outlined"
+                                    size="small"
+                                    // Estilo Dark personalizado para igualar tus inputs
+                                    sx={{
+                                        backgroundColor: 'var(--bg-color)',
+                                        '& .MuiOutlinedInput-root': {
+                                            color: 'var(--text-color)', 
+                                            borderRadius: '8px',
+                                            '& fieldset': { borderColor: '#444' }, 
+                                            '&:hover fieldset': { borderColor: '#666' }, 
+                                            '&.Mui-focused fieldset': { borderColor: '#1B519DFF' }, 
+                                        },
+                                        '& .MuiInputLabel-root': { color: '#888' },
+                                        '& .MuiSvgIcon-root': { color: '#888' }
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="form-group">
                         <label htmlFor="pesoObjetivo">Peso Objetivo (Kg)</label>
@@ -502,7 +552,6 @@ export default function ProduccionPage() {
                     <button className="btn btn-danger" onClick={handlePreparePdf} disabled={!paso2Completo}>
                         <Print fontSize="small" /> Descargar PDF
                     </button>
-                    {/* Botón que ahora abre el Modal iOS */}
                     <button className="btn btn-primary" onClick={handleRequestRegistration} disabled={!paso2Completo || isSaving}>
                         {isSaving ? <CircularProgress size={20} color="inherit" /> : <Inventory2 fontSize="small" />}
                         {isSaving ? ' Guardando...' : ' Registrar Producción'}
@@ -510,7 +559,7 @@ export default function ProduccionPage() {
                 </div>
             </div>
 
-            {/* --- MODAL DETALLE DE CÁLCULO (EXISTENTE) --- */}
+            {/* --- MODAL DETALLE --- */}
             {modalOpen && currentModalData && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -615,8 +664,8 @@ const customStyles = {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Fondo oscuro semitransparente
-        backdropFilter: 'blur(4px)', // Efecto glass
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -624,11 +673,11 @@ const customStyles = {
         animation: 'fadeIn 0.2s ease-out'
     },
     iosModal: {
-        backgroundColor: 'var(--card-bg)', // Usa la variable de tema (blanco/oscuro)
+        backgroundColor: 'var(--card-bg)',
         color: 'var(--text-color)',
         width: '85%',
         maxWidth: '320px',
-        borderRadius: '20px', // Bordes muy redondos tipo iOS
+        borderRadius: '20px',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden',
         textAlign: 'center',
@@ -650,7 +699,7 @@ const customStyles = {
     },
     iosActionGroup: {
         display: 'flex',
-        borderTop: '1px solid var(--border-color)', // Línea separadora sutil
+        borderTop: '1px solid var(--border-color)',
     },
     iosButtonCancel: {
         flex: 1,
@@ -658,7 +707,7 @@ const customStyles = {
         background: 'transparent',
         border: 'none',
         borderRight: '1px solid var(--border-color)',
-        color: '#ef4444', // Rojo para cancelar
+        color: '#ef4444',
         fontWeight: '600',
         fontSize: '1rem',
         cursor: 'pointer',

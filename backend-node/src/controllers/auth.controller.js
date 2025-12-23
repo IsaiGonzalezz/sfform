@@ -65,7 +65,7 @@ exports.login = async (req, res) => {
             nombre: usuario.Nombre    // Nombre (Capitalizada)
         };
 
-        const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+        const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '10m' });
         const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: '1d' });
 
         res.json({

@@ -181,9 +181,12 @@ function LoginPage() {
                             autoComplete="email"
                             autoFocus
                             value={correo}
-                            onChange={(e) => setCorreo(e.target.value)}
-                            // Aquí usamos tus estilos de inputs modernos si ya los aplicaste en CSS global
-                            // o dejamos props básicas limpias
+                            // --- CAMBIO AQUÍ: Eliminamos espacios al escribir ---
+                            onChange={(e) => {
+                                const valSinEspacios = e.target.value.replace(/\s/g, '');
+                                setCorreo(valSinEspacios);
+                            }}
+                            // ----------------------------------------------------
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">

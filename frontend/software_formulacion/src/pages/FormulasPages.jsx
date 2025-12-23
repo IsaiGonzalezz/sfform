@@ -9,9 +9,11 @@ import {
     ReceiptLong, Science, PlaylistAddCheck,
     Save, Add, Edit, Delete, ClearAll, PictureAsPdf,
 } from '@mui/icons-material';
-// --- NUEVO IMPORT ---
-import { Check, AlertCircle } from 'lucide-react'; // Agregamos icono de alerta
+import { Check, AlertCircle } from 'lucide-react';
 import CircularProgress from '@mui/material/CircularProgress';
+
+// --- NUEVOS IMPORTS PARA EL SELECT MEJORADO (AUTOCOMPLETE) ---
+import { Autocomplete, TextField } from '@mui/material';
 
 // --- URLs RELATIVAS
 const API_URL_FORMULAS_REL = '/formulas/';
@@ -47,10 +49,10 @@ export default function FormulaPage() {
     const [showConsultar, setShowConsultar] = useState(false);
     const [error, setError] = useState(null);
 
-    // --- NUEVO: Estado para la notificación Toast (con TIPO) ---
-    const [toast, setToast] = useState({ show: false, message: '', type: 'success' }); // type: 'success' | 'error'
+    // --- ESTADO NOTIFICACIÓN TOAST ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    // --- NUEVO: Función para mostrar el Toast (Versátil) ---
+    // --- FUNCIÓN TOAST ---
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => {
@@ -81,10 +83,14 @@ export default function FormulaPage() {
                     axiosInstance.get(API_URL_EMPRESA_REL)
                 ]);
 
-                const dataMapeada = ingredientesRes.data.map(ing => ({
-                    id: ing.iding,
-                    nombre: ing.nombre
-                }));
+                // 2. ORDENAR ALFABÉTICAMENTE LOS INGREDIENTES
+                const dataMapeada = ingredientesRes.data
+                    .map(ing => ({
+                        id: ing.iding,
+                        nombre: ing.nombre
+                    }))
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre)); // Orden A-Z
+
                 setListaIngredientes(dataMapeada);
 
                 if (empresaRes.data && empresaRes.data.length > 0) {
@@ -92,7 +98,6 @@ export default function FormulaPage() {
                     setEmpresaInfo(empresaDatos);
                 } else {
                     console.warn('No se encontraron datos de la empresa para el reporte.');
-                    // No mostramos error UI aquí para no bloquear el uso, solo log
                 }
 
             } catch (err) {
@@ -126,25 +131,39 @@ export default function FormulaPage() {
         setCurrentIngrediente(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleIngredienteSearchChange = (e) => {
-        const selectedId = e.target.value;
-        const ingredienteEncontrado = listaIngredientes.find(ing => String(ing.id) === String(selectedId));
+    // 1. y 3. MANEJADOR DEL SELECT MEJORADO (Autocomplete)
+    const handleIngredienteSelect = (event, newValue) => {
+        // Si el usuario limpia el campo (newValue es null)
+        if (!newValue) {
+            setCurrentIngrediente(prev => ({ ...prev, id: '', nombre: '' }));
+            return;
+        }
 
+        // 3. VALIDACIÓN DE DUPLICADOS CON TOAST
+        const yaExiste = ingredientes.some(ing => String(ing.id) === String(newValue.id));
+
+        if (yaExiste) {
+            showToast(`El ingrediente "${newValue.nombre}" ya está agregado en la lista.`, 'error');
+            // No actualizamos el estado, por lo que el select no cambiará o se limpiará según configuración
+            return;
+        }
+
+        // Si no existe, lo seleccionamos
         setCurrentIngrediente(prev => ({
             ...prev,
-            id: selectedId,
-            nombre: ingredienteEncontrado ? ingredienteEncontrado.nombre : ''
+            id: newValue.id,
+            nombre: newValue.nombre
         }));
     };
 
     const handleAddIngrediente = (e) => {
         e.preventDefault();
         if (!currentIngrediente.id || !currentIngrediente.peso || !currentIngrediente.tolerancia) {
-            // REEMPLAZO DE ALERT POR TOAST DE ERROR
             showToast('Selecciona un ingrediente válido y define peso/tolerancia.', 'error');
             return;
         }
         setIngredientes([...ingredientes, { ...currentIngrediente }]);
+        // Limpiamos el input para agregar otro
         setCurrentIngrediente({ id: '', nombre: '', peso: '', tolerancia: '' });
     };
 
@@ -184,13 +203,11 @@ export default function FormulaPage() {
             const response = await axiosInstance.post(API_URL_FORMULAS_REL, payload);
             console.log('Respuesta de la API:', response.data);
             
-            // TOAST DE ÉXITO
             showToast('¡Fórmula registrada exitosamente!');
             
             handleLimpiarFormulario();
         } catch (err) {
             console.error("Error al registrar la fórmula:", err.response ? err.response.data : err.message);
-            // TOAST DE ERROR
             const msg = err.response ? JSON.stringify(err.response.data) : "Error desconocido al guardar";
             showToast(`Error: ${msg}`, 'error');
         } finally {
@@ -240,17 +257,17 @@ export default function FormulaPage() {
     return (
         <div className="formula-page" style={{ position: 'relative' }}> 
 
-            {/* --- RENDERIZADO DEL TOAST (DINÁMICO) --- */}
+            {/* --- RENDERIZADO DEL TOAST --- */}
             {toast.show && (
                 <div style={{
                     ...toastStyles.toast,
-                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4', // Rojo claro o Verde claro
-                    color: toast.type === 'error' ? '#991b1b' : '#15803d', // Rojo oscuro o Verde oscuro
+                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                    color: toast.type === 'error' ? '#991b1b' : '#15803d',
                     borderColor: toast.type === 'error' ? '#fecaca' : '#bbf7d0',
                 }}>
                     <div style={{
                         ...toastStyles.toastIconContainer,
-                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e', // Rojo o Verde brillante
+                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e',
                     }}>
                         {toast.type === 'error' ? <AlertCircle size={16} color="#fff" /> : <Check size={16} color="#fff" strokeWidth={3} />}
                     </div>
@@ -306,29 +323,46 @@ export default function FormulaPage() {
                 </form>
             </div>
 
-            {/* --- 2. Sección: Selección de Ingredientes --- */}
+            {/* --- 2. Sección: Selección de Ingredientes (MODIFICADA CON AUTOCOMPLETE) --- */}
             <div className={`formula-section ${!formulaDefinida ? 'locked' : ''}`}>
                 <h2 className="section-title"><Science /> Paso 2: Agregar Ingredientes</h2>
                 <form onSubmit={handleAddIngrediente} className="form-grid-ingredientes">
                     <div className="input-group">
                         <label htmlFor="nombreIngrediente">Nombre del Ingrediente</label>
-                        <select
+                        
+                        {/* 1. SELECTOR MEJORADO TIPO SELECT2 (AUTOCOMPLETE) */}
+                        <Autocomplete
                             id="nombreIngrediente"
-                            className="form-select"
-                            value={currentIngrediente.id}
-                            onChange={handleIngredienteSearchChange}
+                            options={listaIngredientes}
+                            getOptionLabel={(option) => option.nombre || ''}
+                            // Encontramos el objeto completo basado en el ID actual
+                            value={listaIngredientes.find(ing => String(ing.id) === String(currentIngrediente.id)) || null}
+                            onChange={handleIngredienteSelect}
                             disabled={isLoading || isSaving}
-                        >
-                            <option value="">
-                                {isLoading ? "Cargando..." : "Selecciona un ingrediente"}
-                            </option>
-                            
-                            {listaIngredientes.map(ing => (
-                                <option key={ing.id} value={ing.id}>
-                                    {ing.nombre}
-                                </option>
-                            ))}
-                        </select>
+                            noOptionsText="No se encontró el ingrediente"
+                            isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+                            renderInput={(params) => (
+                                <TextField 
+                                    {...params} 
+                                    placeholder={isLoading ? "Cargando..." : "Buscar ingrediente..."}
+                                    variant="outlined"
+                                    size="small"
+                                    // Ajustamos estilos para que se parezca a tus inputs originales
+                                    sx={{
+                                        backgroundColor: 'var(--bg-color)',
+                                        '& .MuiOutlinedInput-root': {
+                                            color: 'var(--text-color)', // Texto claro
+                                            borderRadius: '8px',
+                                            '& fieldset': { borderColor: '#444' }, // Borde normal
+                                            '&:hover fieldset': { borderColor: '#666' }, // Borde hover
+                                            '&.Mui-focused fieldset': { borderColor: '#1B609DFF' }, // Borde focus
+                                        },
+                                        '& .MuiInputLabel-root': { color: '#888' },
+                                        '& .MuiSvgIcon-root': { color: '#888' } // Icono flecha
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="input-group">
                         <label htmlFor="pesoIngrediente">Peso Objetivo (Kg)</label>
@@ -362,6 +396,7 @@ export default function FormulaPage() {
                         </button>
                     </div>
                 </form>
+                
                 <h3 className="subsection-title">Ingredientes Agregados</h3>
                 <div className="table-wrapper">
                     <table className="ingredient-table">
@@ -478,13 +513,12 @@ export default function FormulaPage() {
     );
 }
 
-// --- ESTILOS DE TOAST (NUEVO) ---
+// --- ESTILOS DE TOAST ---
 const toastStyles = {
     toast: {
         position: 'fixed',
         top: '20px',
         right: '20px',
-        // Fondo y color base por defecto (será sobreescrito dinámicamente)
         backgroundColor: '#fff', 
         color: '#333', 
         padding: '12px 24px',

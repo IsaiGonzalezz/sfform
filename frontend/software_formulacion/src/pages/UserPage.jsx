@@ -2,17 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/useAuth';
 import {
     Box, Typography, Button, Paper, IconButton,
-    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Checkbox,
-    FormControlLabel, Switch // <--- Para el switch
+    Checkbox, FormControlLabel, Switch
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash'; // <--- Icono Restaurar
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash'; 
 import GroupIcon from '@mui/icons-material/Group';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { AlertCircle, Check } from 'lucide-react'; // Iconos Toast
+
 import UserFormModal from '../components/UserFormModal';
 
 const API_URL_REL = `/usuarios/`;
@@ -34,19 +34,39 @@ function UsersPage() {
     // --- Estados ---
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // Modales de Edición/Creación
     const [isModalOpen, setModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
-    
-    // NUEVO: Estado para mostrar eliminados
+
+    // Estado Switch Filtro
     const [showDeleted, setShowDeleted] = useState(false);
+
+    // --- ESTADO TOAST (Manual) ---
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    // --- HELPER: Mostrar Toast ---
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+        }, 3000);
+    };
+
+    // --- ESTADOS PARA CONFIRM MODAL (Manual iOS Style) ---
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({
+        title: '',
+        message: '',
+        color: '#ef4444', // Rojo por defecto
+        confirmText: '',
+        onConfirm: () => {}
+    });
 
     // --- Función READ (Usuarios) ---
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
-            // Lógica del filtro: Si showDeleted es true, pedimos ?verTodos=true
             const url = showDeleted 
                 ? `${API_URL_REL}?verTodos=true` 
                 : API_URL_REL;
@@ -55,55 +75,77 @@ function UsersPage() {
             setUsers(response.data || []);
         } catch (error) {
             console.error("Hubo un error al obtener los usuarios:", error);
+            showToast("Error al cargar usuarios", "error");
             setUsers([]);
         } finally {
             setLoading(false);
         }
-    }, [axiosInstance, showDeleted]); // <--- Dependencia showDeleted
+    }, [axiosInstance, showDeleted]);
 
     useEffect(() => {
         fetchUsers();
     }, [fetchUsers]);
 
-    // --- Función DELETE (Desactivar) ---
-    // --- Función DELETE (Desactivar / Soft Delete) ---
-    const handleDeleteUser = async () => {
-        if (!userToDelete) return; 
-
-        try {
-            // CORRECCIÓN: patch(URL, DATOS)
-            // Enviamos activo: 0 (o false) para que el backend sepa qué cambiar
-            await axiosInstance.patch(`${API_URL_REL}${userToDelete.id}`, {
-                activo: 0 
-            });
-
-            console.log('Usuario desactivado exitosamente:', userToDelete.id);
-            fetchUsers(); // Recargamos la tabla
-        } catch (error) {
-            console.error('Hubo un error al desactivar el usuario:', error.response?.data || error.message);
-        } finally {
-            handleCloseConfirm(); 
-        }
-    };
-
-    // --- NUEVO: Función RESTAURAR (Activar) ---
-    const handleRestoreUser = async (id) => {
-        if (!window.confirm("¿Deseas restaurar este usuario?")) return;
-        try {
-            // Ajusta la ruta si tu backend usa /activar/ o un PATCH directo
-            await axiosInstance.put(`${API_URL_REL}activar/${id}`);
-            fetchUsers(); // Recargamos la tabla
-        } catch (error) {
-            console.error("Error al restaurar:", error);
-            alert("No se pudo restaurar el usuario.");
-        }
-    };
-
-    // --- Handlers Modales ---
+    // --- Handlers Modales Form ---
     const handleOpenModal = (user = null) => { setCurrentUser(user); setModalOpen(true); };
     const handleCloseModal = () => { setModalOpen(false); setCurrentUser(null); };
-    const handleOpenConfirm = (user) => { setUserToDelete(user); setConfirmOpen(true); };
-    const handleCloseConfirm = () => { setConfirmOpen(false); setUserToDelete(null); };
+
+    // --- LÓGICA DE ACCIONES (Desactivar / Restaurar) ---
+
+    // 1. DESACTIVAR (Soft Delete - Patch activo: 0)
+    const handleDeleteClick = (user) => {
+        setModalConfig({
+            title: 'Confirmar Desactivación',
+            message: (
+                <>
+                    ¿Estás seguro de desactivar al usuario <strong>{user.nombre}</strong>?
+                    <br />Ya no podrá iniciar sesión en el sistema.
+                </>
+            ),
+            color: '#ef4444', // Rojo
+            confirmText: 'Desactivar',
+            onConfirm: async () => {
+                try {
+                    // Patch para desactivar (soft delete)
+                    await axiosInstance.patch(`${API_URL_REL}${user.id}`, { activo: 0 });
+                    showToast(`Usuario ${user.nombre} desactivado`, 'success');
+                    fetchUsers();
+                } catch (error) {
+                    console.error('Error al desactivar:', error);
+                    showToast('Error al desactivar usuario', 'error');
+                }
+            }
+        });
+        setShowConfirmModal(true);
+    };
+
+    // 2. RESTAURAR (Activar)
+    const handleRestoreClick = (userId) => {
+        setModalConfig({
+            title: 'Confirmar Restauración',
+            message: '¿Deseas restaurar este usuario para que pueda acceder nuevamente?',
+            color: '#3b82f6', // Azul
+            confirmText: 'Restaurar',
+            onConfirm: async () => {
+                try {
+                    await axiosInstance.put(`${API_URL_REL}activar/${userId}`);
+                    showToast('Usuario restaurado exitosamente', 'success');
+                    fetchUsers();
+                } catch (error) {
+                    console.error("Error al restaurar:", error);
+                    showToast("No se pudo restaurar el usuario", "error");
+                }
+            }
+        });
+        setShowConfirmModal(true);
+    };
+
+    // Función para ejecutar la acción confirmada
+    const handleConfirmAction = () => {
+        modalConfig.onConfirm();
+        setShowConfirmModal(false);
+    };
+
 
     // --- Definición de Columnas ---
     const columns = [
@@ -133,23 +175,23 @@ function UsersPage() {
                 return (
                     <Box display="flex" gap={1} alignItems="center" height="100%">
                         {isActive ? (
-                            // ACCIONES NORMALES (Editar / Borrar)
+                            // ACCIONES NORMALES
                             <>
                                 <IconButton onClick={() => handleOpenModal(params.row)} 
                                     sx={{ backgroundColor: '#229D1B', color: '#fff', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#1b8016' } }}>
                                     <EditIcon sx={{ fontSize: '20px' }} />
                                 </IconButton>
-                                <IconButton onClick={() => handleOpenConfirm(params.row)} 
+                                <IconButton onClick={() => handleDeleteClick(params.row)} 
                                     sx={{ backgroundColor: '#9D1B1B', color: '#fff', borderRadius: '8px', padding: '6px', '&:hover': { backgroundColor: '#7a1515' } }}>
                                     <DeleteOutlineIcon sx={{ fontSize: '20px' }} />
                                 </IconButton>
                             </>
                         ) : (
-                            // ACCIÓN RESTAURAR (Solo visible si está eliminado)
+                            // ACCIÓN RESTAURAR
                             <Button 
                                 variant="contained" 
                                 size="small"
-                                onClick={() => handleRestoreUser(params.row.id)}
+                                onClick={() => handleRestoreClick(params.row.id)}
                                 startIcon={<RestoreFromTrashIcon />}
                                 sx={{ 
                                     backgroundColor: '#1976d2', 
@@ -170,7 +212,54 @@ function UsersPage() {
     ];
 
     return (
-        <>
+        <Box sx={{ width: '100%', pb: 4, position: 'relative' }}>
+
+            {/* --- TOAST COMPONENT --- */}
+            {toast.show && (
+                <div style={{
+                    ...customStyles.toast,
+                    backgroundColor: toast.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                    color: toast.type === 'error' ? '#991b1b' : '#15803d',
+                    borderColor: toast.type === 'error' ? '#fecaca' : '#bbf7d0',
+                }}>
+                    <div style={{
+                        ...customStyles.toastIconContainer,
+                        backgroundColor: toast.type === 'error' ? '#ef4444' : '#22c55e',
+                    }}>
+                        {toast.type === 'error' ? <AlertCircle size={16} color="#fff" /> : <Check size={16} color="#fff" strokeWidth={3} />}
+                    </div>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* --- MODAL CONFIRMACIÓN (DISEÑO IOS MANUAL) --- */}
+            {showConfirmModal && (
+                <div style={customStyles.modalOverlay}>
+                    <div style={customStyles.iosModal}>
+                        <div style={customStyles.iosModalContent}>
+                            <h3 style={customStyles.iosTitle}>{modalConfig.title}</h3>
+                            <div style={customStyles.iosMessage}>
+                                {modalConfig.message}
+                            </div>
+                        </div>
+                        <div style={customStyles.iosActionGroup}>
+                            <button
+                                style={customStyles.iosButtonCancel}
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                style={{ ...customStyles.iosButtonConfirm, color: modalConfig.color }}
+                                onClick={handleConfirmAction}
+                            >
+                                {modalConfig.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Encabezado */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, p: 2, background: 'var(--bg-color)', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -215,7 +304,7 @@ function UsersPage() {
                     rows={users}
                     columns={columns}
                     loading={loading}
-                    getRowId={(row) => row.id} // <--- OJO: En usuarios suele ser 'id', no 'rfid' (ajusta si es necesario)
+                    getRowId={(row) => row.id} // ID de usuario
                     slots={{ noRowsOverlay: CustomNoRowsOverlay }}
                     autoHeight={users.length === 0}
                     // Estilo condicional para filas inactivas
@@ -240,25 +329,111 @@ function UsersPage() {
                 />
             </Paper>
 
-            {/* Modales */}
-            <UserFormModal open={isModalOpen} onClose={handleCloseModal} onSaveSuccess={fetchUsers} userToEdit={currentUser} />
+            <UserFormModal 
+                open={isModalOpen} 
+                onClose={handleCloseModal} 
+                onSaveSuccess={() => {
+                    fetchUsers();
+                    showToast(currentUser ? 'Usuario editado correctamente' : 'Usuario creado correctamente');
+                }} 
+                userToEdit={currentUser} 
+            />
             
-            <Dialog open={confirmOpen} onClose={handleCloseConfirm} PaperProps={{ sx: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderRadius: '12px', boxShadow: '0 0 15px rgba(255, 0, 0, 0.2)' } }}>
-                <DialogTitle sx={{ fontWeight: 'bold', color: '#F87171', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningAmberIcon /> Confirmar Desactivación
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ color: 'var(--text-color)' }}>
-                        ¿Estás seguro de que deseas desactivar al usuario <strong style={{ color: '#60A5FA' }}>{userToDelete?.nombre}</strong>?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={handleCloseConfirm} sx={{ color: 'var(--text-color)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', textTransform: 'none' }}>Cancelar</Button>
-                    <Button onClick={handleDeleteUser} sx={{ color: '#fff', backgroundColor: '#EF4444', fontWeight: 'bold', borderRadius: '8px', px: 2, textTransform: 'none', '&:hover': { backgroundColor: '#DC2626' } }} autoFocus>Desactivar</Button>
-                </DialogActions>
-            </Dialog>
-        </>
+        </Box>
     );
 }
+
+// --- ESTILOS PERSONALIZADOS (TOAST & MODAL IOS) ---
+const customStyles = {
+    toast: {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '12px 24px',
+        borderRadius: '50px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        zIndex: 9999,
+        border: '1px solid',
+        animation: 'slideIn 0.3s ease-out'
+    },
+    toastIconContainer: {
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    modalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10000,
+        animation: 'fadeIn 0.2s ease-out'
+    },
+    iosModal: {
+        backgroundColor: 'var(--card-bg)',
+        color: 'var(--text-color)',
+        width: '85%',
+        maxWidth: '320px',
+        borderRadius: '20px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden',
+        textAlign: 'center',
+        animation: 'scaleUp 0.2s ease-out',
+        border: '1px solid var(--border-color)'
+    },
+    iosModalContent: {
+        padding: '24px 20px 20px 20px',
+    },
+    iosTitle: {
+        margin: '0 0 10px 0',
+        fontSize: '1.2rem',
+        fontWeight: '700',
+    },
+    iosMessage: {
+        margin: 0,
+        fontSize: '0.95rem',
+        opacity: 0.8,
+        lineHeight: 1.4
+    },
+    iosActionGroup: {
+        display: 'flex',
+        borderTop: '1px solid var(--border-color)',
+    },
+    iosButtonCancel: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        borderRight: '1px solid var(--border-color)',
+        color: 'var(--text-color)', 
+        opacity: 0.7,
+        fontWeight: '600',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    },
+    iosButtonConfirm: {
+        flex: 1,
+        padding: '16px',
+        background: 'transparent',
+        border: 'none',
+        fontWeight: '700',
+        fontSize: '1rem',
+        cursor: 'pointer',
+    }
+};
 
 export default UsersPage;
