@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config(); // Cargar variables de entorno
+const path = require('path')
 
 // Inicializar la aplicación Express
 const app = express();
@@ -47,13 +48,25 @@ app.use('/api/inventario', require('./src/routes/inventario.routes'));
 //RUTA PARA TOKEN Y LOGIN
 app.use('/api/token', require('./src/routes/auth.routes'));
 
-// --- RUTA DE PRUEBA  ---
-app.get('/', (req, res) => {
-    res.send('API Node.js funcionando correctamente');
-});
+// ==========================================
+//  B. SERVIR EL FRONTEND (LA FUSIÓN)
+//  (Esto va DESPUÉS de todas las rutas /api)
+// ==========================================
+
+//<-- DESCOMENTA LINEA 58 Y {62-64}
+// 1. Decirle a Express que la carpeta 'dist' tiene los archivos estáticos (CSS, JS, Imágenes del build)
+//app.use(express.static(path.join(__dirname, 'dist')));
+
+// 2. El Comodín (*): Cualquier ruta que NO sea /api ni un archivo estático, 
+//    se la mandamos al index.html para que React se encargue.
+//app.get(/.*/, (req, res) => {
+//    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+//});
+
+
 
 // --- ARRANCAR SERVIDOR ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
