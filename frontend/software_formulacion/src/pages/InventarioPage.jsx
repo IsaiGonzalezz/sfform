@@ -97,7 +97,7 @@ function Row({ row }) {
                 <TableCell>{fechaFormateada}</TableCell>
             </TableRow>
 
-            {/* DETALLE */}
+            {/* DETALLE DESPLEGABLE */}
             <TableRow>
                 <TableCell colSpan={7} sx={{ p: 0 }}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
@@ -110,7 +110,7 @@ function Row({ row }) {
                                 bgcolor: 'var(--bg-color)'
                             }}
                         >
-                            {/* HEADER */}
+                            {/* HEADER DEL DETALLE */}
                             <Box
                                 sx={{
                                     p: 2,
@@ -119,7 +119,8 @@ function Row({ row }) {
                                 }}
                             >
                                 <Grid container spacing={3} alignItems="center">
-                                    <Grid item xs={12} md={4}>
+                                    {/* Título Lote */}
+                                    <Grid item xs={12} md={3}>
                                         <Typography
                                             variant="h6"
                                             sx={{ color: '#3CA7FF', fontWeight: 700 }}
@@ -128,9 +129,10 @@ function Row({ row }) {
                                         </Typography>
                                     </Grid>
 
-                                    <Grid item xs={12} md={8}>
-                                        <Grid container spacing={10}>
-                                            <Grid item xs={4}>
+                                    {/* Info Adicional (Fórmula, Usuario, Operador, Fecha) */}
+                                    <Grid item xs={12} md={9}>
+                                        <Grid container spacing={4}>
+                                            <Grid item xs={3}>
                                                 <Typography variant="caption" sx={{ opacity: .6 }}>
                                                     FÓRMULA
                                                 </Typography>
@@ -139,21 +141,43 @@ function Row({ row }) {
                                                 </Typography>
                                             </Grid>
 
-                                            <Grid item xs={4}>
+                                            {/* USUARIO (Registro) */}
+                                            <Grid item xs={3}>
                                                 <Typography variant="caption" sx={{ opacity: .6 }}>
-                                                    USUARIO
+                                                    REGISTRÓ (USUARIO)
                                                 </Typography>
                                                 <Box display="flex" alignItems="center" gap={1}>
-                                                    <Avatar sx={{ width: 22, height: 22, bgcolor: '#3CA7FF' }}>
-                                                        {row.nombre_usuario?.[0]}
+                                                    <Avatar sx={{ width: 22, height: 22, bgcolor: '#3CA7FF', fontSize: '0.8rem' }}>
+                                                        {row.nombre_usuario?.[0] || 'U'}
                                                     </Avatar>
-                                                    <Typography>{row.nombre_usuario}</Typography>
+                                                    <Typography noWrap>{row.nombre_usuario || 'Desconocido'}</Typography>
                                                 </Box>
                                             </Grid>
 
-                                            <Grid item xs={4}>
+                                            {/* OPERADOR (Trabajo) - NUEVO */}
+                                            <Grid item xs={3}>
                                                 <Typography variant="caption" sx={{ opacity: .6 }}>
-                                                    REGISTRO
+                                                    OPERADOR
+                                                </Typography>
+                                                <Box display="flex" alignItems="center" gap={1}>
+                                                    <Avatar sx={{ width: 22, height: 22, bgcolor: '#FF9800', fontSize: '0.8rem' }}>
+                                                        {row.nombre_operador?.[0] || '?'}
+                                                    </Avatar>
+                                                    <Typography 
+                                                        noWrap 
+                                                        sx={{ 
+                                                            fontStyle: row.nombre_operador ? 'normal' : 'italic',
+                                                            opacity: row.nombre_operador ? 1 : 0.6 
+                                                        }}
+                                                    >
+                                                        {row.nombre_operador || 'No Asignado'}
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+
+                                            <Grid item xs={3}>
+                                                <Typography variant="caption" sx={{ opacity: .6 }}>
+                                                    FECHA REGISTRO
                                                 </Typography>
                                                 <Typography>
                                                     {fechaFormateada} — {horaFormateada}
@@ -164,7 +188,7 @@ function Row({ row }) {
                                 </Grid>
                             </Box>
 
-                            {/* CUERPO */}
+                            {/* CUERPO (Balances y Tablas) - Sin cambios, solo lo pego para que tengas todo junto */}
                             <Box sx={{ p: 3 }}>
                                 <Grid container spacing={6}>
                                     {/* BALANCE */}

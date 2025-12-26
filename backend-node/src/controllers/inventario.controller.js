@@ -12,17 +12,17 @@ const agruparInventario = (recordset) => {
                 folio_produccion: row.folio_produccion,
                 op: row.op,
                 
-                // CORRECCIÓN: Usamos LForm que es lo que viene en tu tabla Inventario
+                // Datos de la fórmula y lote
                 lote: row.lote, 
-                
-                // CORRECCIÓN: Estatus viene de PRODUCCIÓN, Inventario no tiene.
                 estatus: row.estatus, 
-                
                 id_form: row.id_form,
                 nombre_formula: row.nombre_formula,
-                nombre_usuario: row.nombre_usuario,
+                
+                // Usuarios involucrados
+                nombre_usuario: row.nombre_usuario, // Quien registró (Admin/Supervisor)
+                nombre_operador: row.nombre_operador, // Quien la trabaja (Operador RFID)
 
-                // CORRECCIÓN: Mapeo exacto a tus columnas de Inventario
+                // Valores numéricos del inventario
                 p_obj: row.p_obj,   
                 p_real: row.p_real, 
                 p_dif: row.p_dif,   
@@ -47,7 +47,7 @@ const agruparInventario = (recordset) => {
     return Array.from(inventarioMap.values());
 };
 
-// GET: Obtener Inventario (Ajustado a tu Schema REAL)
+// GET: Obtener Inventario (Ajustado a tu Schema REAL + Operador)
 exports.getInventario = async (req, res) => {
     try {
         const pool = await getConnection();
@@ -71,10 +71,10 @@ exports.getInventario = async (req, res) => {
             .input('fechaInicio', sql.DateTime, fechaInicio)
             .input('fechaFin', sql.DateTime, fechaFin);
 
-        // --- QUERY CORREGIDA BASADA EN TU SCRIPT ---
+        // --- QUERY CORREGIDA CON OPERADOR ---
         let sqlQuery = `
             SELECT 
-                -- Tabla INVENTARIO (Según tu CREATE TABLE)
+                -- Tabla INVENTARIO
                 i.Folio AS folio_inventario,
                 i.LForm AS lote,        
                 i.PReal AS p_real,      
@@ -82,38 +82,46 @@ exports.getInventario = async (req, res) => {
                 i.PDif AS p_dif,
                 i.Fecha AS fecha,
                 
-                -- Tabla PRODUCCION (Para obtener OP y Estatus)
+                -- Tabla PRODUCCION
                 p.Folio AS folio_produccion,
                 p.OP AS op,
-                p.Estatus AS estatus,   -- El estatus está en Produccion, no en Inventario
+                p.Estatus AS estatus,
                 
                 -- Tabla FORMULAS
                 f.IdForm AS id_form,
                 f.Nombre AS nombre_formula,
                 
-                -- Tabla USUARIOS
+                -- Tabla USUARIOS (Quien registró la orden administrativa)
                 u.Nombre AS nombre_usuario,
 
-                -- Detalle de Ingredientes (Via Producción)
+                -- Tabla OPERADORES (Quien trabaja la orden en planta)
+                -- Hacemos JOIN con la tabla de Operadores usando el RFID
+                op.Nombre AS nombre_operador,
+
+                -- Detalle de Ingredientes
                 dp.IdIng AS iding,
                 ing.Nombre AS nombre_ingrediente,
                 dp.PesIng AS pesing,
                 dp.Pesado AS pesado
 
             FROM Inventario i
-            -- Joins necesarios
+            -- Joins principales
             LEFT JOIN Produccion p ON i.FolioProduccion = p.Folio
             LEFT JOIN Formulas f ON i.IdForm = f.IdForm
             LEFT JOIN Usuarios u ON i.IdUsu = u.id
             
-            -- Join para sacar ingredientes (opcional, visualización)
+            -- NUEVO JOIN: Obtener nombre del operador
+            -- Relacionamos p.IdOperador (que tiene el RFID) con Operadores.RFID
+            LEFT JOIN Operadores op ON p.IdOperador = op.RFID
+            
+            -- Join para ingredientes
             LEFT JOIN Detalle_Produccion dp ON p.Folio = dp.FolioProduccion
             LEFT JOIN Ingredientes ing ON dp.IdIng = ing.IdIng
             
             WHERE i.Fecha >= @fechaInicio AND i.Fecha <= @fechaFin
         `;
 
-        // Filtro por Estatus (OJO: Filtrará por el estatus de la PRODUCCIÓN, porque Inventario no tiene)
+        // Filtro por Estatus
         if (estatus !== undefined && estatus !== 'todos') {
             request.input('estatusVal', sql.Int, estatus);
             sqlQuery += ` AND p.Estatus = @estatusVal`;
